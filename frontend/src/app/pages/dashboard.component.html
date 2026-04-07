@@ -1,0 +1,152 @@
+<div class="dash-wrap">
+  <app-card [hidHeader]="true" [options]="false" cardClass="dash-shell">
+    <div class="dash-head">
+      <div>
+        <div class="dash-title">Tableau de bord Admin</div>
+        <div class="dash-subtitle">Vue synthétique des dossiers contentieux et indicateurs de suivi.</div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="load()" [disabled]="loading">
+          <i class="feather icon-refresh-cw me-2"></i>
+          Actualiser
+        </button>
+        <a class="btn btn-primary" [routerLink]="['/contentieux']">
+          <i class="feather icon-folder me-2"></i>
+          Gestion Dossier Contentieux
+        </a>
+      </div>
+    </div>
+
+    <div *ngIf="banner" class="alert dash-banner" [ngClass]="{
+      'alert-success': banner.kind === 'success',
+      'alert-info': banner.kind === 'info',
+      'alert-danger': banner.kind === 'danger'
+    }">
+      {{ banner.message }}
+    </div>
+
+    <div class="dash-kpis">
+      <div class="dash-kpi dash-kpi-total">
+        <div class="dash-kpi-k">Total dossiers</div>
+        <div class="dash-kpi-v">{{ countAll() }}</div>
+      </div>
+      <div class="dash-kpi dash-kpi-pending">
+        <div class="dash-kpi-k">À valider</div>
+        <div class="dash-kpi-v">{{ countBy('A_VALIDER') }}</div>
+      </div>
+      <div class="dash-kpi dash-kpi-open">
+        <div class="dash-kpi-k">En cours</div>
+        <div class="dash-kpi-v">{{ countOpen() }}</div>
+      </div>
+      <div class="dash-kpi dash-kpi-closed">
+        <div class="dash-kpi-k">Clôturés</div>
+        <div class="dash-kpi-v">{{ countClosed() }}</div>
+      </div>
+      <div class="dash-kpi dash-kpi-money">
+        <div class="dash-kpi-k">Montant engagé</div>
+        <div class="dash-kpi-v">{{ sumEngage() | number:'1.0-0' }}</div>
+      </div>
+      <div class="dash-kpi dash-kpi-money">
+        <div class="dash-kpi-k">Montant récupéré</div>
+        <div class="dash-kpi-v">{{ sumRecupere() | number:'1.0-0' }}</div>
+      </div>
+      <div class="dash-kpi dash-kpi-rate">
+        <div class="dash-kpi-k">Taux recouvrement</div>
+        <div class="dash-kpi-v">{{ recouvrementRate() | number:'1.0-1' }}%</div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-12 col-xl-6">
+        <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
+          <div class="dash-panel">
+            <div class="dash-panel-head">
+              <div class="dash-panel-title">Répartition par statut</div>
+            </div>
+            <apx-chart
+              [series]="statusDonutOptions.series"
+              [chart]="statusDonutOptions.chart"
+              [labels]="statusDonutOptions.labels"
+              [colors]="statusDonutOptions.colors"
+              [legend]="statusDonutOptions.legend"
+              [dataLabels]="statusDonutOptions.dataLabels"
+              [plotOptions]="statusDonutOptions.plotOptions"
+            ></apx-chart>
+          </div>
+        </app-card>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
+          <div class="dash-panel">
+            <div class="dash-panel-head">
+              <div class="dash-panel-title">Montants (Total)</div>
+            </div>
+            <apx-chart
+              [series]="amountsBarOptions.series"
+              [chart]="amountsBarOptions.chart"
+              [plotOptions]="amountsBarOptions.plotOptions"
+              [dataLabels]="amountsBarOptions.dataLabels"
+              [colors]="amountsBarOptions.colors"
+              [xaxis]="amountsBarOptions.xaxis"
+              [grid]="amountsBarOptions.grid"
+              [tooltip]="amountsBarOptions.tooltip"
+            ></apx-chart>
+          </div>
+        </app-card>
+      </div>
+
+      <div class="col-12">
+        <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
+          <div class="dash-panel">
+            <div class="dash-panel-head dash-panel-head-row">
+              <div>
+                <div class="dash-panel-title">Derniers dossiers</div>
+                <div class="dash-panel-sub">Basé sur la dernière date disponible (mise à jour/création).</div>
+              </div>
+              <div class="dash-tools">
+                <div class="dash-search">
+                  <i class="feather icon-search"></i>
+                  <input type="text" [(ngModel)]="search" placeholder="Rechercher (réf, débiteur, compte…)" />
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive dash-table">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Référence</th>
+                    <th>Statut</th>
+                    <th>Débiteur</th>
+                    <th class="col-hide-md">Compte</th>
+                    <th class="col-hide-md">Chargé</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngIf="loading">
+                    <td colspan="5" class="text-center">Chargement...</td>
+                  </tr>
+                  <tr *ngFor="let d of filteredLatest()">
+                    <td class="dash-link">
+                      <a [routerLink]="['/contentieux']">{{ d.reference }}</a>
+                    </td>
+                    <td><span [class]="badgeClass(d.statut)">{{ statusLabel(d.statut) }}</span></td>
+                    <td>{{ d.nomDebiteur || '—' }}</td>
+                    <td class="col-hide-md dash-mono">{{ d.compteActuel || '—' }}</td>
+                    <td class="col-hide-md">{{ d.chargeDossier || '—' }}</td>
+                  </tr>
+                  <tr *ngIf="!loading && filteredLatest().length === 0">
+                    <td colspan="5">
+                      <div class="dash-empty">Aucun dossier trouvé.</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </app-card>
+      </div>
+    </div>
+  </app-card>
+</div>

@@ -1,0 +1,338 @@
+<div class="contentieux-wrap">
+  <app-card [hidHeader]="true" [options]="false" cardClass="contentieux-shell">
+    <div class="contentieux-header">
+      <div class="contentieux-head">
+        <div>
+          <div class="contentieux-title">Gestion Dossier Contentieux</div>
+          <div class="contentieux-subtitle">
+            Suivi complet du cycle de vie : ouverture, affectation, changement de compte, suppression, clôture et réouverture.
+          </div>
+        </div>
+        <div class="contentieux-header-actions">
+          <button class="btn btn-primary" type="button" (click)="openNew()">
+            <i class="feather icon-plus me-2"></i>
+            {{ canValidate() ? 'Nouveau dossier' : 'Demander ouverture' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="contentieux-body">
+      <div *ngIf="banner" class="alert contentieux-banner" [ngClass]="{
+        'alert-success': banner.kind === 'success',
+        'alert-info': banner.kind === 'info',
+        'alert-danger': banner.kind === 'danger'
+      }">
+        {{ banner.message }}
+      </div>
+
+      <div class="contentieux-kpis">
+        <div class="contentieux-kpi contentieux-kpi-total">
+          <div class="contentieux-kpi-k">Total</div>
+          <div class="contentieux-kpi-v">{{ countAll() }}</div>
+        </div>
+        <div class="contentieux-kpi contentieux-kpi-pending">
+          <div class="contentieux-kpi-k">En attente</div>
+          <div class="contentieux-kpi-v">{{ countByStatus('A_VALIDER') }}</div>
+        </div>
+        <div class="contentieux-kpi contentieux-kpi-open">
+          <div class="contentieux-kpi-k">Ouverts</div>
+          <div class="contentieux-kpi-v">{{ countByStatus('OUVERT') }}</div>
+        </div>
+        <div class="contentieux-kpi contentieux-kpi-closed">
+          <div class="contentieux-kpi-k">Clôturés</div>
+          <div class="contentieux-kpi-v">{{ countByStatus('CLOTURE') }}</div>
+        </div>
+      </div>
+
+      <div class="contentieux-toolbar">
+        <div class="contentieux-filters">
+          <div class="contentieux-search">
+            <i class="feather icon-search"></i>
+            <input class="form-control" type="text" [(ngModel)]="search" placeholder="Rechercher (référence, débiteur, compte, agence...)">
+            <button *ngIf="search" type="button" class="contentieux-clear" (click)="clearSearch()" aria-label="Effacer">
+              <i class="feather icon-x"></i>
+            </button>
+          </div>
+          <div class="contentieux-tabs">
+            <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='Tous'" [class.btn-outline-secondary]="activeStatus!=='Tous'" (click)="activeStatus='Tous'">
+              Tous <span class="contentieux-pill">{{ countAll() }}</span>
+            </button>
+            <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='A_VALIDER'" [class.btn-outline-secondary]="activeStatus!=='A_VALIDER'" (click)="activeStatus='A_VALIDER'">
+              En attente <span class="contentieux-pill">{{ countByStatus('A_VALIDER') }}</span>
+            </button>
+            <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='OUVERT'" [class.btn-outline-secondary]="activeStatus!=='OUVERT'" (click)="activeStatus='OUVERT'">
+              Ouvert <span class="contentieux-pill">{{ countByStatus('OUVERT') }}</span>
+            </button>
+            <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='AFFECTE'" [class.btn-outline-secondary]="activeStatus!=='AFFECTE'" (click)="activeStatus='AFFECTE'">
+              Affecté <span class="contentieux-pill">{{ countByStatus('AFFECTE') }}</span>
+            </button>
+            <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='CHANGEMENT_COMPTE'" [class.btn-outline-secondary]="activeStatus!=='CHANGEMENT_COMPTE'" (click)="activeStatus='CHANGEMENT_COMPTE'">
+              Compte <span class="contentieux-pill">{{ countByStatus('CHANGEMENT_COMPTE') }}</span>
+            </button>
+            <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='CLOTURE'" [class.btn-outline-secondary]="activeStatus!=='CLOTURE'" (click)="activeStatus='CLOTURE'">
+              Clôturé <span class="contentieux-pill">{{ countByStatus('CLOTURE') }}</span>
+            </button>
+            <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='REOUVERT'" [class.btn-outline-secondary]="activeStatus!=='REOUVERT'" (click)="activeStatus='REOUVERT'">
+              Réouvert <span class="contentieux-pill">{{ countByStatus('REOUVERT') }}</span>
+            </button>
+          </div>
+          <div class="contentieux-tools">
+            <div class="contentieux-result">
+              {{ filteredCount() }} résultat(s)
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" type="button" (click)="refresh()">
+              <i class="feather icon-refresh-cw me-2"></i>
+              Actualiser
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="contentieux-table card">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Référence</th>
+                <th>Statut</th>
+                <th>Débiteur</th>
+                <th>Compte</th>
+                <th>Chargé</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="loading">
+                <td colspan="6" class="text-center">Chargement...</td>
+              </tr>
+              <tr *ngFor="let d of filteredDossiers()" [class.contentieux-row-pending]="d.statut === 'A_VALIDER'">
+                <td class="contentieux-link">
+                  <a href="javascript:" (click)="openDetails(d)">{{ d.reference }}</a>
+                </td>
+                <td><span [class]="badgeClass(d.statut)">{{ statusLabel(d.statut) }}</span></td>
+                <td>{{ d.nomDebiteur || '—' }}</td>
+                <td class="contentieux-mono col-hide-md">{{ d.compteActuel || '—' }}</td>
+                <td class="col-hide-md">{{ d.chargeDossier || '—' }}</td>
+                <td class="text-end">
+                  <div class="contentieux-actions-row">
+                    <button class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="openEdit(d)">
+                      <i class="feather icon-edit-2"></i><span class="contentieux-action-text">Modifier</span>
+                    </button>
+                    <button *ngIf="d.statut === 'A_VALIDER' && canValidate()" class="btn btn-sm btn-primary contentieux-action-btn" type="button" (click)="validateOpening(d)">
+                      <i class="feather icon-check-circle"></i><span class="contentieux-action-text">Valider</span>
+                    </button>
+                    <button *ngIf="d.statut !== 'A_VALIDER'" class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="openAssign(d)">
+                      <i class="feather icon-user-check"></i><span class="contentieux-action-text">Affecter</span>
+                    </button>
+                    <button *ngIf="d.statut !== 'A_VALIDER'" class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="openChangeAccount(d)">
+                      <i class="feather icon-credit-card"></i><span class="contentieux-action-text">Compte</span>
+                    </button>
+                    <button *ngIf="d.statut !== 'CLOTURE' && d.statut !== 'A_VALIDER'" class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="openClose(d)">
+                      <i class="feather icon-lock"></i><span class="contentieux-action-text">Clôturer</span>
+                    </button>
+                    <button *ngIf="d.statut === 'CLOTURE'" class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="reopen(d)">
+                      <i class="feather icon-rotate-ccw"></i><span class="contentieux-action-text">Réouvrir</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger contentieux-action-btn" type="button" (click)="remove(d)">
+                      <i class="feather icon-trash-2"></i><span class="contentieux-action-text">Supprimer</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="!loading && filteredDossiers().length === 0">
+                <td colspan="6">
+                  <div class="contentieux-empty">
+                    Aucun dossier trouvé.
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </app-card>
+</div>
+
+<div *ngIf="showForm" class="contentieux-overlay" (click)="closeForm()">
+  <div class="contentieux-modal" (click)="$event.stopPropagation()">
+    <div class="contentieux-modal-head">
+      <div class="contentieux-modal-title">{{ editingId ? 'Modifier dossier contentieux' : 'Nouveau dossier contentieux' }}</div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeForm()">Fermer</button>
+    </div>
+
+    <form (ngSubmit)="submit()" class="contentieux-modal-body">
+      <div class="row g-4">
+        <div class="col-12 col-xl-6">
+          <div class="contentieux-card">
+            <div class="contentieux-card-title">Informations générales</div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-12 col-md-6">
+                <label class="form-label contentieux-label">Référence dossier</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.reference" name="reference" placeholder="Générée automatiquement" readonly>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label contentieux-label">Objet</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.objet" name="objet" placeholder="Ex: Recouvrement créance professionnelle">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label contentieux-label">Nom du débiteur</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.nomDebiteur" name="nomDebiteur" placeholder="Nom du client ou de la partie adverse">
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label class="form-label contentieux-label">Compte actuel</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.compteActuel" name="compteActuel" placeholder="000123456789">
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label contentieux-label">Ancien compte</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.ancienCompte" name="ancienCompte" placeholder="Ancien numéro">
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label contentieux-label">Agence</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.agence" name="agence" placeholder="Agence BNA Tunis">
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label contentieux-label">Chargé de dossier</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.chargeDossier" name="chargeDossier" placeholder="Non affecté">
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label contentieux-label">Date d’ouverture</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.dateOuverture" name="dateOuverture" type="date">
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label contentieux-label">Montant total engagé</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.montantEngage" name="montantEngage" placeholder="0.00">
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label contentieux-label">Montant récupéré</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.montantRecupere" name="montantRecupere" placeholder="0.00">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-xl-6">
+          <div class="contentieux-card">
+            <div class="contentieux-card-title">Suivi administratif et financier</div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-12">
+                <label class="form-label contentieux-label">Observations administratives</label>
+                <textarea class="form-control contentieux-input contentieux-textarea" [(ngModel)]="form.observationsAdministratives" name="observationsAdministratives" rows="6" placeholder="Décisions prises, affectations, actions administratives..."></textarea>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label contentieux-label">Observations financières</label>
+                <textarea class="form-control contentieux-input contentieux-textarea" [(ngModel)]="form.observationsFinancieres" name="observationsFinancieres" rows="6" placeholder="État financier, montant dû, recouvrement, impacts..."></textarea>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label contentieux-label">Date de clôture</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.dateCloture" name="dateCloture" type="date">
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label contentieux-label">Motif de clôture</label>
+                <input class="form-control contentieux-input" [(ngModel)]="form.motifCloture" name="motifCloture" placeholder="Décision, règlement, annulation...">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="contentieux-actions">
+            <button class="btn btn-success contentieux-submit" type="submit">
+              <i class="feather icon-save me-2"></i>
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div *ngIf="showActionDialog" class="contentieux-overlay" (click)="closeActionDialog()">
+  <div class="contentieux-dialog" (click)="$event.stopPropagation()">
+    <div class="contentieux-modal-head">
+      <div class="contentieux-modal-title">
+        @if (actionDialogType === 'assign') { Affecter un chargé }
+        @else if (actionDialogType === 'changeAccount') { Changer de compte }
+        @else if (actionDialogType === 'close') { Clôturer le dossier }
+        @else { Détails du dossier }
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeActionDialog()">Fermer</button>
+    </div>
+
+    <div class="contentieux-modal-body">
+      @if (actionDialogType === 'assign') {
+        <div class="mb-3">
+          <label class="form-label contentieux-label">Chargé de dossier</label>
+          <select class="form-select contentieux-input" [(ngModel)]="assignTo" name="assignTo">
+            <option *ngFor="let a of agents" [ngValue]="a">{{ a }}</option>
+          </select>
+        </div>
+        <div class="contentieux-actions">
+          <button class="btn btn-primary" type="button" (click)="confirmAssign()">Confirmer</button>
+        </div>
+      } @else if (actionDialogType === 'changeAccount') {
+        <div class="mb-3">
+          <label class="form-label contentieux-label">Nouveau compte</label>
+          <input class="form-control contentieux-input" [(ngModel)]="newCompte" name="newCompte" placeholder="Saisir le nouveau compte">
+        </div>
+        <div class="contentieux-actions">
+          <button class="btn btn-primary" type="button" (click)="confirmChangeAccount()">Confirmer</button>
+        </div>
+      } @else if (actionDialogType === 'close') {
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label contentieux-label">Date de clôture</label>
+            <input class="form-control contentieux-input" type="date" [(ngModel)]="closeDate" name="closeDate">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label contentieux-label">Motif de clôture</label>
+            <input class="form-control contentieux-input" [(ngModel)]="closeMotif" name="closeMotif" placeholder="Décision, règlement, annulation...">
+          </div>
+        </div>
+        <div class="contentieux-actions mt-3">
+          <button class="btn btn-primary" type="button" (click)="confirmClose()">Confirmer</button>
+        </div>
+      } @else if (actionDialogType === 'details') {
+        <div class="contentieux-details">
+          <div class="contentieux-details-grid">
+            <div class="contentieux-detail">
+              <div class="contentieux-detail-k">Référence</div>
+              <div class="contentieux-detail-v">{{ selected?.reference }}</div>
+            </div>
+            <div class="contentieux-detail">
+              <div class="contentieux-detail-k">Statut</div>
+              <div class="contentieux-detail-v"><span [class]="selected ? badgeClass(selected.statut) : ''">{{ selected ? statusLabel(selected.statut) : '' }}</span></div>
+            </div>
+            <div class="contentieux-detail">
+              <div class="contentieux-detail-k">Chargé</div>
+              <div class="contentieux-detail-v">{{ selected?.chargeDossier }}</div>
+            </div>
+            <div class="contentieux-detail">
+              <div class="contentieux-detail-k">Compte</div>
+              <div class="contentieux-detail-v contentieux-mono">{{ selected?.compteActuel }}</div>
+            </div>
+            <div class="contentieux-detail">
+              <div class="contentieux-detail-k">Créé par</div>
+              <div class="contentieux-detail-v">{{ selected?.createdBy || '—' }}</div>
+            </div>
+            <div class="contentieux-detail">
+              <div class="contentieux-detail-k">Validé par</div>
+              <div class="contentieux-detail-v">{{ selected?.validatedBy || '—' }}</div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

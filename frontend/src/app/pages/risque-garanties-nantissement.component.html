@@ -1,0 +1,281 @@
+<app-card cardTitle="Garanties - Nantissement" [options]="false">
+  <div class="risque-shell">
+    <div class="risque-subtitle">Saisie et suivi des nantissements.</div>
+
+    <div *ngIf="banner" class="alert" [ngClass]="{
+      'alert-success': banner.kind === 'success',
+      'alert-info': banner.kind === 'info',
+      'alert-danger': banner.kind === 'danger'
+    }">
+      {{ banner.message }}
+    </div>
+
+    <div class="nantissements">
+      <div class="nant-tabs">
+        <button type="button" class="btn btn-sm" [class.btn-primary]="activeType==='fonds'" [class.btn-outline-secondary]="activeType!=='fonds'" (click)="activeType='fonds'">
+          Fonds de commerce
+        </button>
+        <button type="button" class="btn btn-sm" [class.btn-primary]="activeType==='vehicule'" [class.btn-outline-secondary]="activeType!=='vehicule'" (click)="activeType='vehicule'">
+          Véhicule
+        </button>
+      </div>
+
+      <div class="card nant-card" *ngIf="activeType==='fonds'">
+        <div class="nant-head">
+          <div class="nant-title">Nantissement – Fonds de commerce</div>
+          <div class="nant-hint">Saisie des informations du nantissement.</div>
+        </div>
+        <form class="nant-body" (ngSubmit)="saveFonds()" #fondsForm="ngForm">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Nom Dossier</label>
+              <input class="form-control nant-input" type="text" name="nomDossier" [(ngModel)]="fonds.nomDossier" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">N° compte</label>
+              <input class="form-control nant-input" type="text" name="numeroCompte" [(ngModel)]="fonds.numeroCompte" required>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Estimation initiale</label>
+              <input class="form-control nant-input" type="number" step="0.01" name="estimationInitiale" [(ngModel)]="fonds.estimationInitiale">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Date enregistrement</label>
+              <input class="form-control nant-input" type="date" name="dateEnregistrement" [(ngModel)]="fonds.dateEnregistrement">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea class="form-control nant-input" rows="3" name="description" [(ngModel)]="fonds.description"></textarea>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Rang</label>
+              <input class="form-control nant-input" type="text" name="rang" [(ngModel)]="fonds.rang">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Adresse</label>
+              <input class="form-control nant-input" type="text" name="adresse" [(ngModel)]="fonds.adresse">
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Garant débiteur</label>
+              <input class="form-control nant-input" type="text" name="garantDebiteur" [(ngModel)]="fonds.garantDebiteur">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">N° document</label>
+              <input class="form-control nant-input" type="text" name="numeroDocument" [(ngModel)]="fonds.numeroDocument">
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Montant</label>
+              <input class="form-control nant-input" type="number" step="0.01" name="montant" [(ngModel)]="fonds.montant">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Estimation courante</label>
+              <input class="form-control nant-input" type="number" step="0.01" name="estimationCourante" [(ngModel)]="fonds.estimationCourante">
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">N° registre commerce</label>
+              <input class="form-control nant-input" type="text" name="numeroRegistreCommerce" [(ngModel)]="fonds.numeroRegistreCommerce">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Date inscription</label>
+              <input class="form-control nant-input" type="date" name="dateInscription" [(ngModel)]="fonds.dateInscription">
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Type document caution</label>
+              <input class="form-control nant-input" type="text" name="typeDocumentCaution" [(ngModel)]="fonds.typeDocumentCaution">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Nom caution</label>
+              <input class="form-control nant-input" type="text" name="nomCaution" [(ngModel)]="fonds.nomCaution">
+            </div>
+          </div>
+
+          <div class="nant-actions">
+            <button *ngIf="editingFondsId" type="button" class="btn btn-outline-secondary" (click)="cancelEditFonds(); fondsForm.resetForm()">Annuler</button>
+            <button type="button" class="btn btn-outline-secondary" (click)="resetFonds(); fondsForm.resetForm()">Réinitialiser</button>
+            <button type="submit" class="btn btn-primary">{{ editingFondsId ? 'Mettre à jour' : 'Enregistrer' }}</button>
+          </div>
+        </form>
+
+        <div class="nant-table">
+          <div class="nant-table-head">
+            <div>
+              <div class="nant-table-title">Tableau – Fonds de commerce</div>
+              <div class="nant-table-hint">{{ filteredFonds().length }} enregistrement(s)</div>
+            </div>
+            <div class="nant-table-tools">
+              <div class="nant-search">
+                <i class="feather icon-search"></i>
+                <input class="form-control nant-input" type="text" [(ngModel)]="searchFonds" name="searchFonds" placeholder="Rechercher (dossier, compte, caution)">
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Nom Dossier</th>
+                  <th>N° compte</th>
+                  <th class="col-hide-lg">Rang</th>
+                  <th class="col-hide-md">Montant</th>
+                  <th class="col-hide-lg">Date inscription</th>
+                  <th class="col-hide-md">Nom caution</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let n of filteredFonds()">
+                  <td class="nant-cell-strong">{{ n.nomDossier || '—' }}</td>
+                  <td class="nant-mono">{{ n.numeroCompte || '—' }}</td>
+                  <td class="col-hide-lg">{{ n.rang || '—' }}</td>
+                  <td class="col-hide-md nant-mono">{{ n.montant || '—' }}</td>
+                  <td class="col-hide-lg">{{ n.dateInscription || '—' }}</td>
+                  <td class="col-hide-md">{{ n.nomCaution || '—' }}</td>
+                  <td class="text-end">
+                    <div class="nant-actions-row">
+                      <button class="btn btn-sm btn-outline-secondary nant-action-btn" type="button" (click)="openEditFonds(n)">
+                        <i class="feather icon-edit-2"></i><span class="nant-action-text">Modifier</span>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger nant-action-btn" type="button" (click)="removeFonds(n)">
+                        <i class="feather icon-trash-2"></i><span class="nant-action-text">Supprimer</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredFonds().length === 0">
+                  <td colspan="7">
+                    <div class="nant-empty">Aucun nantissement (Fonds de commerce).</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card nant-card" *ngIf="activeType==='vehicule'">
+        <div class="nant-head">
+          <div class="nant-title">Nantissement – Véhicule</div>
+          <div class="nant-hint">Saisie des informations du nantissement.</div>
+        </div>
+        <form class="nant-body" (ngSubmit)="saveVehicule()" #vehForm="ngForm">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Dossier</label>
+              <input class="form-control nant-input" type="text" name="dossier" [(ngModel)]="vehicule.dossier" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">N° compte</label>
+              <input class="form-control nant-input" type="text" name="numeroCompteVeh" [(ngModel)]="vehicule.numeroCompte" required>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Estimation initiale</label>
+              <input class="form-control nant-input" type="number" step="0.01" name="estimationInitialeVeh" [(ngModel)]="vehicule.estimationInitiale">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Date enregistrement</label>
+              <input class="form-control nant-input" type="date" name="dateEnregistrementVeh" [(ngModel)]="vehicule.dateEnregistrement">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea class="form-control nant-input" rows="3" name="descriptionVeh" [(ngModel)]="vehicule.description"></textarea>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Matricule</label>
+              <input class="form-control nant-input" type="text" name="matricule" [(ngModel)]="vehicule.matricule" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Montant</label>
+              <input class="form-control nant-input" type="number" step="0.01" name="montantVeh" [(ngModel)]="vehicule.montant">
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Estimation courante</label>
+              <input class="form-control nant-input" type="number" step="0.01" name="estimationCouranteVeh" [(ngModel)]="vehicule.estimationCourante">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Date inscription</label>
+              <input class="form-control nant-input" type="date" name="dateInscriptionVeh" [(ngModel)]="vehicule.dateInscription">
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Nom caution</label>
+              <input class="form-control nant-input" type="text" name="nomCautionVeh" [(ngModel)]="vehicule.nomCaution">
+            </div>
+          </div>
+
+          <div class="nant-actions">
+            <button *ngIf="editingVehiculeId" type="button" class="btn btn-outline-secondary" (click)="cancelEditVehicule(); vehForm.resetForm()">Annuler</button>
+            <button type="button" class="btn btn-outline-secondary" (click)="resetVehicule(); vehForm.resetForm()">Réinitialiser</button>
+            <button type="submit" class="btn btn-primary">{{ editingVehiculeId ? 'Mettre à jour' : 'Enregistrer' }}</button>
+          </div>
+        </form>
+
+        <div class="nant-table">
+          <div class="nant-table-head">
+            <div>
+              <div class="nant-table-title">Tableau – Véhicule</div>
+              <div class="nant-table-hint">{{ filteredVehicule().length }} enregistrement(s)</div>
+            </div>
+            <div class="nant-table-tools">
+              <div class="nant-search">
+                <i class="feather icon-search"></i>
+                <input class="form-control nant-input" type="text" [(ngModel)]="searchVehicule" name="searchVehicule" placeholder="Rechercher (dossier, compte, matricule)">
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Dossier</th>
+                  <th>N° compte</th>
+                  <th>Matricule</th>
+                  <th class="col-hide-md">Montant</th>
+                  <th class="col-hide-lg">Date inscription</th>
+                  <th class="col-hide-lg">Nom caution</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let n of filteredVehicule()">
+                  <td class="nant-cell-strong">{{ n.dossier || '—' }}</td>
+                  <td class="nant-mono">{{ n.numeroCompte || '—' }}</td>
+                  <td class="nant-mono">{{ n.matricule || '—' }}</td>
+                  <td class="col-hide-md nant-mono">{{ n.montant || '—' }}</td>
+                  <td class="col-hide-lg">{{ n.dateInscription || '—' }}</td>
+                  <td class="col-hide-lg">{{ n.nomCaution || '—' }}</td>
+                  <td class="text-end">
+                    <div class="nant-actions-row">
+                      <button class="btn btn-sm btn-outline-secondary nant-action-btn" type="button" (click)="openEditVehicule(n)">
+                        <i class="feather icon-edit-2"></i><span class="nant-action-text">Modifier</span>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger nant-action-btn" type="button" (click)="removeVehicule(n)">
+                        <i class="feather icon-trash-2"></i><span class="nant-action-text">Supprimer</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredVehicule().length === 0">
+                  <td colspan="7">
+                    <div class="nant-empty">Aucun nantissement (Véhicule).</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-card>
+

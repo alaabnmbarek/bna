@@ -1,0 +1,176 @@
+<app-card cardTitle="Garanties - Hypothèque" [options]="false">
+  <div class="risque-shell">
+    <div class="risque-subtitle">Saisie et suivi des hypothèques.</div>
+
+    <div *ngIf="banner" class="alert" [ngClass]="{
+      'alert-success': banner.kind === 'success',
+      'alert-info': banner.kind === 'info',
+      'alert-danger': banner.kind === 'danger'
+    }">
+      {{ banner.message }}
+    </div>
+
+    <div class="card nant-card">
+      <div class="nant-head">
+        <div class="nant-title">Hypothèque</div>
+        <div class="nant-hint">Saisie des informations de l’hypothèque.</div>
+      </div>
+      <form class="nant-body" (ngSubmit)="save()" #hypForm="ngForm">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label">Dossier</label>
+            <input class="form-control nant-input" type="text" name="hypDossier" [(ngModel)]="hypotheque.dossier" required>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">N° compte</label>
+            <input class="form-control nant-input" type="text" name="hypNumeroCompte" [(ngModel)]="hypotheque.numeroCompte" required>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Date enregistrement</label>
+            <input class="form-control nant-input" type="date" name="hypDateEnregistrement" [(ngModel)]="hypotheque.dateEnregistrement">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Date inscription</label>
+            <input class="form-control nant-input" type="date" name="hypDateInscription" [(ngModel)]="hypotheque.dateInscription">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Montant</label>
+            <input class="form-control nant-input" type="number" step="0.01" name="hypMontant" [(ngModel)]="hypotheque.montant">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Type bien</label>
+            <input class="form-control nant-input" type="text" name="hypTypeBien" [(ngModel)]="hypotheque.typeBien">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Adresse</label>
+            <input class="form-control nant-input" type="text" name="hypAdresse" [(ngModel)]="hypotheque.adresse">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Main levée</label>
+            <select class="form-select nant-input" name="hypMainLevee" [(ngModel)]="hypotheque.mainLevee">
+              <option value="" selected>Sélectionner…</option>
+              <option value="OUI">Oui</option>
+              <option value="NON">Non</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Estimation initiale</label>
+            <input class="form-control nant-input" type="number" step="0.01" name="hypEstimationInitiale" [(ngModel)]="hypotheque.estimationInitiale">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Pari-passu</label>
+            <select class="form-select nant-input" name="hypPariPassu1" [(ngModel)]="hypotheque.pariPassu1">
+              <option value="" selected>Sélectionner…</option>
+              <option value="OUI">Oui</option>
+              <option value="NON">Non</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Estimation courante</label>
+            <input class="form-control nant-input" type="number" step="0.01" name="hypEstimationCourante" [(ngModel)]="hypotheque.estimationCourante">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">N° titre</label>
+            <input class="form-control nant-input" type="text" name="hypNumeroTitre" [(ngModel)]="hypotheque.numeroTitre">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Date renouvellement</label>
+            <input class="form-control nant-input" type="date" name="hypDateRenouvellement" [(ngModel)]="hypotheque.dateRenouvellement">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Date expiration</label>
+            <input class="form-control nant-input" type="date" name="hypDateExpiration" [(ngModel)]="hypotheque.dateExpiration">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Nom caution</label>
+            <input class="form-control nant-input" type="text" name="hypNomCaution" [(ngModel)]="hypotheque.nomCaution">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Date délivrance</label>
+            <input class="form-control nant-input" type="date" name="hypDateDelivrance" [(ngModel)]="hypotheque.dateDelivrance">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Pari-passu (2)</label>
+            <select class="form-select nant-input" name="hypPariPassu2" [(ngModel)]="hypotheque.pariPassu2">
+              <option value="" selected>Sélectionner…</option>
+              <option value="OUI">Oui</option>
+              <option value="NON">Non</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="nant-actions">
+          <button *ngIf="editingId" type="button" class="btn btn-outline-secondary" (click)="cancelEdit(); hypForm.resetForm()">Annuler</button>
+          <button type="button" class="btn btn-outline-secondary" (click)="reset(); hypForm.resetForm()">Réinitialiser</button>
+          <button type="submit" class="btn btn-primary">{{ editingId ? 'Mettre à jour' : 'Enregistrer' }}</button>
+        </div>
+      </form>
+
+      <div class="nant-table">
+        <div class="nant-table-head">
+          <div>
+            <div class="nant-table-title">Tableau – Hypothèque</div>
+            <div class="nant-table-hint">{{ filtered().length }} enregistrement(s)</div>
+          </div>
+          <div class="nant-table-tools">
+            <div class="nant-search">
+              <i class="feather icon-search"></i>
+              <input class="form-control nant-input" type="text" [(ngModel)]="search" name="search" placeholder="Rechercher (dossier, compte, type bien, titre)">
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Dossier</th>
+                <th>N° compte</th>
+                <th class="col-hide-md">Montant</th>
+                <th>Type bien</th>
+                <th class="col-hide-lg">Date inscription</th>
+                <th class="col-hide-lg">Main levée</th>
+                <th class="col-hide-md">Nom caution</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let h of filtered()">
+                <td class="nant-cell-strong">{{ h.dossier || '—' }}</td>
+                <td class="nant-mono">{{ h.numeroCompte || '—' }}</td>
+                <td class="col-hide-md nant-mono">{{ h.montant || '—' }}</td>
+                <td>{{ h.typeBien || '—' }}</td>
+                <td class="col-hide-lg">{{ h.dateInscription || '—' }}</td>
+                <td class="col-hide-lg">{{ h.mainLevee || '—' }}</td>
+                <td class="col-hide-md">{{ h.nomCaution || '—' }}</td>
+                <td class="text-end">
+                  <div class="nant-actions-row">
+                    <button class="btn btn-sm btn-outline-secondary nant-action-btn" type="button" (click)="openEdit(h)">
+                      <i class="feather icon-edit-2"></i><span class="nant-action-text">Modifier</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger nant-action-btn" type="button" (click)="remove(h)">
+                      <i class="feather icon-trash-2"></i><span class="nant-action-text">Supprimer</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="filtered().length === 0">
+                <td colspan="8">
+                  <div class="nant-empty">Aucune hypothèque.</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-card>
+

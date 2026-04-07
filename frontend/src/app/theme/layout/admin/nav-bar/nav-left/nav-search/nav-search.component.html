@@ -1,0 +1,26 @@
+<a href="javascript:" class="pop-search" (click)="open()"><i class="feather icon-search"></i></a>
+<div class="search-bar" *ngIf="isSearch">
+  <input
+    type="text"
+    class="form-control border-0 shadow-none"
+    placeholder="Rechercher ici..."
+    [value]="query"
+    (input)="onInput($any($event.target).value)"
+    (keydown)="onKeydown($event)"
+  >
+  <button type="button" class="close" aria-label="Close" (click)="close()">
+    <span aria-hidden="true">&times;</span>
+  </button>
+
+  <div class="search-results" *ngIf="results.length > 0">
+    <a
+      *ngFor="let r of results"
+      href="javascript:"
+      class="search-result"
+      (click)="goTo(r.url)"
+    >
+      <i *ngIf="r.icon" [ngClass]="r.icon"></i>
+      <span>{{ r.title }}</span>
+    </a>
+  </div>
+</div>

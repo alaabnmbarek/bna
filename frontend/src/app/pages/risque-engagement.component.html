@@ -1,0 +1,130 @@
+<app-card cardTitle="Risque - Engagement" [options]="false">
+  <div class="risque-shell">
+    <div class="risque-subtitle">Suivi des engagements liés aux dossiers contentieux.</div>
+    <div *ngIf="banner" class="alert" [ngClass]="{
+      'alert-success': banner.kind === 'success',
+      'alert-info': banner.kind === 'info',
+      'alert-danger': banner.kind === 'danger'
+    }">
+      {{ banner.message }}
+    </div>
+    <div class="card risque-form-card">
+      <div class="risque-form-head">
+        <div class="risque-form-title">Formulaire d’engagement</div>
+        <div class="risque-form-hint">Renseignez les informations principales de l’engagement.</div>
+      </div>
+      <form class="risque-form-body" (ngSubmit)="save()" #f="ngForm">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label">N° compte</label>
+            <input class="form-control" type="text" name="numeroCompte" [(ngModel)]="form.numeroCompte" placeholder="Ex: 000123456789" required>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Num risque</label>
+            <input class="form-control" type="text" name="numRisque" [(ngModel)]="form.numRisque" placeholder="Ex: RSK-2026-001" required>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Titre créance</label>
+            <input class="form-control" type="text" name="titreCreance" [(ngModel)]="form.titreCreance" placeholder="Ex: Crédit d’investissement" required>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Date contrat</label>
+            <input class="form-control" type="date" name="dateContrat" [(ngModel)]="form.dateContrat">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Intérêt / Intérêt retard</label>
+            <select class="form-select" name="interetType" [(ngModel)]="form.interetType">
+              <option value="" selected>Sélectionner…</option>
+              <option value="IC">Intérêt (I.C)</option>
+              <option value="IR">Intérêt retard (I.R)</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Taux (I.C / I.R)</label>
+            <input class="form-control" type="number" step="0.01" name="taux" [(ngModel)]="form.taux" placeholder="Ex: 8.50">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Échéance</label>
+            <input class="form-control" type="date" name="echeance" [(ngModel)]="form.echeance">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Montant restant</label>
+            <input class="form-control" type="number" step="0.01" name="montantRestant" [(ngModel)]="form.montantRestant" placeholder="Ex: 12000.00">
+          </div>
+        </div>
+
+        <div class="risque-form-actions">
+          <button *ngIf="editingId" type="button" class="btn btn-outline-secondary" (click)="cancelEdit(); f.resetForm()">Annuler</button>
+          <button type="button" class="btn btn-outline-secondary" (click)="reset(); f.resetForm()">Réinitialiser</button>
+          <button type="submit" class="btn btn-primary">{{ editingId ? 'Mettre à jour' : 'Enregistrer' }}</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card risque-table-card mt-3">
+      <div class="risque-table-head">
+        <div>
+          <div class="risque-table-title">Liste des engagements</div>
+          <div class="risque-table-hint">{{ filteredCount() }} engagement(s)</div>
+        </div>
+        <div class="risque-table-tools">
+          <div class="risque-search">
+            <i class="feather icon-search"></i>
+            <input class="form-control" type="text" [(ngModel)]="search" name="search" placeholder="Rechercher (compte, titre, risque…)">
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>N° compte</th>
+              <th>Titre créance</th>
+              <th class="col-hide-lg">Date contrat</th>
+              <th class="col-hide-md">I.C / I.R</th>
+              <th class="col-hide-md">Taux</th>
+              <th class="col-hide-lg">Échéance</th>
+              <th>Montant restant</th>
+              <th class="col-hide-md">Num risque</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of filteredEngagements()">
+              <td class="risque-mono">{{ e.numeroCompte }}</td>
+              <td class="risque-cell-muted">{{ e.titreCreance }}</td>
+              <td class="risque-cell-muted col-hide-lg">{{ e.dateContrat || '—' }}</td>
+              <td class="col-hide-md">
+                <span class="badge bg-secondary-subtle text-secondary" *ngIf="!e.interetType">—</span>
+                <span class="badge bg-info-subtle text-info" *ngIf="e.interetType">{{ e.interetType }}</span>
+              </td>
+              <td class="col-hide-md">{{ e.taux || '—' }}</td>
+              <td class="risque-cell-muted col-hide-lg">{{ e.echeance || '—' }}</td>
+              <td class="risque-mono">{{ e.montantRestant || '—' }}</td>
+              <td class="col-hide-md risque-mono">{{ e.numRisque }}</td>
+              <td class="text-end">
+                <div class="risque-actions-row">
+                  <button class="btn btn-sm btn-outline-secondary risque-action-btn" type="button" (click)="openEdit(e)">
+                    <i class="feather icon-edit-2"></i><span class="risque-action-text">Modifier</span>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger risque-action-btn" type="button" (click)="remove(e)">
+                    <i class="feather icon-trash-2"></i><span class="risque-action-text">Supprimer</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredEngagements().length === 0">
+              <td colspan="9">
+                <div class="risque-empty">Aucun engagement.</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</app-card>

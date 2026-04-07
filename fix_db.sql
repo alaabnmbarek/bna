@@ -1,0 +1,3 @@
+ALTER TABLE users MODIFY COLUMN role VARCHAR(100);
+ALTER TABLE role_permissions MODIFY COLUMN permission VARCHAR(100);
+ALTER TABLE user_permissions MODIFY COLUMN permission VARCHAR(100);

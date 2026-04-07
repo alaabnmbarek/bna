@@ -1,0 +1,1 @@
+{"ast":null,"code":"export let BerryConfig = /*#__PURE__*/(() => {\n  class BerryConfig {\n    static isCollapse_menu = false;\n    static font_family = 'Roboto'; // Roboto, poppins, inter\n  }\n  return BerryConfig;\n})();","map":null,"metadata":{},"sourceType":"module","externalDependencies":[]}

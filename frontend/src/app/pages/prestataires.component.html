@@ -1,0 +1,174 @@
+<div class="admin-wrap">
+  <app-card [hidHeader]="true" [options]="false" cardClass="admin-shell">
+    <div class="admin-head">
+      <div>
+        <div class="admin-title">Gestion des Prestataires</div>
+        <div class="admin-subtitle">Répertoire des prestataires (huissiers, avocats, experts, notaires) liés aux dossiers contentieux.</div>
+      </div>
+      <div class="admin-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="load()" [disabled]="loading">
+          <i class="feather icon-refresh-cw me-2"></i>
+          Actualiser
+        </button>
+        <button class="btn btn-primary" type="button" (click)="toggleForm()">
+          <i class="feather icon-plus me-2"></i>
+          Nouveau prestataire
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="banner" class="alert admin-banner" [ngClass]="{
+      'alert-success': banner.kind === 'success',
+      'alert-info': banner.kind === 'info',
+      'alert-danger': banner.kind === 'danger'
+    }">
+      {{ banner.message }}
+    </div>
+
+    <div class="admin-filters">
+      <div class="admin-search">
+        <i class="feather icon-search"></i>
+        <input class="form-control" [(ngModel)]="q" placeholder="Rechercher (nom, email, téléphone…)" (keyup.enter)="load()">
+      </div>
+
+      <div class="admin-selects">
+        <select class="form-select" [(ngModel)]="type" (change)="load()">
+          <option value="">Type : Tous</option>
+          <option *ngFor="let t of types" [value]="t">{{ t }}</option>
+        </select>
+        <select class="form-select" [(ngModel)]="actif" (change)="load()">
+          <option value="">Statut : Tous</option>
+          <option value="true">Actif</option>
+          <option value="false">Inactif</option>
+        </select>
+        <button class="btn btn-outline-secondary" type="button" (click)="load()" [disabled]="loading">
+          Filtrer
+        </button>
+      </div>
+    </div>
+
+    <div class="admin-table card">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>Prestataire</th>
+              <th class="col-hide-md">Type</th>
+              <th class="col-hide-lg">Contact</th>
+              <th>Statut</th>
+              <th class="col-hide-lg">Performance</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="loading">
+              <td colspan="6" class="text-center">Chargement...</td>
+            </tr>
+            <tr *ngFor="let p of prestataires">
+              <td>
+                <div class="admin-cell-strong">{{ p.nom }}</div>
+                <div class="admin-cell-muted admin-truncate">{{ p.specialites || '—' }}</div>
+              </td>
+              <td class="col-hide-md">{{ p.type }}</td>
+              <td class="col-hide-lg admin-cell-muted">
+                <div>{{ p.email || '—' }}</div>
+                <div>{{ p.telephone || '—' }}</div>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="p.actif ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'">
+                  {{ p.actif ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+              <td class="col-hide-lg admin-cell-muted">
+                <div>Note: {{ p.noteMoyenne ?? '—' }}</div>
+                <div>Missions: {{ p.missionsTerminees ?? 0 }}/{{ p.missionsTotal ?? 0 }}</div>
+              </td>
+              <td class="text-end">
+                <div class="admin-actions-row">
+                  <button class="btn btn-sm btn-outline-primary admin-action-btn" type="button" (click)="open(p)">
+                    <i class="feather icon-folder"></i><span class="admin-action-text">Missions</span>
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary admin-action-btn" type="button" (click)="edit(p)">
+                    <i class="feather icon-edit-2"></i><span class="admin-action-text">Modifier</span>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger admin-action-btn" type="button" (click)="deactivate(p)">
+                    <i class="feather icon-slash"></i><span class="admin-action-text">Désactiver</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="!loading && prestataires.length === 0">
+              <td colspan="6">
+                <div class="admin-empty">Aucun prestataire.</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </app-card>
+</div>
+
+<div *ngIf="showForm" class="admin-overlay" (click)="closeForm()">
+  <div class="admin-modal" (click)="$event.stopPropagation()">
+    <div class="admin-modal-head">
+      <div class="admin-modal-title">{{ isEditing ? 'Modifier prestataire' : 'Nouveau prestataire' }}</div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeForm()">Fermer</button>
+    </div>
+
+    <form class="admin-modal-body" (ngSubmit)="save()">
+      <div class="row g-3">
+        <div class="col-12 col-md-4">
+          <label class="form-label admin-label">Type</label>
+          <select class="form-select admin-input" [(ngModel)]="form.type" name="type" required>
+            <option *ngFor="let t of types" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-8">
+          <label class="form-label admin-label">Nom</label>
+          <input class="form-control admin-input" [(ngModel)]="form.nom" name="nom" required>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Email</label>
+          <input class="form-control admin-input" [(ngModel)]="form.email" name="email" type="email">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Téléphone</label>
+          <input class="form-control admin-input" [(ngModel)]="form.telephone" name="telephone">
+        </div>
+
+        <div class="col-12">
+          <label class="form-label admin-label">Adresse</label>
+          <input class="form-control admin-input" [(ngModel)]="form.adresse" name="adresse">
+        </div>
+
+        <div class="col-12 col-md-4">
+          <label class="form-label admin-label">Actif</label>
+          <select class="form-select admin-input" [(ngModel)]="form.actif" name="actif">
+            <option [ngValue]="true">Oui</option>
+            <option [ngValue]="false">Non</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-8">
+          <label class="form-label admin-label">Spécialités</label>
+          <input class="form-control admin-input" [(ngModel)]="form.specialites" name="specialites" placeholder="Ex: Recouvrement, Contentieux…">
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Tarifs</label>
+          <input class="form-control admin-input" [(ngModel)]="form.tarifs" name="tarifs" placeholder="Ex: 120 DT/heure ou forfait…">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Disponibilités</label>
+          <input class="form-control admin-input" [(ngModel)]="form.disponibilites" name="disponibilites" placeholder="Ex: Lun-Ven 9h-17h">
+        </div>
+      </div>
+
+      <div class="admin-modal-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeForm()">Annuler</button>
+        <button type="submit" class="btn btn-primary">{{ isEditing ? 'Mettre à jour' : 'Créer' }}</button>
+      </div>
+    </form>
+  </div>
+</div>

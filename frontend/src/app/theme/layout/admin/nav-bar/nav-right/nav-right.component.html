@@ -1,0 +1,58 @@
+<ul class="navbar-nav ms-auto align-items-center">
+  <li>
+    <div class="dropdown" ngbDropdown display="static">
+      <a ngbDropdownToggle href="javascript:">
+        <i class="icon feather icon-bell"></i>
+        <span class="badge badge-pill badge-danger">5</span>
+      </a>
+      <div ngbDropdownMenu class="dropdown-menu-end notification">
+        <div class="noti-head">
+          <h6 class="d-inline-block m-b-0">Notifications</h6>
+          <div class="float-right">
+            <a href="javascript:" class="m-r-10">marquer comme lu</a>
+            <a href="javascript:">tout effacer</a>
+          </div>
+        </div>
+        <ul class="noti-body">
+          <li class="n-title">
+            <p class="m-b-0">NOUVEAU</p>
+          </li>
+          <li class="notification">
+            <div class="media">
+              <img class="img-radius" src="assets/images/user/avatar-4.jpg" alt="Notification image">
+              <div class="media-body">
+                <p><strong>Système BNA</strong><span class="n-time text-muted"><i class="icon feather icon-clock m-r-10"></i>30 min</span></p>
+                <p>Bienvenue sur votre espace sécurisé</p>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <div class="noti-footer">
+          <a href="javascript:">tout afficher</a>
+        </div>
+      </div>
+    </div>
+  </li>
+  <li>
+    <div class="drp-user dropdown" ngbDropdown display="static">
+      <a href="javascript:" ngbDropdownToggle>
+        <i class="feather icon-user"></i>
+      </a>
+      <div class="dropdown-menu-end profile-notification" ngbDropdownMenu>
+        <div class="pro-head">
+          <img src="assets/images/user/avatar-4.jpg" class="img-radius" alt="User-Profile-Image">
+          <span>{{ auth.username() }}</span>
+          <a href="javascript:" (click)="logout()" class="dud-logout" title="Déconnexion">
+            <i class="feather icon-log-out"></i>
+          </a>
+        </div>
+        <ul class="pro-body">
+          <li class="pro-section">Espace Client</li>
+          <li><a [routerLink]="['/user']" class="dropdown-item"><i class="feather icon-user"></i> Mon Profil</a></li>
+          <li><a [routerLink]="['/profile/change-password']" class="dropdown-item"><i class="feather icon-lock"></i> Changer mot de passe</a></li>
+          <li><a href="javascript:" (click)="logout()" class="dropdown-item"><i class="feather icon-log-out"></i> Déconnexion</a></li>
+        </ul>
+      </div>
+    </div>
+  </li>
+</ul>

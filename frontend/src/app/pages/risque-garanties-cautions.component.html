@@ -1,0 +1,130 @@
+<app-card cardTitle="Garanties - Cautions" [options]="false">
+  <div class="risque-shell">
+    <div class="risque-subtitle">Saisie et suivi des cautions.</div>
+
+    <div *ngIf="banner" class="alert" [ngClass]="{
+      'alert-success': banner.kind === 'success',
+      'alert-info': banner.kind === 'info',
+      'alert-danger': banner.kind === 'danger'
+    }">
+      {{ banner.message }}
+    </div>
+
+    <div class="card nant-card">
+      <div class="nant-head">
+        <div class="nant-title">Caution</div>
+        <div class="nant-hint">Saisie des informations de caution.</div>
+      </div>
+      <form class="nant-body" (ngSubmit)="save()" #cautionForm="ngForm">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label">N° Dossier</label>
+            <input class="form-control nant-input" type="text" name="cautionNumeroDossier" [(ngModel)]="caution.numeroDossier" required>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">N° compte</label>
+            <input class="form-control nant-input" type="text" name="cautionNumeroCompte" [(ngModel)]="caution.numeroCompte" required>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">N° garant</label>
+            <input class="form-control nant-input" type="text" name="cautionNumeroGarant" [(ngModel)]="caution.numeroGarant">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Nat. caution</label>
+            <input class="form-control nant-input" type="text" name="cautionNature" [(ngModel)]="caution.natureCaution" placeholder="Ex: Solidaire / Simple">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Date contrat</label>
+            <input class="form-control nant-input" type="date" name="cautionDateContrat" [(ngModel)]="caution.dateContrat">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Montant limite de la caution</label>
+            <input class="form-control nant-input" type="number" step="0.01" name="cautionMontantLimite" [(ngModel)]="caution.montantLimite">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Type document caution</label>
+            <input class="form-control nant-input" type="text" name="cautionTypeDoc" [(ngModel)]="caution.typeDocumentCaution">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">N° document</label>
+            <input class="form-control nant-input" type="text" name="cautionNumeroDoc" [(ngModel)]="caution.numeroDocument">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Description</label>
+            <textarea class="form-control nant-input" rows="3" name="cautionDescription" [(ngModel)]="caution.description"></textarea>
+          </div>
+        </div>
+
+        <div class="nant-actions">
+          <button *ngIf="editingId" type="button" class="btn btn-outline-secondary" (click)="cancelEdit(); cautionForm.resetForm()">Annuler</button>
+          <button type="button" class="btn btn-outline-secondary" (click)="reset(); cautionForm.resetForm()">Réinitialiser</button>
+          <button type="submit" class="btn btn-primary">{{ editingId ? 'Mettre à jour' : 'Enregistrer' }}</button>
+        </div>
+      </form>
+
+      <div class="nant-table">
+        <div class="nant-table-head">
+          <div>
+            <div class="nant-table-title">Tableau – Cautions</div>
+            <div class="nant-table-hint">{{ filtered().length }} enregistrement(s)</div>
+          </div>
+          <div class="nant-table-tools">
+            <div class="nant-search">
+              <i class="feather icon-search"></i>
+              <input class="form-control nant-input" type="text" [(ngModel)]="search" name="search" placeholder="Rechercher (dossier, compte, garant, nature)">
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>N° Dossier</th>
+                <th>N° compte</th>
+                <th class="col-hide-md">N° garant</th>
+                <th>Nat. caution</th>
+                <th class="col-hide-lg">Date contrat</th>
+                <th class="col-hide-md">Montant limite</th>
+                <th class="col-hide-lg">Type doc</th>
+                <th class="col-hide-lg">N° doc</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of filtered()">
+                <td class="nant-cell-strong">{{ c.numeroDossier || '—' }}</td>
+                <td class="nant-mono">{{ c.numeroCompte || '—' }}</td>
+                <td class="col-hide-md nant-mono">{{ c.numeroGarant || '—' }}</td>
+                <td>{{ c.natureCaution || '—' }}</td>
+                <td class="col-hide-lg">{{ c.dateContrat || '—' }}</td>
+                <td class="col-hide-md nant-mono">{{ c.montantLimite || '—' }}</td>
+                <td class="col-hide-lg">{{ c.typeDocumentCaution || '—' }}</td>
+                <td class="col-hide-lg nant-mono">{{ c.numeroDocument || '—' }}</td>
+                <td class="text-end">
+                  <div class="nant-actions-row">
+                    <button class="btn btn-sm btn-outline-secondary nant-action-btn" type="button" (click)="openEdit(c)">
+                      <i class="feather icon-edit-2"></i><span class="nant-action-text">Modifier</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger nant-action-btn" type="button" (click)="remove(c)">
+                      <i class="feather icon-trash-2"></i><span class="nant-action-text">Supprimer</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="filtered().length === 0">
+                <td colspan="9">
+                  <div class="nant-empty">Aucune caution.</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-card>
+

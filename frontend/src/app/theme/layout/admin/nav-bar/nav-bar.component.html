@@ -1,0 +1,13 @@
+<header class="navbar pcoded-header navbar-expand-lg">
+  <div class="m-header">
+    <a href="javascript:" class="mobile-menu" id="mobile-collapse" (click)="navCollapse()"><span></span></a>
+    <a [routerLink]="['/admin']" class="b-brand">
+    <h4 class="text-white mb-0"></h4>
+  </a>
+    <a class="mob-toggler" [ngClass]="{'on' : this.menuClass}" href="javascript:" (click)="toggleMobOption()"><i class="feather icon-more-vertical"></i></a>
+  </div>
+  <div class="collapse navbar-collapse" [style.display]="this.collapseStyle">
+    <app-nav-left class="me-auto"></app-nav-left>
+    <app-nav-right class="ms-auto"></app-nav-right>
+  </div>
+</header>

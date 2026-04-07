@@ -1,0 +1,256 @@
+.admin-wrap {
+  padding: 12px;
+}
+
+.admin-shell {
+  border-radius: 18px;
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.admin-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.admin-title {
+  font-weight: 1000;
+  font-size: 18px;
+  color: var(--app-text);
+}
+
+.admin-subtitle {
+  margin-top: 4px;
+  color: var(--app-text-muted);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-banner {
+  border-radius: 14px;
+  font-weight: 800;
+  border: 1px solid var(--app-border);
+  margin-bottom: 12px;
+}
+
+.admin-filters {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.admin-search {
+  position: relative;
+  width: 420px;
+  max-width: 100%;
+}
+
+.admin-search i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--app-text-muted);
+  font-size: 16px;
+}
+
+.admin-search input {
+  padding-left: 36px;
+}
+
+.admin-selects {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-selects .form-select {
+  width: 240px;
+}
+
+.admin-table {
+  border-radius: 18px;
+  border: 1px solid var(--app-border);
+  overflow: hidden;
+  box-shadow: var(--app-shadow-sm);
+}
+
+.admin-table thead th {
+  font-size: 12px;
+  text-transform: none;
+  color: var(--app-text-muted);
+  font-weight: 900;
+  border-top: 0;
+}
+
+.admin-table tbody td {
+  font-size: 13px;
+  color: var(--app-text);
+  vertical-align: middle;
+}
+
+.admin-cell-strong {
+  font-weight: 1000;
+  color: var(--app-text);
+}
+
+.admin-cell-muted {
+  color: var(--app-text-muted);
+}
+
+.admin-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12.5px;
+}
+
+.admin-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  font-weight: 900;
+}
+
+.admin-action-btn i {
+  font-size: 14px;
+}
+
+.admin-action-text {
+  display: inline;
+}
+
+.admin-empty {
+  padding: 14px;
+  font-weight: 800;
+  color: var(--app-text-muted);
+}
+
+.admin-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1050;
+}
+
+.admin-modal {
+  width: 100%;
+  max-width: 980px;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid var(--app-border);
+  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.30);
+  overflow: hidden;
+}
+
+.admin-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--app-border);
+  background: rgba(15, 23, 42, 0.02);
+}
+
+.admin-modal-title {
+  font-weight: 1000;
+  color: var(--app-text);
+  font-size: 16px;
+}
+
+.admin-modal-body {
+  padding: 16px;
+}
+
+.admin-label {
+  font-weight: 900;
+  color: var(--app-text);
+}
+
+.admin-input {
+  border-radius: 12px;
+}
+
+.admin-modal-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.admin-perms-summary {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--app-border);
+  background: rgba(15, 23, 42, 0.02);
+  font-weight: 800;
+  color: var(--app-text);
+}
+
+.admin-perms-count {
+  font-weight: 1000;
+}
+
+.col-hide-md {
+  display: table-cell;
+}
+
+.col-hide-lg {
+  display: table-cell;
+}
+
+@media (max-width: 991px) {
+  .col-hide-md {
+    display: none;
+  }
+  .admin-selects .form-select {
+    width: 200px;
+  }
+}
+
+@media (max-width: 1199px) {
+  .col-hide-lg {
+    display: none;
+  }
+}
+
+@media (max-width: 575px) {
+  .admin-action-text {
+    display: none;
+  }
+  .admin-selects,
+  .admin-selects .form-select {
+    width: 100%;
+  }
+  .admin-filters {
+    align-items: stretch;
+  }
+}

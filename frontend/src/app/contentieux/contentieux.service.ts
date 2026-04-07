@@ -1,0 +1,86 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+export type ContentieuxStatus = 'A_VALIDER' | 'OUVERT' | 'AFFECTE' | 'CHANGEMENT_COMPTE' | 'CLOTURE' | 'REOUVERT';
+
+export interface DossierContentieux {
+  id: number;
+  reference: string;
+  statut: ContentieuxStatus;
+  objet?: string | null;
+  nomDebiteur?: string | null;
+  compteActuel?: string | null;
+  ancienCompte?: string | null;
+  agence?: string | null;
+  chargeDossier?: string | null;
+  dateOuverture?: string | null;
+  montantEngage?: number | null;
+  montantRecupere?: number | null;
+  observationsAdministratives?: string | null;
+  observationsFinancieres?: string | null;
+  dateCloture?: string | null;
+  motifCloture?: string | null;
+  createdBy?: string | null;
+  validatedBy?: string | null;
+  validatedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface CreateDossierRequest {
+  objet?: string;
+  nomDebiteur?: string;
+  compteActuel?: string;
+  ancienCompte?: string;
+  agence?: string;
+  chargeDossier?: string;
+  dateOuverture?: string;
+  montantEngage?: number | string;
+  montantRecupere?: number | string;
+  observationsAdministratives?: string;
+  observationsFinancieres?: string;
+}
+
+@Injectable({ providedIn: 'root' })
+export class ContentieuxService {
+  private url = '/api/contentieux/dossiers';
+
+  constructor(private http: HttpClient) {}
+
+  list(): Observable<DossierContentieux[]> {
+    return this.http.get<DossierContentieux[]>(this.url);
+  }
+
+  create(payload: CreateDossierRequest): Observable<DossierContentieux> {
+    return this.http.post<DossierContentieux>(this.url, payload);
+  }
+
+  update(id: number, payload: CreateDossierRequest): Observable<DossierContentieux> {
+    return this.http.patch<DossierContentieux>(`${this.url}/${id}`, payload);
+  }
+
+  validate(id: number): Observable<DossierContentieux> {
+    return this.http.patch<DossierContentieux>(`${this.url}/${id}/validate`, {});
+  }
+
+  assign(id: number, chargeDossier: string): Observable<DossierContentieux> {
+    return this.http.patch<DossierContentieux>(`${this.url}/${id}/assign`, { chargeDossier });
+  }
+
+  changeAccount(id: number, nouveauCompte: string): Observable<DossierContentieux> {
+    return this.http.patch<DossierContentieux>(`${this.url}/${id}/change-account`, { nouveauCompte });
+  }
+
+  close(id: number, payload: { dateCloture?: string; motifCloture?: string }): Observable<DossierContentieux> {
+    return this.http.patch<DossierContentieux>(`${this.url}/${id}/close`, payload);
+  }
+
+  reopen(id: number): Observable<DossierContentieux> {
+    return this.http.patch<DossierContentieux>(`${this.url}/${id}/reopen`, {});
+  }
+
+  remove(id: number): Observable<{ deleted: boolean }> {
+    return this.http.delete<{ deleted: boolean }>(`${this.url}/${id}`);
+  }
+}

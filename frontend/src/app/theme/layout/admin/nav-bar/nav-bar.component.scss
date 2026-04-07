@@ -1,0 +1,38 @@
+.navbar.pcoded-header {
+  background: var(--app-nav-bg) !important;
+  background-color: var(--app-nav-bg) !important;
+  color: var(--app-nav-text) !important;
+  border-bottom: 1px solid var(--app-nav-border);
+
+  .m-header {
+    background: var(--app-sidebar-bg) !important;
+    .mobile-menu {
+      span {
+        background-color: var(--app-nav-text) !important;
+        &:after,
+        &:before {
+          background-color: var(--app-nav-text) !important;
+        }
+      }
+    }
+  }
+
+  ::ng-deep {
+    .navbar-nav > li > a,
+    .navbar-nav > li > a i,
+    .navbar-nav > li > a span,
+    .navbar-nav > li > .dropdown > a,
+    .navbar-nav > li > .dropdown > a i,
+    .navbar-nav > li > .dropdown > a span,
+    .m-header a,
+    .m-header a i,
+    .m-header a span {
+      color: var(--app-nav-text) !important;
+    }
+  }
+}
+
+:host ::ng-deep .pcoded-header {
+  background: var(--app-nav-bg) !important;
+  background-color: var(--app-nav-bg) !important;
+}

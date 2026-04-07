@@ -1,0 +1,24 @@
+<ng-scrollbar style="height: calc(100vh - 56px)" visibility="hover">
+  <div class="navbar-content">
+    <div class="">
+      <div class="main-menu-header">
+        <img class="img-radius" [src]="profileImage" alt="User-Profile-Image">
+        <div class="user-details" (click)="isNavProfile = !isNavProfile">
+          <span>{{ auth.username() }}</span>
+          <div id="more-details">{{ auth.role()?.replace('ROLE_', '') }}<i class="fa m-l-5" [ngClass]="{'fa-chevron-up': isNavProfile, 'fa-chevron-down': !isNavProfile }"></i></div>
+        </div>
+      </div>
+    </div>
+    <ul class="nav pcoded-inner-navbar">
+      @for (item of navigations; track item) {
+        @if (item.type === 'group') {
+          <app-nav-group [item]="item" />
+        } @else if (item.type === 'collapse') {
+          <app-nav-collapse [item]="item" />
+        } @else if (item.type === 'item') {
+          <app-nav-item [item]="item" />
+        }
+      }
+    </ul>
+  </div>
+</ng-scrollbar>

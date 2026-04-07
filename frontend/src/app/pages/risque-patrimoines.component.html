@@ -1,0 +1,138 @@
+<app-card cardTitle="Risque - Patrimoines" [options]="false">
+  <div class="risque-shell">
+    <div class="risque-subtitle">Informations patrimoniales associées aux débiteurs et dossiers.</div>
+    <div *ngIf="banner" class="alert" [ngClass]="{
+      'alert-success': banner.kind === 'success',
+      'alert-info': banner.kind === 'info',
+      'alert-danger': banner.kind === 'danger'
+    }">
+      {{ banner.message }}
+    </div>
+
+    <div class="card risque-form-card">
+      <div class="risque-form-head">
+        <div class="risque-form-title">Formulaire de patrimoine</div>
+        <div class="risque-form-hint">Renseignez les informations du débiteur et l’inventaire patrimonial.</div>
+      </div>
+
+      <form class="risque-form-body" (ngSubmit)="save()" #f="ngForm">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label">Nom</label>
+            <input class="form-control" type="text" name="nom" [(ngModel)]="form.nom" placeholder="Ex: BEN SALEM" required>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Prénom</label>
+            <input class="form-control" type="text" name="prenom" [(ngModel)]="form.prenom" placeholder="Ex: Ahmed" required>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Date de naissance (optionnel)</label>
+            <input class="form-control" type="date" name="dateNaissance" [(ngModel)]="form.dateNaissance">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Numéro dossier</label>
+            <input class="form-control" type="text" name="numeroDossier" [(ngModel)]="form.numeroDossier" placeholder="Ex: DOS-2026-014" required>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Biens immobiliers (nombre)</label>
+            <input class="form-control" type="number" step="1" min="0" name="biensImmobiliers" [(ngModel)]="form.biensImmobiliers" placeholder="Ex: 2">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Comptes bancaires (nombre)</label>
+            <input class="form-control" type="number" step="1" min="0" name="comptesBancaires" [(ngModel)]="form.comptesBancaires" placeholder="Ex: 3">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Investissements / Actions (nombre)</label>
+            <input class="form-control" type="number" step="1" min="0" name="investissementsActions" [(ngModel)]="form.investissementsActions" placeholder="Ex: 1">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Crédits / Prêts (nombre)</label>
+            <input class="form-control" type="number" step="1" min="0" name="creditsPrets" [(ngModel)]="form.creditsPrets" placeholder="Ex: 2">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Autres dettes (nombre)</label>
+            <input class="form-control" type="number" step="1" min="0" name="autresDettes" [(ngModel)]="form.autresDettes" placeholder="Ex: 0">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Dettes fiscales ou pénalités (nombre)</label>
+            <input class="form-control" type="number" step="1" min="0" name="dettesFiscalesPenalites" [(ngModel)]="form.dettesFiscalesPenalites" placeholder="Ex: 1">
+          </div>
+        </div>
+
+        <div class="risque-form-actions">
+          <button *ngIf="editingId" type="button" class="btn btn-outline-secondary" (click)="cancelEdit(); f.resetForm()">Annuler</button>
+          <button type="button" class="btn btn-outline-secondary" (click)="reset(); f.resetForm()">Réinitialiser</button>
+          <button type="submit" class="btn btn-primary">{{ editingId ? 'Mettre à jour' : 'Enregistrer' }}</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card risque-table-card mt-3">
+      <div class="risque-table-head">
+        <div>
+          <div class="risque-table-title">Liste des patrimoines</div>
+          <div class="risque-table-hint">{{ filteredCount() }} enregistrement(s)</div>
+        </div>
+        <div class="risque-table-tools">
+          <div class="risque-search">
+            <i class="feather icon-search"></i>
+            <input class="form-control" type="text" [(ngModel)]="search" name="search" placeholder="Rechercher (nom, prénom, dossier…)">
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Prénom</th>
+              <th class="col-hide-lg">Date naissance</th>
+              <th>Num dossier</th>
+              <th class="col-hide-md">Biens immob.</th>
+              <th class="col-hide-md">Comptes</th>
+              <th class="col-hide-lg">Invest.</th>
+              <th class="col-hide-lg">Crédits</th>
+              <th class="col-hide-lg">Autres</th>
+              <th class="col-hide-lg">Fiscales</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of filteredPatrimoines()">
+              <td class="risque-cell-strong">{{ p.nom }}</td>
+              <td class="risque-cell-strong">{{ p.prenom }}</td>
+              <td class="risque-cell-muted col-hide-lg">{{ p.dateNaissance || '—' }}</td>
+              <td class="risque-mono">{{ p.numeroDossier }}</td>
+              <td class="col-hide-md risque-mono">{{ p.biensImmobiliers || '—' }}</td>
+              <td class="col-hide-md risque-mono">{{ p.comptesBancaires || '—' }}</td>
+              <td class="col-hide-lg risque-mono">{{ p.investissementsActions || '—' }}</td>
+              <td class="col-hide-lg risque-mono">{{ p.creditsPrets || '—' }}</td>
+              <td class="col-hide-lg risque-mono">{{ p.autresDettes || '—' }}</td>
+              <td class="col-hide-lg risque-mono">{{ p.dettesFiscalesPenalites || '—' }}</td>
+              <td class="text-end">
+                <div class="risque-actions-row">
+                  <button class="btn btn-sm btn-outline-secondary risque-action-btn" type="button" (click)="openEdit(p)">
+                    <i class="feather icon-edit-2"></i><span class="risque-action-text">Modifier</span>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger risque-action-btn" type="button" (click)="remove(p)">
+                    <i class="feather icon-trash-2"></i><span class="risque-action-text">Supprimer</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredPatrimoines().length === 0">
+              <td colspan="11">
+                <div class="risque-empty">Aucun patrimoine.</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</app-card>

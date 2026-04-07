@@ -1,0 +1,40 @@
+:root {
+  --app-bg: #f5f7fb;
+  --app-surface: #ffffff;
+  --app-surface-2: #fbfcfe;
+  --app-text: #0f172a;
+  --app-text-muted: #64748b;
+  --app-border: rgba(15, 23, 42, 0.10);
+  --app-border-strong: rgba(15, 23, 42, 0.16);
+
+  --app-primary: #006847;
+  --app-primary-600: #005a3e;
+  --app-accent: #1abc9c;
+
+  --app-nav-bg: #0b1220;
+  --app-sidebar-bg: #0b1220;
+  --app-nav-text: rgba(255, 255, 255, 0.92);
+  --app-nav-text-muted: rgba(255, 255, 255, 0.68);
+  --app-nav-border: rgba(255, 255, 255, 0.10);
+  --app-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --app-nav-active-bg: rgba(255, 255, 255, 0.12);
+
+  --app-radius-sm: 12px;
+  --app-radius: 16px;
+  --app-radius-lg: 18px;
+  --app-shadow: 0 14px 40px rgba(15, 23, 42, 0.10);
+  --app-shadow-sm: 0 8px 22px rgba(15, 23, 42, 0.08);
+
+  --app-ring: 0 0 0 4px rgba(0, 104, 71, 0.12);
+}
+
+:root {
+  --bs-body-bg: var(--app-bg);
+  --bs-body-color: var(--app-text);
+  --bs-border-color: var(--app-border);
+
+  --bs-primary: var(--app-primary);
+  --bs-primary-rgb: 0, 104, 71;
+  --bs-link-color: var(--app-primary);
+  --bs-link-hover-color: var(--app-primary-600);
+}

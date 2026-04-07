@@ -1,0 +1,72 @@
+<div class="row">
+  <div class="col-sm-12" *ngIf="loading">
+    <app-card [options]="false">
+      <div class="text-center p-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Chargement...</span>
+        </div>
+      </div>
+    </app-card>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="col-md-4">
+      <app-card cardTitle="Photo de Profil" [options]="false">
+        <div class="text-center">
+          <div class="profile-img-container mb-3">
+            <img [src]="profile.profileImage || 'assets/images/user/avatar-placeholder.jpg'" 
+                 alt="Profile" 
+                 class="img-radius img-fluid wid-150">
+          </div>
+          <div class="d-grid gap-2">
+            <label class="btn btn-outline-primary mb-2">
+              <i class="feather icon-upload m-r-5"></i> Modifier la photo
+              <input type="file" (change)="onImageChange($event)" hidden accept="image/*">
+            </label>
+            <button class="btn btn-outline-danger" *ngIf="profile.profileImage" (click)="removeImage()">
+              <i class="feather icon-trash-2 m-r-5"></i> Supprimer la photo
+            </button>
+          </div>
+          <p class="text-muted f-12 mt-3">Format accepté : JPG, PNG. Max 2Mo.</p>
+        </div>
+      </app-card>
+    </div>
+
+    <div class="col-md-8">
+      <app-card cardTitle="Informations Personnelles" [options]="false">
+        <form (ngSubmit)="saveProfile()">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Nom d'utilisateur</label>
+              <input type="text" class="form-control" [value]="profile.username" disabled>
+              <small class="text-muted">Le nom d'utilisateur ne peut pas être modifié.</small>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Rôle</label>
+              <input type="text" class="form-control" [value]="profile.role" disabled>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nom Complet</label>
+            <input type="text" class="form-control" [(ngModel)]="profile.fullName" name="fullName" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" [(ngModel)]="profile.email" name="email" required>
+          </div>
+
+          <hr class="my-4">
+
+          <div class="text-right">
+            <button type="submit" class="btn btn-primary" [disabled]="saving">
+              <i class="feather icon-save m-r-5"></i>
+              {{ saving ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+            </button>
+          </div>
+        </form>
+      </app-card>
+    </div>
+  </ng-container>
+</div>

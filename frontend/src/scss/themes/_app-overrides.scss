@@ -1,0 +1,358 @@
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+  letter-spacing: 0.1px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--app-text);
+  letter-spacing: -0.2px;
+}
+
+.text-muted {
+  color: var(--app-text-muted) !important;
+}
+
+.card {
+  border-radius: var(--app-radius-lg);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.card-header {
+  background: transparent;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.btn {
+  border-radius: var(--app-radius-sm);
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.btn-primary {
+  background: var(--app-primary);
+  border-color: var(--app-primary);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--app-primary-600);
+  border-color: var(--app-primary-600);
+}
+
+.btn-outline-secondary {
+  border-color: var(--app-border-strong);
+  color: var(--app-text);
+}
+
+.form-control,
+.form-select {
+  border-radius: var(--app-radius);
+  border: 1px solid var(--app-border);
+  padding: 0.65rem 0.85rem;
+  background: var(--app-surface);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: rgba(0, 104, 71, 0.5);
+  box-shadow: var(--app-ring);
+}
+
+.table {
+  --bs-table-bg: transparent;
+}
+
+.table thead th {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--app-text-muted);
+  border-top: 0;
+}
+
+.table tbody td {
+  vertical-align: middle;
+}
+
+.badge {
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.pcoded-navbar .pcoded-inner-navbar > li > a {
+  border-radius: 12px;
+}
+
+.pcoded-header,
+.pcoded-header[class*="header-"] {
+  background: var(--app-nav-bg) !important;
+  color: var(--app-nav-text) !important;
+  border-bottom: 1px solid var(--app-nav-border);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.pcoded-header .m-header,
+.pcoded-header[class*="header-"] .m-header {
+  background: var(--app-sidebar-bg) !important;
+  border-right: 1px solid var(--app-nav-border);
+}
+
+.pcoded-header .navbar-nav > li > a,
+.pcoded-header .navbar-nav > li > a i,
+.pcoded-header .navbar-nav > li > a span,
+.pcoded-header .dropdown-toggle,
+.pcoded-header .input-group .input-group-text {
+  color: var(--app-nav-text-muted) !important;
+}
+
+.pcoded-header .navbar-nav > li > a:hover,
+.pcoded-header .dropdown-toggle:hover {
+  color: var(--app-nav-text) !important;
+}
+
+.pcoded-header .mobile-menu span,
+.pcoded-header .mobile-menu span:before,
+.pcoded-header .mobile-menu span:after {
+  background-color: var(--app-nav-text-muted) !important;
+}
+
+.pcoded-header .dropdown-menu.profile-notification,
+.pcoded-header .dropdown-menu.notification {
+  background: #fff;
+  color: var(--app-text);
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  box-shadow: var(--app-shadow);
+}
+
+.pcoded-header .dropdown-menu.profile-notification .pro-section {
+  color: rgba(15, 23, 42, 0.55) !important;
+}
+
+.pcoded-header .dropdown-menu.profile-notification .dropdown-item {
+  color: #0f172a !important;
+}
+
+.pcoded-header .dropdown-menu.profile-notification .dropdown-item i {
+  color: #0f172a !important;
+}
+
+.pcoded-header .dropdown-menu.profile-notification .dropdown-item:hover,
+.pcoded-header .dropdown-menu.profile-notification li:hover > .dropdown-item {
+  background: rgba(11, 18, 32, 0.06) !important;
+  color: #0b1220 !important;
+}
+
+.pcoded-header .dropdown-menu.profile-notification .dropdown-item:hover i,
+.pcoded-header .dropdown-menu.profile-notification li:hover > .dropdown-item i {
+  color: #0b1220 !important;
+}
+
+.pcoded-navbar {
+  background: var(--app-sidebar-bg) !important;
+  border-right: 1px solid var(--app-nav-border);
+  color: var(--app-nav-text);
+}
+
+.pcoded-navbar .pcoded-inner-navbar > li > a,
+.pcoded-navbar .pcoded-submenu > li > a {
+  color: var(--app-nav-text-muted);
+}
+
+.pcoded-navbar .pcoded-inner-navbar > li > a i,
+.pcoded-navbar .pcoded-submenu > li > a i {
+  color: var(--app-nav-text-muted);
+}
+
+.pcoded-navbar .pcoded-inner-navbar > li > a:hover,
+.pcoded-navbar .pcoded-submenu > li > a:hover {
+  color: var(--app-nav-text);
+  background: var(--app-nav-hover-bg);
+}
+
+.pcoded-navbar .pcoded-inner-navbar > li.active > a,
+.pcoded-navbar .pcoded-inner-navbar > li.pcoded-trigger > a {
+  color: var(--app-nav-text);
+  background: var(--app-nav-active-bg);
+  box-shadow: inset 3px 0 0 var(--app-primary);
+}
+
+.pcoded-navbar .pcoded-submenu > li.active > a,
+.pcoded-navbar .pcoded-submenu > li.pcoded-trigger > a {
+  color: var(--app-nav-text);
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.pcoded-navbar .pcoded-submenu > li > a {
+  border-radius: 10px;
+}
+
+.pcoded-navbar .pcoded-submenu > li > a {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.pcoded-navbar .pcoded-submenu > li > a i {
+  color: rgba(255, 255, 255, 0.80) !important;
+}
+
+.pcoded-navbar .pcoded-submenu > li > a:hover {
+  color: #ffffff !important;
+}
+
+.pcoded-navbar li.nav-garanties > a.nav-link,
+.pcoded-navbar li.nav-garanties > a.nav-link .pcoded-mtext,
+.pcoded-navbar li.nav-garanties > a.nav-link .pcoded-micon i,
+.pcoded-navbar li.nav-garanties > a.nav-link:hover,
+.pcoded-navbar li.nav-garanties > a.nav-link:focus,
+.pcoded-navbar li.nav-garanties.pcoded-trigger > a.nav-link,
+.pcoded-navbar li.nav-garanties.active > a.nav-link {
+  color: #ffffff !important;
+}
+
+.pcoded-navbar a[href$="/risque/engagement"],
+.pcoded-navbar a[href$="risque/engagement"],
+.pcoded-navbar a[href$="/risque/patrimoines"],
+.pcoded-navbar a[href$="risque/patrimoines"],
+.pcoded-navbar a[href$="/risque/garanties"],
+.pcoded-navbar a[href$="risque/garanties"],
+.pcoded-navbar a[href$="/risque/garanties/nantissement"],
+.pcoded-navbar a[href$="risque/garanties/nantissement"],
+.pcoded-navbar a[href$="/risque/garanties/hypotheque"],
+.pcoded-navbar a[href$="risque/garanties/hypotheque"],
+.pcoded-navbar a[href$="/risque/garanties/cautions"],
+.pcoded-navbar a[href$="risque/garanties/cautions"],
+.pcoded-navbar a[href$="/risque/engagement"] i,
+.pcoded-navbar a[href$="risque/engagement"] i,
+.pcoded-navbar a[href$="/risque/patrimoines"] i,
+.pcoded-navbar a[href$="risque/patrimoines"] i,
+.pcoded-navbar a[href$="/risque/garanties"] i,
+.pcoded-navbar a[href$="risque/garanties"] i,
+.pcoded-navbar a[href$="/risque/garanties/nantissement"] i,
+.pcoded-navbar a[href$="risque/garanties/nantissement"] i,
+.pcoded-navbar a[href$="/risque/garanties/hypotheque"] i,
+.pcoded-navbar a[href$="risque/garanties/hypotheque"] i,
+.pcoded-navbar a[href$="/risque/garanties/cautions"] i,
+.pcoded-navbar a[href$="risque/garanties/cautions"] i {
+  color: #ffffff !important;
+}
+
+.pcoded-navbar a[href$="/risque/engagement"]:hover,
+.pcoded-navbar a[href$="risque/engagement"]:hover,
+.pcoded-navbar a[href$="/risque/patrimoines"]:hover,
+.pcoded-navbar a[href$="risque/patrimoines"]:hover,
+.pcoded-navbar a[href$="/risque/garanties"]:hover,
+.pcoded-navbar a[href$="risque/garanties"]:hover,
+.pcoded-navbar a[href$="/risque/garanties/nantissement"]:hover,
+.pcoded-navbar a[href$="risque/garanties/nantissement"]:hover,
+.pcoded-navbar a[href$="/risque/garanties/hypotheque"]:hover,
+.pcoded-navbar a[href$="risque/garanties/hypotheque"]:hover,
+.pcoded-navbar a[href$="/risque/garanties/cautions"]:hover,
+.pcoded-navbar a[href$="risque/garanties/cautions"]:hover,
+.pcoded-navbar a[href$="/risque/engagement"]:focus,
+.pcoded-navbar a[href$="risque/engagement"]:focus,
+.pcoded-navbar a[href$="/risque/patrimoines"]:focus,
+.pcoded-navbar a[href$="risque/patrimoines"]:focus,
+.pcoded-navbar a[href$="/risque/garanties"]:focus,
+.pcoded-navbar a[href$="risque/garanties"]:focus,
+.pcoded-navbar a[href$="/risque/garanties/nantissement"]:focus,
+.pcoded-navbar a[href$="risque/garanties/nantissement"]:focus,
+.pcoded-navbar a[href$="/risque/garanties/hypotheque"]:focus,
+.pcoded-navbar a[href$="risque/garanties/hypotheque"]:focus,
+.pcoded-navbar a[href$="/risque/garanties/cautions"]:focus,
+.pcoded-navbar a[href$="risque/garanties/cautions"]:focus,
+.pcoded-navbar a[href$="/risque/engagement"]:active,
+.pcoded-navbar a[href$="risque/engagement"]:active,
+.pcoded-navbar a[href$="/risque/patrimoines"]:active,
+.pcoded-navbar a[href$="risque/patrimoines"]:active,
+.pcoded-navbar a[href$="/risque/garanties"]:active,
+.pcoded-navbar a[href$="risque/garanties"]:active,
+.pcoded-navbar a[href$="/risque/garanties/nantissement"]:active,
+.pcoded-navbar a[href$="risque/garanties/nantissement"]:active,
+.pcoded-navbar a[href$="/risque/garanties/hypotheque"]:active,
+.pcoded-navbar a[href$="risque/garanties/hypotheque"]:active,
+.pcoded-navbar a[href$="/risque/garanties/cautions"]:active,
+.pcoded-navbar a[href$="risque/garanties/cautions"]:active,
+.pcoded-navbar li.active > a[href$="/risque/engagement"],
+.pcoded-navbar li.active > a[href$="risque/engagement"],
+.pcoded-navbar li.active > a[href$="/risque/patrimoines"],
+.pcoded-navbar li.active > a[href$="risque/patrimoines"],
+.pcoded-navbar li.active > a[href$="/risque/garanties"],
+.pcoded-navbar li.active > a[href$="risque/garanties"],
+.pcoded-navbar li.active > a[href$="/risque/garanties/nantissement"],
+.pcoded-navbar li.active > a[href$="risque/garanties/nantissement"],
+.pcoded-navbar li.active > a[href$="/risque/garanties/hypotheque"],
+.pcoded-navbar li.active > a[href$="risque/garanties/hypotheque"],
+.pcoded-navbar li.active > a[href$="/risque/garanties/cautions"],
+.pcoded-navbar li.active > a[href$="risque/garanties/cautions"] {
+  color: #ffffff !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.pcoded-navbar a[href$="/risque/engagement"]:hover i,
+.pcoded-navbar a[href$="risque/engagement"]:hover i,
+.pcoded-navbar a[href$="/risque/patrimoines"]:hover i,
+.pcoded-navbar a[href$="risque/patrimoines"]:hover i,
+.pcoded-navbar a[href$="/risque/garanties"]:hover i,
+.pcoded-navbar a[href$="risque/garanties"]:hover i,
+.pcoded-navbar a[href$="/risque/engagement"]:focus i,
+.pcoded-navbar a[href$="risque/engagement"]:focus i,
+.pcoded-navbar a[href$="/risque/patrimoines"]:focus i,
+.pcoded-navbar a[href$="risque/patrimoines"]:focus i,
+.pcoded-navbar a[href$="/risque/garanties"]:focus i,
+.pcoded-navbar a[href$="risque/garanties"]:focus i,
+.pcoded-navbar a[href$="/risque/engagement"]:active i,
+.pcoded-navbar a[href$="risque/engagement"]:active i,
+.pcoded-navbar a[href$="/risque/patrimoines"]:active i,
+.pcoded-navbar a[href$="risque/patrimoines"]:active i,
+.pcoded-navbar a[href$="/risque/garanties"]:active i,
+.pcoded-navbar a[href$="risque/garanties"]:active i,
+.pcoded-navbar a[href$="/risque/garanties/nantissement"]:hover i,
+.pcoded-navbar a[href$="risque/garanties/nantissement"]:hover i,
+.pcoded-navbar a[href$="/risque/garanties/hypotheque"]:hover i,
+.pcoded-navbar a[href$="risque/garanties/hypotheque"]:hover i,
+.pcoded-navbar a[href$="/risque/garanties/cautions"]:hover i,
+.pcoded-navbar a[href$="risque/garanties/cautions"]:hover i,
+.pcoded-navbar a[href$="/risque/garanties/nantissement"]:focus i,
+.pcoded-navbar a[href$="risque/garanties/nantissement"]:focus i,
+.pcoded-navbar a[href$="/risque/garanties/hypotheque"]:focus i,
+.pcoded-navbar a[href$="risque/garanties/hypotheque"]:focus i,
+.pcoded-navbar a[href$="/risque/garanties/cautions"]:focus i,
+.pcoded-navbar a[href$="risque/garanties/cautions"]:focus i,
+.pcoded-navbar a[href$="/risque/garanties/nantissement"]:active i,
+.pcoded-navbar a[href$="risque/garanties/nantissement"]:active i,
+.pcoded-navbar a[href$="/risque/garanties/hypotheque"]:active i,
+.pcoded-navbar a[href$="risque/garanties/hypotheque"]:active i,
+.pcoded-navbar a[href$="/risque/garanties/cautions"]:active i,
+.pcoded-navbar a[href$="risque/garanties/cautions"]:active i,
+.pcoded-navbar li.active > a[href$="/risque/engagement"] i,
+.pcoded-navbar li.active > a[href$="risque/engagement"] i,
+.pcoded-navbar li.active > a[href$="/risque/patrimoines"] i,
+.pcoded-navbar li.active > a[href$="risque/patrimoines"] i,
+.pcoded-navbar li.active > a[href$="/risque/garanties"] i,
+.pcoded-navbar li.active > a[href$="risque/garanties"] i,
+.pcoded-navbar li.active > a[href$="/risque/garanties/nantissement"] i,
+.pcoded-navbar li.active > a[href$="risque/garanties/nantissement"] i,
+.pcoded-navbar li.active > a[href$="/risque/garanties/hypotheque"] i,
+.pcoded-navbar li.active > a[href$="risque/garanties/hypotheque"] i,
+.pcoded-navbar li.active > a[href$="/risque/garanties/cautions"] i,
+.pcoded-navbar li.active > a[href$="risque/garanties/cautions"] i {
+  color: #ffffff !important;
+}
+
+@media (max-width: 991px) {
+  .card {
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+  }
+}

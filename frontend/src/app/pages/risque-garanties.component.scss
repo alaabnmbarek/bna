@@ -1,0 +1,258 @@
+.risque-shell {
+  padding: 8px 2px;
+}
+
+.risque-subtitle {
+  color: #7b8794;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.garanties-subnav {
+  background: #ffffff;
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.garanties-subnav-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.garanties-subnav-actions .btn {
+  border-radius: 12px;
+  font-weight: 900;
+}
+
+.garanties-subnav-select {
+  display: none;
+  border-radius: 12px;
+  font-weight: 800;
+  max-width: 260px;
+}
+
+.nantissements {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nant-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nant-tabs .btn {
+  border-radius: 12px;
+  font-weight: 900;
+}
+
+.nant-card {
+  background: #ffffff;
+  border: 1px solid var(--app-border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--app-shadow-sm);
+}
+
+.nant-head {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--app-border);
+  background: rgba(15, 23, 42, 0.02);
+}
+
+.nant-title {
+  color: var(--app-text);
+  font-weight: 1000;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+}
+
+.nant-hint {
+  margin-top: 4px;
+  color: var(--app-text-muted);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.nant-body {
+  padding: 18px;
+}
+
+.nant-body .form-label {
+  color: var(--app-text);
+  font-weight: 900;
+}
+
+.nant-input {
+  background: #ffffff;
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+.nant-input::placeholder {
+  color: var(--app-text-muted);
+}
+
+.nant-input:focus {
+  background: #ffffff;
+  border-color: rgba(0, 104, 71, 0.40);
+  box-shadow: var(--app-ring);
+  color: var(--app-text);
+}
+
+.nant-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.nant-table {
+  border-top: 1px solid var(--app-border);
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.nant-table-head {
+  padding: 0 18px 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nant-table-title {
+  font-weight: 1000;
+  font-size: 15px;
+  color: var(--app-text);
+}
+
+.nant-table-hint {
+  margin-top: 2px;
+  color: var(--app-text-muted);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.nant-table-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nant-search {
+  position: relative;
+  width: 360px;
+  max-width: 100%;
+}
+
+.nant-search i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--app-text-muted);
+  font-size: 16px;
+}
+
+.nant-search input {
+  padding-left: 36px;
+}
+
+.nant-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nant-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  font-weight: 900;
+}
+
+.nant-action-btn i {
+  font-size: 14px;
+}
+
+.nant-action-text {
+  display: inline;
+}
+
+.nant-empty {
+  padding: 14px 18px 18px;
+  font-weight: 800;
+  color: var(--app-text-muted);
+}
+
+.nant-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12.5px;
+}
+
+.nant-cell-strong {
+  font-weight: 900;
+  color: var(--app-text);
+}
+
+.col-hide-md {
+  display: table-cell;
+}
+
+.col-hide-lg {
+  display: table-cell;
+}
+
+@media (max-width: 991px) {
+  .col-hide-md {
+    display: none;
+  }
+}
+
+@media (max-width: 1199px) {
+  .col-hide-lg {
+    display: none;
+  }
+}
+
+@media (max-width: 575px) {
+  .garanties-subnav-actions {
+    display: none;
+  }
+  .garanties-subnav-select {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+  }
+  .nant-head {
+    padding: 14px;
+  }
+  .nant-body {
+    padding: 14px;
+  }
+  .nant-table-head {
+    padding: 0 14px 10px;
+  }
+  .nant-search {
+    width: 100%;
+  }
+  .nant-action-text {
+    display: none;
+  }
+}

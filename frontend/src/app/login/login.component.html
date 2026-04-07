@@ -1,0 +1,68 @@
+<div class="login-shell">
+  <div class="login-left">
+    <div class="login-left-inner">
+      <div class="login-brand">
+        <img class="login-logo" src="assets/images/logo.png" alt="BNA Bank">
+        <div class="login-brand-text">BNA BANK</div>
+      </div>
+
+      <h2 class="login-title">S'IDENTIFIER</h2>
+
+      <form class="login-form" (ngSubmit)="submit()">
+        <div class="form-group">
+          <label class="login-label" for="login-username">Identifiant</label>
+          <div class="login-input">
+            <input id="login-username" type="text" placeholder="Identifiant" [(ngModel)]="username" name="username" required>
+            <i class="feather icon-user"></i>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="login-label" for="login-password">Mot de passe</label>
+          <div class="login-input">
+            <input id="login-password" type="password" placeholder="Mot de passe" [(ngModel)]="password" name="password" required>
+            <i class="feather icon-eye"></i>
+          </div>
+        </div>
+
+        <div class="login-row">
+          <label class="login-remember">
+            <input type="checkbox" [(ngModel)]="remember" name="remember">
+            <span>Se souvenir de moi</span>
+          </label>
+          <a class="login-link" [routerLink]="['/reset-password']">Mot de passe oublié?</a>
+        </div>
+
+        <div class="login-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+        <button class="login-submit" type="submit" [disabled]="loading">
+          {{ loading ? 'Connexion…' : 'Se connecter' }}
+        </button>
+
+        <div class="login-bottom">
+          <span class="login-muted">Vous n'avez pas un compte ?</span>
+          <a class="login-link-strong" [routerLink]="['/register']">S'inscrire</a>
+        </div>
+      </form>
+
+      <div class="login-footer">BNA BANK 2026 ©</div>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-right-inner">
+      <div class="login-right-title">
+        <div>Gestion BNA</div>
+        <div>des Dossiers</div>
+        <div>Contentieux</div>
+      </div>
+
+      <div class="login-right-links">
+        <a href="javascript:">FAQ</a>
+        <a href="javascript:">LABEL SECURITY</a>
+        <a href="javascript:">LABEL LEGAL</a>
+        <a href="javascript:">Contact</a>
+      </div>
+    </div>
+  </div>
+</div>

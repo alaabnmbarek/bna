@@ -1,0 +1,9 @@
+<app-navigation class="pcoded-navbar" [ngClass]="{'navbar-collapsed' : navCollapsed, 'mob-open' : navCollapsedMob}" (NavCollapsedMob)="navMobClick()"></app-navigation>
+<app-nav-bar class="navbar pcoded-header navbar-expand-lg navbar-light" (NavCollapse)="this.navCollapsed = !this.navCollapsed;" (NavCollapsedMob)="navMobClick()"></app-nav-bar>
+<div class="pcoded-main-container">
+    <div class="pcoded-content">
+      <app-breadcrumb></app-breadcrumb>
+      <router-outlet></router-outlet>
+    </div>
+</div>
+<app-configuration></app-configuration>

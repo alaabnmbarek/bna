@@ -1,0 +1,44 @@
+version: '3.9'
+services:
+  db:
+    image: mysql:8.3
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-securedb}
+      MYSQL_USER: ${DB_USER:-secureuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-securepass}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-securedb}
+      DB_USER: ${DB_USER:-secureuser}
+      DB_PASSWORD: ${DB_PASSWORD:-securepass}
+      JWT_SECRET: ${JWT_SECRET:-ZmFrZV9zZWNyZXRfY2hhbmdldGhpcy10b2ludGVuZC1iYXNlNjQ=}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-900000}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4200}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:

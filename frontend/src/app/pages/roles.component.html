@@ -1,0 +1,116 @@
+<div class="admin-wrap">
+  <app-card [hidHeader]="true" [options]="false" cardClass="admin-shell">
+    <div class="admin-head">
+      <div>
+        <div class="admin-title">Gestion des Rôles</div>
+        <div class="admin-subtitle">Création des rôles et configuration des permissions.</div>
+      </div>
+      <div class="admin-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="loadRoles()" [disabled]="loading">
+          <i class="feather icon-refresh-cw me-2"></i>
+          Actualiser
+        </button>
+        <button class="btn btn-primary" type="button" (click)="toggleForm()">
+          <i class="feather icon-plus me-2"></i>
+          Nouveau rôle
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="banner" class="alert admin-banner" [ngClass]="{
+      'alert-success': banner.kind === 'success',
+      'alert-info': banner.kind === 'info',
+      'alert-danger': banner.kind === 'danger'
+    }">
+      {{ banner.message }}
+    </div>
+
+    <div class="admin-filters">
+      <div class="admin-search">
+        <i class="feather icon-search"></i>
+        <input class="form-control" [(ngModel)]="q" placeholder="Rechercher (nom, id…)" />
+      </div>
+    </div>
+
+    <div class="admin-table card">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Rôle</th>
+              <th>Permissions</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="loading">
+              <td colspan="4" class="text-center">Chargement...</td>
+            </tr>
+            <tr *ngFor="let role of filteredRoles()">
+              <td class="admin-mono">{{ role.id }}</td>
+              <td><span class="badge bg-primary-subtle text-primary">{{ role.name }}</span></td>
+              <td class="admin-cell-muted">
+                {{ role.permissions?.length || 0 }} permission(s)
+              </td>
+              <td class="text-end">
+                <div class="admin-actions-row">
+                  <button class="btn btn-sm btn-outline-secondary admin-action-btn" type="button" (click)="editRole(role)">
+                    <i class="feather icon-edit-2"></i><span class="admin-action-text">Modifier</span>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger admin-action-btn" type="button" (click)="deleteRole(role.id!)">
+                    <i class="feather icon-trash-2"></i><span class="admin-action-text">Supprimer</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="!loading && filteredRoles().length === 0">
+              <td colspan="4">
+                <div class="admin-empty">Aucun rôle configuré.</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </app-card>
+</div>
+
+<div *ngIf="showForm" class="admin-overlay" (click)="closeForm()">
+  <div class="admin-modal" (click)="$event.stopPropagation()">
+    <div class="admin-modal-head">
+      <div class="admin-modal-title">{{ isEditing ? 'Modifier rôle' : 'Nouveau rôle' }}</div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeForm()">Fermer</button>
+    </div>
+
+    <form class="admin-modal-body" (ngSubmit)="saveRole()">
+      <div class="row g-3">
+        <div class="col-12 col-lg-4">
+          <label class="form-label admin-label">Nom du rôle</label>
+          <input type="text" class="form-control admin-input" [(ngModel)]="newRole.name" name="name" placeholder="Ex: RESPONSABLE_FINANCIER" required>
+          <div class="admin-hint">Majuscules + underscores (ex: ROLE_NOM)</div>
+        </div>
+
+        <div class="col-12 col-lg-8">
+          <label class="form-label admin-label">Permissions</label>
+          <div class="admin-perms">
+            <label class="admin-perm" *ngFor="let perm of availablePermissions">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                [checked]="isPermissionSelected(perm)"
+                (change)="onPermissionChange(perm, $event)"
+              >
+              <span>{{ perm.replace('_', ' ') }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-modal-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeForm()">Annuler</button>
+        <button type="submit" class="btn btn-primary">{{ isEditing ? 'Mettre à jour' : 'Créer' }}</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,158 @@
+<div class="admin-wrap">
+  <app-card [hidHeader]="true" [options]="false" cardClass="admin-shell">
+    <div class="admin-head">
+      <div>
+        <div class="admin-title">Gestion des Utilisateurs</div>
+        <div class="admin-subtitle">Création, activation et attribution des rôles.</div>
+      </div>
+      <div class="admin-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="loadUsers()" [disabled]="loading">
+          <i class="feather icon-refresh-cw me-2"></i>
+          Actualiser
+        </button>
+        <button class="btn btn-primary" type="button" (click)="toggleForm()">
+          <i class="feather icon-user-plus me-2"></i>
+          Nouvel utilisateur
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="banner" class="alert admin-banner" [ngClass]="{
+      'alert-success': banner.kind === 'success',
+      'alert-info': banner.kind === 'info',
+      'alert-danger': banner.kind === 'danger'
+    }">
+      {{ banner.message }}
+    </div>
+
+    <div class="admin-filters">
+      <div class="admin-search">
+        <i class="feather icon-search"></i>
+        <input class="form-control" [(ngModel)]="q" placeholder="Rechercher (nom, username, email…)" />
+      </div>
+      <div class="admin-selects">
+        <select class="form-select" [(ngModel)]="filterRole">
+          <option value="">Rôle : Tous</option>
+          <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+        </select>
+        <select class="form-select" [(ngModel)]="filterEnabled">
+          <option value="">Statut : Tous</option>
+          <option value="true">Actif</option>
+          <option value="false">Désactivé</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="admin-table card">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Utilisateur</th>
+              <th class="col-hide-lg">Email</th>
+              <th>Rôle</th>
+              <th class="col-hide-md">Permissions</th>
+              <th>Statut</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="loading">
+              <td colspan="7" class="text-center">Chargement...</td>
+            </tr>
+            <tr *ngFor="let user of filteredUsers()">
+              <td class="admin-mono">{{ user.id }}</td>
+              <td>
+                <div class="admin-cell-strong">{{ user.fullName || user.username }}</div>
+                <div class="admin-cell-muted">{{ user.username }}</div>
+                <div class="admin-cell-muted col-hide-lg" *ngIf="user.phoneNumber">{{ user.phoneNumber }}</div>
+              </td>
+              <td class="col-hide-lg admin-cell-muted">{{ user.email || '—' }}</td>
+              <td><span class="badge bg-primary-subtle text-primary">{{ user.role }}</span></td>
+              <td class="col-hide-md admin-cell-muted">
+                {{ (user.permissions?.length || 0) }} permission(s)
+              </td>
+              <td>
+                <span class="badge" [ngClass]="user.enabled ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'">
+                  {{ user.enabled ? 'Actif' : 'Désactivé' }}
+                </span>
+              </td>
+              <td class="text-end">
+                <div class="admin-actions-row">
+                  <button class="btn btn-sm btn-outline-secondary admin-action-btn" type="button" (click)="editUser(user)">
+                    <i class="feather icon-edit-2"></i><span class="admin-action-text">Modifier</span>
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning admin-action-btn" type="button" (click)="toggleStatus(user)">
+                    <i class="feather" [ngClass]="user.enabled ? 'icon-slash' : 'icon-check'"></i><span class="admin-action-text">{{ user.enabled ? 'Désactiver' : 'Activer' }}</span>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger admin-action-btn" type="button" (click)="deleteUser(user.id)">
+                    <i class="feather icon-trash-2"></i><span class="admin-action-text">Supprimer</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="!loading && filteredUsers().length === 0">
+              <td colspan="7">
+                <div class="admin-empty">Aucun utilisateur.</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </app-card>
+</div>
+
+<div *ngIf="showForm" class="admin-overlay" (click)="closeForm()">
+  <div class="admin-modal" (click)="$event.stopPropagation()">
+    <div class="admin-modal-head">
+      <div class="admin-modal-title">{{ isEditing ? 'Modifier utilisateur' : 'Nouvel utilisateur' }}</div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeForm()">Fermer</button>
+    </div>
+
+    <form class="admin-modal-body" (ngSubmit)="saveUser()">
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Nom d'utilisateur</label>
+          <input type="text" class="form-control admin-input" [(ngModel)]="newUser.username" name="username" [disabled]="isEditing" required>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Mot de passe {{ isEditing ? '(optionnel)' : '' }}</label>
+          <input type="password" class="form-control admin-input" [(ngModel)]="newUser.password" name="password" [required]="!isEditing">
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Email</label>
+          <input type="email" class="form-control admin-input" [(ngModel)]="newUser.email" name="email">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Numéro de téléphone</label>
+          <input type="text" class="form-control admin-input" [(ngModel)]="newUser.phoneNumber" name="phoneNumber">
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Nom complet</label>
+          <input type="text" class="form-control admin-input" [(ngModel)]="newUser.fullName" name="fullName">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Rôle</label>
+              <select class="form-select admin-input" [ngModel]="newUser.role" (ngModelChange)="onRoleChange($event)" name="role" required>
+            <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+          </select>
+        </div>
+
+            <div class="col-12">
+              <div class="admin-perms-summary">
+                Permissions attribuées automatiquement : <span class="admin-perms-count">{{ newUser.permissions.length }}</span>
+              </div>
+            </div>
+      </div>
+
+      <div class="admin-modal-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeForm()">Annuler</button>
+        <button type="submit" class="btn btn-primary">{{ isEditing ? 'Mettre à jour' : 'Créer' }}</button>
+      </div>
+    </form>
+  </div>
+</div>

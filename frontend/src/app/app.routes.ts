@@ -1,0 +1,57 @@
+import { Routes } from '@angular/router';
+import { LoginComponent } from './login/login.component';
+import { RegisterComponent } from './register/register.component';
+import { ResetPasswordComponent } from './reset-password/reset-password.component';
+import { UserPageComponent } from './pages/user.component';
+import { AdminPageComponent } from './pages/admin.component';
+import { AuthGuard } from './auth/auth.guard';
+import { DashboardPageComponent } from './pages/dashboard.component';
+import { ContentieuxPageComponent } from './pages/contentieux.component';
+import { RisqueEngagementPageComponent } from './pages/risque-engagement.component';
+import { RisquePatrimoinesPageComponent } from './pages/risque-patrimoines.component';
+import { RisqueGarantiesCautionsPageComponent } from './pages/risque-garanties-cautions.component';
+import { RisqueGarantiesHypothequePageComponent } from './pages/risque-garanties-hypotheque.component';
+import { RisqueGarantiesNantissementPageComponent } from './pages/risque-garanties-nantissement.component';
+import { UsersPageComponent } from './pages/users.component';
+import { RolesPageComponent } from './pages/roles.component';
+import { PrestatairesPageComponent } from './pages/prestataires.component';
+import { PrestataireDetailPageComponent } from './pages/prestataire-detail.component';
+import { AdminComponent } from './theme/layout/admin/admin.component';
+import { GuestComponent } from './theme/layout/guest/guest.component';
+
+import { ChangePasswordComponent } from './pages/profile/change-password.component';
+
+export const routes: Routes = [
+  {
+    path: '',
+    component: GuestComponent,
+    children: [
+      { path: 'login', component: LoginComponent },
+      { path: 'register', component: RegisterComponent },
+      { path: 'reset-password', component: ResetPasswordComponent }
+    ]
+  },
+  {
+    path: '',
+    component: AdminComponent,
+    canActivate: [AuthGuard],
+    children: [
+      { path: 'admin', component: DashboardPageComponent, data: { roles: ['ROLE_ADMIN'] } },
+      { path: 'contentieux', component: ContentieuxPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
+      { path: 'risque/engagement', component: RisqueEngagementPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
+      { path: 'risque/patrimoines', component: RisquePatrimoinesPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
+      { path: 'risque/garanties', redirectTo: 'risque/garanties/nantissement', pathMatch: 'full' },
+      { path: 'risque/garanties/nantissement', component: RisqueGarantiesNantissementPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
+      { path: 'risque/garanties/hypotheque', component: RisqueGarantiesHypothequePageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
+      { path: 'risque/garanties/cautions', component: RisqueGarantiesCautionsPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
+      { path: 'user', component: UserPageComponent },
+      { path: 'profile/change-password', component: ChangePasswordComponent },
+      { path: 'users', component: UsersPageComponent, data: { roles: ['ROLE_ADMIN'] } },
+      { path: 'roles', component: RolesPageComponent, data: { roles: ['ROLE_ADMIN'] } },
+      { path: 'prestataires', component: PrestatairesPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
+      { path: 'prestataires/:id', component: PrestataireDetailPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
+      { path: '', redirectTo: 'admin', pathMatch: 'full' }
+    ]
+  },
+  { path: '**', redirectTo: 'admin' }
+];
