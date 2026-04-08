@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../auth/auth.service';
+import { ProfileService } from '../auth/profile.service';
 import { ContentieuxService, ContentieuxStatus, DossierContentieux } from '../contentieux/contentieux.service';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 
@@ -19,15 +20,32 @@ export class ContentieuxPageComponent implements OnInit {
   activeStatus: ContentieuxStatus | 'Tous' = 'Tous';
   search = '';
   loading = false;
+  profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
 
   agents = ['Non affecté', 'Chargé A', 'Chargé B', 'Chargé C'];
 
   banner: { kind: 'success' | 'info' | 'danger'; message: string } | null = null;
   private bannerTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private auth: AuthService, private contentieux: ContentieuxService) {}
+  constructor(
+    public auth: AuthService,
+    private contentieux: ContentieuxService,
+    private profileService: ProfileService
+  ) {}
 
   ngOnInit(): void {
+    this.profileService.profile$.subscribe(profile => {
+      if (profile && profile.profileImage) {
+        this.profileImage = profile.profileImage;
+      } else {
+        this.profileImage = 'assets/images/user/avatar-4.jpg';
+      }
+    });
+
+    if (this.auth.token()) {
+      this.profileService.getProfile().subscribe();
+    }
+
     this.load();
   }
 

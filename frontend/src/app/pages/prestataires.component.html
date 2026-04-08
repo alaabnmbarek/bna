@@ -5,15 +5,26 @@
         <div class="admin-title">Gestion des Prestataires</div>
         <div class="admin-subtitle">Répertoire des prestataires (huissiers, avocats, experts, notaires) liés aux dossiers contentieux.</div>
       </div>
-      <div class="admin-actions">
-        <button class="btn btn-outline-secondary" type="button" (click)="load()" [disabled]="loading">
-          <i class="feather icon-refresh-cw me-2"></i>
-          Actualiser
-        </button>
-        <button class="btn btn-primary" type="button" (click)="toggleForm()">
-          <i class="feather icon-plus me-2"></i>
-          Nouveau prestataire
-        </button>
+      <div class="app-head-right">
+        <div class="app-user-chip">
+          <img class="app-user-avatar" [src]="profileImage" alt="User avatar">
+          <div class="app-user-meta">
+            <div class="app-user-name">{{ auth.username() }}</div>
+            <div class="app-user-role">{{ auth.role()?.replace('ROLE_', '') }}</div>
+          </div>
+          <i class="fa fa-chevron-down app-user-caret" aria-hidden="true"></i>
+        </div>
+
+        <div class="admin-actions">
+          <button class="btn btn-outline-secondary" type="button" (click)="load()" [disabled]="loading">
+            <i class="feather icon-refresh-cw me-2"></i>
+            Actualiser
+          </button>
+          <button class="btn btn-primary" type="button" (click)="toggleForm()">
+            <i class="feather icon-plus me-2"></i>
+            Nouveau prestataire
+          </button>
+        </div>
       </div>
     </div>
 

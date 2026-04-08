@@ -1,1 +1,89 @@
-// This file is intentionally left empty to allow customers to add custom CSS if needed.
+:host {
+  display: block;
+}
+
+.bna-sidebar-content {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 12px 12px;
+  gap: 12px;
+}
+
+.bna-sidebar-brand {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 10px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.bna-sidebar-brand-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.bna-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 6px;
+  border-radius: 14px;
+  width: 100%;
+}
+
+.bna-brand-icon {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.bna-brand-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+}
+
+.bna-brand-bna {
+  color: var(--app-primary);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.bna-brand-bank {
+  color: #6b6b6b;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.bna-sidebar-menu {
+  flex: 1 1 auto;
+}
+
+:host-context(.navbar-collapsed) .bna-sidebar-content {
+  padding: 12px 8px;
+}
+
+:host-context(.navbar-collapsed) .bna-sidebar-brand {
+  padding: 10px 8px;
+}
+
+:host-context(.navbar-collapsed) .bna-brand {
+  padding: 0;
+  justify-content: center;
+}
+
+:host-context(.navbar-collapsed) .bna-brand-text {
+  display: none;
+}

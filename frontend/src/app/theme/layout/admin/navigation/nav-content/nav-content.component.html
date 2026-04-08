@@ -1,15 +1,23 @@
 <ng-scrollbar style="height: calc(100vh - 56px)" visibility="hover">
-  <div class="navbar-content">
-    <div class="">
-      <div class="main-menu-header">
-        <img class="img-radius" [src]="profileImage" alt="User-Profile-Image">
-        <div class="user-details" (click)="isNavProfile = !isNavProfile">
-          <span>{{ auth.username() }}</span>
-          <div id="more-details">{{ auth.role()?.replace('ROLE_', '') }}<i class="fa m-l-5" [ngClass]="{'fa-chevron-up': isNavProfile, 'fa-chevron-down': !isNavProfile }"></i></div>
-        </div>
-      </div>
+  <div class="navbar-content bna-sidebar-content">
+    <div class="bna-sidebar-brand">
+      <a class="bna-sidebar-brand-link" [routerLink]="['/admin']">
+        <span class="bna-brand">
+          <span class="bna-brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 40 40" width="40" height="40" focusable="false" aria-hidden="true">
+              <rect x="6" y="6" width="28" height="28" rx="9" fill="#006847"></rect>
+              <path fill="#ffffff" fill-rule="evenodd" d="M16 13.5c0-1.93 1.57-3.5 3.5-3.5H28c1.93 0 3.5 1.57 3.5 3.5v4.2c0 1.93-1.57 3.5-3.5 3.5h-5.8c-.66 0-1.2.54-1.2 1.2v.6c0 1.93-1.57 3.5-3.5 3.5H12c-1.93 0-3.5-1.57-3.5-3.5v-4.2c0-1.93 1.57-3.5 3.5-3.5h5.8c.66 0 1.2-.54 1.2-1.2v-.6Z"></path>
+            </svg>
+          </span>
+          <span class="bna-brand-text">
+            <span class="bna-brand-bna">BNA</span>
+            <span class="bna-brand-bank">BANK</span>
+          </span>
+        </span>
+      </a>
     </div>
-    <ul class="nav pcoded-inner-navbar">
+
+    <ul class="nav pcoded-inner-navbar bna-sidebar-menu">
       @for (item of navigations; track item) {
         @if (item.type === 'group') {
           <app-nav-group [item]="item" />

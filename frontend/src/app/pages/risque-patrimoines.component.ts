@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../theme/shared/components/card/card.component';
+import { AuthService } from '../auth/auth.service';
+import { ProfileService } from '../auth/profile.service';
 
 @Component({
   selector: 'app-risque-patrimoines',
@@ -12,6 +14,7 @@ import { CardComponent } from '../theme/shared/components/card/card.component';
 })
 export class RisquePatrimoinesPageComponent implements OnInit {
   private readonly storageKey = 'pfe.risque.patrimoines.v1';
+  profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
 
   banner: { kind: 'success' | 'info' | 'danger'; message: string } | null = null;
   private bannerTimer: ReturnType<typeof setTimeout> | null = null;
@@ -47,7 +50,24 @@ export class RisquePatrimoinesPageComponent implements OnInit {
     createdAt: string;
   }> = [];
 
+  constructor(
+    public auth: AuthService,
+    private profileService: ProfileService
+  ) {}
+
   ngOnInit(): void {
+    this.profileService.profile$.subscribe(profile => {
+      if (profile && profile.profileImage) {
+        this.profileImage = profile.profileImage;
+      } else {
+        this.profileImage = 'assets/images/user/avatar-4.jpg';
+      }
+    });
+
+    if (this.auth.token()) {
+      this.profileService.getProfile().subscribe();
+    }
+
     this.patrimoines = this.storageRead(this.storageKey, []);
   }
 

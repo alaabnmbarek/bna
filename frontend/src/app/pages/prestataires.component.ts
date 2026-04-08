@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { Prestataire, PrestataireType, PrestatairesService } from '../prestataires/prestataires.service';
+import { AuthService } from '../auth/auth.service';
+import { ProfileService } from '../auth/profile.service';
 
 @Component({
   selector: 'app-prestataires-page',
@@ -18,6 +20,7 @@ export class PrestatairesPageComponent implements OnInit {
   showForm = false;
   isEditing = false;
   editingId: number | null = null;
+  profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
 
   q = '';
   type: PrestataireType | '' = '';
@@ -39,10 +42,24 @@ export class PrestatairesPageComponent implements OnInit {
 
   constructor(
     private service: PrestatairesService,
-    private router: Router
+    private router: Router,
+    public auth: AuthService,
+    private profileService: ProfileService
   ) {}
 
   ngOnInit(): void {
+    this.profileService.profile$.subscribe(profile => {
+      if (profile && profile.profileImage) {
+        this.profileImage = profile.profileImage;
+      } else {
+        this.profileImage = 'assets/images/user/avatar-4.jpg';
+      }
+    });
+
+    if (this.auth.token()) {
+      this.profileService.getProfile().subscribe();
+    }
+
     this.load();
   }
 

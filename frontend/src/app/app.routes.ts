@@ -20,6 +20,7 @@ import { AdminComponent } from './theme/layout/admin/admin.component';
 import { GuestComponent } from './theme/layout/guest/guest.component';
 
 import { ChangePasswordComponent } from './pages/profile/change-password.component';
+import { RoleLandingPageComponent } from './pages/admin.component';
 
 export const routes: Routes = [
   {
@@ -50,8 +51,8 @@ export const routes: Routes = [
       { path: 'roles', component: RolesPageComponent, data: { roles: ['ROLE_ADMIN'] } },
       { path: 'prestataires', component: PrestatairesPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
       { path: 'prestataires/:id', component: PrestataireDetailPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
-      { path: '', redirectTo: 'admin', pathMatch: 'full' }
+      { path: '', component: RoleLandingPageComponent }
     ]
   },
-  { path: '**', redirectTo: 'admin' }
+  { path: '**', redirectTo: '' }
 ];

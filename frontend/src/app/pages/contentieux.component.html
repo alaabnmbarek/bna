@@ -8,11 +8,22 @@
             Suivi complet du cycle de vie : ouverture, affectation, changement de compte, suppression, clôture et réouverture.
           </div>
         </div>
-        <div class="contentieux-header-actions">
-          <button class="btn btn-primary" type="button" (click)="openNew()">
-            <i class="feather icon-plus me-2"></i>
-            {{ canValidate() ? 'Nouveau dossier' : 'Demander ouverture' }}
-          </button>
+        <div class="app-head-right">
+          <div class="app-user-chip">
+            <img class="app-user-avatar" [src]="profileImage" alt="User avatar">
+            <div class="app-user-meta">
+              <div class="app-user-name">{{ auth.username() }}</div>
+              <div class="app-user-role">{{ auth.role()?.replace('ROLE_', '') }}</div>
+            </div>
+            <i class="fa fa-chevron-down app-user-caret" aria-hidden="true"></i>
+          </div>
+
+          <div class="contentieux-header-actions">
+            <button class="btn btn-primary" type="button" (click)="openNew()">
+              <i class="feather icon-plus me-2"></i>
+              {{ canValidate() ? 'Nouveau dossier' : 'Demander ouverture' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

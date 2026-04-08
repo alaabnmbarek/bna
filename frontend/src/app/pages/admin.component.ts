@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-admin-page',
@@ -131,5 +132,28 @@ export class AdminPageComponent implements OnInit {
 
   isLast(review: any) {
     return this.reviews.indexOf(review) === this.reviews.length - 1;
+  }
+}
+
+@Component({
+  selector: 'app-role-landing-page',
+  standalone: true,
+  template: ``
+})
+export class RoleLandingPageComponent implements OnInit {
+  private router = inject(Router);
+  private auth = inject(AuthService);
+
+  ngOnInit(): void {
+    const role = this.auth.role();
+    if (role === 'ROLE_ADMIN') {
+      this.router.navigate(['/admin'], { replaceUrl: true });
+      return;
+    }
+    if (role === 'ROLE_CHARGE_DOSSIER' || role === 'ROLE_RESPONSABLE_CONTENTIEUX') {
+      this.router.navigate(['/contentieux'], { replaceUrl: true });
+      return;
+    }
+    this.router.navigate(['/user'], { replaceUrl: true });
   }
 }

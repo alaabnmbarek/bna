@@ -29,6 +29,8 @@ export class LoginComponent {
         const role = this.auth.role();
         if (role === 'ROLE_ADMIN') {
           this.router.navigate(['/admin']);
+        } else if (role === 'ROLE_CHARGE_DOSSIER' || role === 'ROLE_RESPONSABLE_CONTENTIEUX') {
+          this.router.navigate(['/contentieux']);
         } else {
           this.router.navigate(['/user']);
         }

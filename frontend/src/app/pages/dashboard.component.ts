@@ -5,6 +5,8 @@ import { RouterModule } from '@angular/router';
 import { NgApexchartsModule, ApexOptions } from 'ng-apexcharts';
 import { ContentieuxService, ContentieuxStatus, DossierContentieux } from '../contentieux/contentieux.service';
 import { CardComponent } from '../theme/shared/components/card/card.component';
+import { AuthService } from '../auth/auth.service';
+import { ProfileService } from '../auth/profile.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,6 +20,7 @@ export class DashboardPageComponent implements OnInit {
   dossiers: DossierContentieux[] = [];
   loading = false;
   search = '';
+  profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
 
   banner: { kind: 'success' | 'info' | 'danger'; message: string } | null = null;
   private bannerTimer: ReturnType<typeof setTimeout> | null = null;
@@ -25,9 +28,25 @@ export class DashboardPageComponent implements OnInit {
   statusDonutOptions!: Partial<ApexOptions>;
   amountsBarOptions!: Partial<ApexOptions>;
 
-  constructor(private contentieux: ContentieuxService) {}
+  constructor(
+    private contentieux: ContentieuxService,
+    public auth: AuthService,
+    private profileService: ProfileService
+  ) {}
 
   ngOnInit(): void {
+    this.profileService.profile$.subscribe(profile => {
+      if (profile && profile.profileImage) {
+        this.profileImage = profile.profileImage;
+      } else {
+        this.profileImage = 'assets/images/user/avatar-4.jpg';
+      }
+    });
+
+    if (this.auth.token()) {
+      this.profileService.getProfile().subscribe();
+    }
+
     this.load();
   }
 

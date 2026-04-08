@@ -5,15 +5,26 @@
         <div class="dash-title">Tableau de bord Admin</div>
         <div class="dash-subtitle">Vue synthétique des dossiers contentieux et indicateurs de suivi.</div>
       </div>
-      <div class="dash-actions">
-        <button class="btn btn-outline-secondary" type="button" (click)="load()" [disabled]="loading">
-          <i class="feather icon-refresh-cw me-2"></i>
-          Actualiser
-        </button>
-        <a class="btn btn-primary" [routerLink]="['/contentieux']">
-          <i class="feather icon-folder me-2"></i>
-          Gestion Dossier Contentieux
-        </a>
+      <div class="app-head-right">
+        <div class="app-user-chip">
+          <img class="app-user-avatar" [src]="profileImage" alt="User avatar">
+          <div class="app-user-meta">
+            <div class="app-user-name">{{ auth.username() }}</div>
+            <div class="app-user-role">{{ auth.role()?.replace('ROLE_', '') }}</div>
+          </div>
+          <i class="fa fa-chevron-down app-user-caret" aria-hidden="true"></i>
+        </div>
+
+        <div class="dash-actions">
+          <button class="btn btn-outline-secondary" type="button" (click)="load()" [disabled]="loading">
+            <i class="feather icon-refresh-cw me-2"></i>
+            Actualiser
+          </button>
+          <a class="btn btn-primary" [routerLink]="['/contentieux']">
+            <i class="feather icon-folder me-2"></i>
+            Gestion Dossier Contentieux
+          </a>
+        </div>
       </div>
     </div>
 

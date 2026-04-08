@@ -160,9 +160,16 @@ h6 {
 }
 
 .pcoded-navbar {
-  background: var(--app-sidebar-bg) !important;
+  background: linear-gradient(180deg, #004c3a 0%, #006847 22%, #0b1220 100%) !important;
   border-right: 1px solid var(--app-nav-border);
   color: var(--app-nav-text);
+}
+
+.pcoded-navbar .navbar-wrapper,
+.pcoded-navbar .navbar-content,
+.pcoded-navbar .scroll-div.navbar-content,
+.pcoded-navbar .header-logo {
+  background: transparent !important;
 }
 
 .pcoded-navbar .pcoded-inner-navbar > li > a,
@@ -349,6 +356,211 @@ h6 {
 .pcoded-navbar li.active > a[href$="/risque/garanties/cautions"] i,
 .pcoded-navbar li.active > a[href$="risque/garanties/cautions"] i {
   color: #ffffff !important;
+}
+
+.pcoded-navbar.bna-sidebar,
+.pcoded-navbar.bna-sidebar.navbar-collapsed,
+.pcoded-navbar.bna-sidebar.mob-open {
+  --app-sidebar-bg: transparent;
+  --app-nav-text: rgba(255, 255, 255, 0.92);
+  --app-nav-text-muted: rgba(255, 255, 255, 0.78);
+  --app-nav-border: rgba(255, 255, 255, 0.10);
+  --app-nav-hover-bg: rgba(255, 255, 255, 0.10);
+  --app-nav-active-bg: rgba(255, 255, 255, 0.14);
+  color: var(--app-nav-text);
+}
+
+.pcoded-navbar.bna-sidebar .navbar-wrapper,
+.pcoded-navbar.bna-sidebar .navbar-content,
+.pcoded-navbar.bna-sidebar .scroll-div.navbar-content,
+.pcoded-navbar.bna-sidebar .header-logo {
+  background: transparent !important;
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li > a,
+.pcoded-navbar.bna-sidebar .pcoded-submenu > li > a {
+  color: var(--app-nav-text) !important;
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li > a .pcoded-mtext,
+.pcoded-navbar.bna-sidebar .pcoded-submenu > li > a .pcoded-mtext {
+  color: inherit !important;
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-menu-caption > label {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-menu-caption:after {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li.disabled > a {
+  opacity: 0.55;
+  color: var(--app-nav-text-muted) !important;
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li.disabled > a i,
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li.disabled > a .pcoded-mtext {
+  color: var(--app-nav-text-muted) !important;
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li > a i,
+.pcoded-navbar.bna-sidebar .pcoded-submenu > li > a i {
+  color: var(--app-nav-text) !important;
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li > a {
+  margin: 2px 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-submenu > li > a {
+  margin: 2px 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: transparent !important;
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li > a:hover,
+.pcoded-navbar.bna-sidebar .pcoded-submenu > li > a:hover {
+  color: var(--app-nav-text) !important;
+  background: var(--app-nav-hover-bg) !important;
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li.active > a,
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li.pcoded-trigger > a {
+  color: var(--app-primary) !important;
+  background: var(--app-nav-active-bg) !important;
+  box-shadow: inset 3px 0 0 var(--app-primary);
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li.active > a i,
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li.pcoded-trigger > a i {
+  color: var(--app-primary) !important;
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li > a .pcoded-micon {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  margin-right: 12px;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li.active > a .pcoded-micon,
+.pcoded-navbar.bna-sidebar .pcoded-inner-navbar > li.pcoded-trigger > a .pcoded-micon {
+  background: rgba(0, 104, 71, 0.32);
+}
+
+.pcoded-navbar.bna-sidebar a[href*="risque/"],
+.pcoded-navbar.bna-sidebar a[href*="risque/"] i {
+  color: var(--app-nav-text) !important;
+}
+
+.pcoded-navbar.bna-sidebar a[href*="risque/"]:hover,
+.pcoded-navbar.bna-sidebar a[href*="risque/"]:hover i,
+.pcoded-navbar.bna-sidebar a[href*="risque/"]:focus,
+.pcoded-navbar.bna-sidebar a[href*="risque/"]:focus i {
+  color: var(--app-nav-text) !important;
+}
+
+.pcoded-navbar.bna-sidebar li.active > a[href*="risque/"],
+.pcoded-navbar.bna-sidebar li.active > a[href*="risque/"] i {
+  color: var(--app-primary) !important;
+  background: var(--app-nav-active-bg) !important;
+  box-shadow: inset 3px 0 0 var(--app-primary) !important;
+}
+
+.app-head-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.app-page-topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.app-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--app-border);
+  background: #ffffff;
+  box-shadow: var(--app-shadow-sm);
+  min-width: 260px;
+}
+
+.app-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.app-user-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+  flex: 1 1 auto;
+}
+
+.app-user-name {
+  font-weight: 1000;
+  font-size: 14px;
+  color: var(--app-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.app-user-role {
+  margin-top: 2px;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  color: var(--app-text-muted);
+  text-transform: uppercase;
+}
+
+.app-user-caret {
+  color: var(--app-text-muted);
+  font-size: 14px;
+  margin-left: 6px;
+}
+
+@media (max-width: 575px) {
+  .app-head-right {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .app-page-topbar {
+    justify-content: stretch;
+  }
+
+  .app-user-chip {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .app-user-name {
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 991px) {

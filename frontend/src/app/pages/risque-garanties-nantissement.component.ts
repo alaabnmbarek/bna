@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../theme/shared/components/card/card.component';
+import { AuthService } from '../auth/auth.service';
+import { ProfileService } from '../auth/profile.service';
 
 @Component({
   selector: 'app-risque-garanties-nantissement',
@@ -13,6 +15,7 @@ import { CardComponent } from '../theme/shared/components/card/card.component';
 export class RisqueGarantiesNantissementPageComponent implements OnInit {
   private readonly keyFonds = 'pfe.risque.garanties.nantissementsFonds.v1';
   private readonly keyVehicule = 'pfe.risque.garanties.nantissementsVehicule.v1';
+  profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
 
   activeType: 'fonds' | 'vehicule' = 'fonds';
 
@@ -91,7 +94,24 @@ export class RisqueGarantiesNantissementPageComponent implements OnInit {
     nomCaution: string;
   }> = [];
 
+  constructor(
+    public auth: AuthService,
+    private profileService: ProfileService
+  ) {}
+
   ngOnInit(): void {
+    this.profileService.profile$.subscribe(profile => {
+      if (profile && profile.profileImage) {
+        this.profileImage = profile.profileImage;
+      } else {
+        this.profileImage = 'assets/images/user/avatar-4.jpg';
+      }
+    });
+
+    if (this.auth.token()) {
+      this.profileService.getProfile().subscribe();
+    }
+
     this.nantissementsFonds = this.storageRead(this.keyFonds, []);
     this.nantissementsVehicule = this.storageRead(this.keyVehicule, []);
   }
@@ -334,4 +354,3 @@ export class RisqueGarantiesNantissementPageComponent implements OnInit {
     }, 2500);
   }
 }
-

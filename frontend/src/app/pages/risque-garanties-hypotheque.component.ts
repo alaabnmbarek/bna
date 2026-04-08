@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../theme/shared/components/card/card.component';
+import { AuthService } from '../auth/auth.service';
+import { ProfileService } from '../auth/profile.service';
 
 @Component({
   selector: 'app-risque-garanties-hypotheque',
@@ -12,6 +14,7 @@ import { CardComponent } from '../theme/shared/components/card/card.component';
 })
 export class RisqueGarantiesHypothequePageComponent implements OnInit {
   private readonly keyHypotheque = 'pfe.risque.garanties.hypotheques.v1';
+  profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
 
   banner: { kind: 'success' | 'info' | 'danger'; message: string } | null = null;
   private bannerTimer: ReturnType<typeof setTimeout> | null = null;
@@ -61,7 +64,24 @@ export class RisqueGarantiesHypothequePageComponent implements OnInit {
     pariPassu2: '' | 'OUI' | 'NON';
   }> = [];
 
+  constructor(
+    public auth: AuthService,
+    private profileService: ProfileService
+  ) {}
+
   ngOnInit(): void {
+    this.profileService.profile$.subscribe(profile => {
+      if (profile && profile.profileImage) {
+        this.profileImage = profile.profileImage;
+      } else {
+        this.profileImage = 'assets/images/user/avatar-4.jpg';
+      }
+    });
+
+    if (this.auth.token()) {
+      this.profileService.getProfile().subscribe();
+    }
+
     this.hypotheques = this.storageRead(this.keyHypotheque, []);
   }
 
@@ -215,4 +235,3 @@ export class RisqueGarantiesHypothequePageComponent implements OnInit {
     }, 2500);
   }
 }
-

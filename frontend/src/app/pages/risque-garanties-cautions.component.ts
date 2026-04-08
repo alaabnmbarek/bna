@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../theme/shared/components/card/card.component';
+import { AuthService } from '../auth/auth.service';
+import { ProfileService } from '../auth/profile.service';
 
 @Component({
   selector: 'app-risque-garanties-cautions',
@@ -12,6 +14,7 @@ import { CardComponent } from '../theme/shared/components/card/card.component';
 })
 export class RisqueGarantiesCautionsPageComponent implements OnInit {
   private readonly keyCautions = 'pfe.risque.garanties.cautions.v1';
+  profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
 
   banner: { kind: 'success' | 'info' | 'danger'; message: string } | null = null;
   private bannerTimer: ReturnType<typeof setTimeout> | null = null;
@@ -45,7 +48,24 @@ export class RisqueGarantiesCautionsPageComponent implements OnInit {
     numeroDocument: string;
   }> = [];
 
+  constructor(
+    public auth: AuthService,
+    private profileService: ProfileService
+  ) {}
+
   ngOnInit(): void {
+    this.profileService.profile$.subscribe(profile => {
+      if (profile && profile.profileImage) {
+        this.profileImage = profile.profileImage;
+      } else {
+        this.profileImage = 'assets/images/user/avatar-4.jpg';
+      }
+    });
+
+    if (this.auth.token()) {
+      this.profileService.getProfile().subscribe();
+    }
+
     this.cautions = this.storageRead(this.keyCautions, []);
   }
 
@@ -195,4 +215,3 @@ export class RisqueGarantiesCautionsPageComponent implements OnInit {
     }, 2500);
   }
 }
-

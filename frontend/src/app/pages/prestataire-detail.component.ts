@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { Mission, MissionStatus, Prestataire, PrestatairesService } from '../prestataires/prestataires.service';
+import { AuthService } from '../auth/auth.service';
+import { ProfileService } from '../auth/profile.service';
 
 @Component({
   selector: 'app-prestataire-detail-page',
@@ -16,6 +18,7 @@ export class PrestataireDetailPageComponent implements OnInit {
   missions: Mission[] = [];
   loading = false;
   prestataireId!: number;
+  profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
 
   missionForm: Partial<Mission> = {
     titre: '',
@@ -30,10 +33,24 @@ export class PrestataireDetailPageComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private service: PrestatairesService
+    private service: PrestatairesService,
+    public auth: AuthService,
+    private profileService: ProfileService
   ) {}
 
   ngOnInit(): void {
+    this.profileService.profile$.subscribe(profile => {
+      if (profile && profile.profileImage) {
+        this.profileImage = profile.profileImage;
+      } else {
+        this.profileImage = 'assets/images/user/avatar-4.jpg';
+      }
+    });
+
+    if (this.auth.token()) {
+      this.profileService.getProfile().subscribe();
+    }
+
     this.prestataireId = Number(this.route.snapshot.paramMap.get('id'));
     if (!this.prestataireId) {
       this.router.navigate(['/prestataires']);
@@ -111,4 +128,3 @@ export class PrestataireDetailPageComponent implements OnInit {
     this.router.navigate(['/prestataires']);
   }
 }
-
