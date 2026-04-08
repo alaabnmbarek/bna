@@ -200,17 +200,16 @@
                 <input class="form-control contentieux-input" [(ngModel)]="form.compteActuel" name="compteActuel" placeholder="000123456789">
               </div>
               <div class="col-12 col-md-4">
-                <label class="form-label contentieux-label">Ancien compte</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.ancienCompte" name="ancienCompte" placeholder="Ancien numéro">
-              </div>
-              <div class="col-12 col-md-4">
                 <label class="form-label contentieux-label">Agence</label>
                 <input class="form-control contentieux-input" [(ngModel)]="form.agence" name="agence" placeholder="Agence BNA Tunis">
               </div>
 
               <div class="col-12 col-md-6">
                 <label class="form-label contentieux-label">Chargé de dossier</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.chargeDossier" name="chargeDossier" placeholder="Non affecté">
+                <select class="form-select contentieux-input" [(ngModel)]="form.chargeDossier" name="chargeDossier">
+                  <option value="" disabled>Non affecté</option>
+                  <option *ngFor="let a of chargeOptions" [value]="a.label">{{ a.label }}</option>
+                </select>
               </div>
               <div class="col-12 col-md-6">
                 <label class="form-label contentieux-label">Date d’ouverture</label>
@@ -343,6 +342,407 @@
             </div>
           </div>
         </div>
+      }
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showRisqueDialog" class="contentieux-overlay" (click)="closeRisqueDialog()">
+  <div class="contentieux-modal risque-modal" (click)="$event.stopPropagation()">
+    <div class="contentieux-modal-head">
+      <div class="risque-head">
+        <div class="contentieux-modal-title">Données risque — {{ selected?.reference }}</div>
+        <div class="risque-head-meta">
+          @if (risqueStep === 'select') { <span class="risque-pill">Étape 1/2</span> }
+          @else { <span class="risque-pill">Étape 2/2</span> }
+        </div>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeRisqueDialog()">Fermer</button>
+    </div>
+
+    <div class="contentieux-modal-body">
+      @if (risqueStep === 'select') {
+        <div class="risque-intro">
+          <div class="risque-intro-title">Que voulez-vous gérer pour ce dossier ?</div>
+          <div class="risque-intro-sub">Sélectionnez les sections à ajouter ou modifier, puis confirmez.</div>
+        </div>
+
+        <div class="risque-grid">
+          <label class="risque-option" [class.risque-option-selected]="risqueSelection.engagements">
+            <input type="checkbox" class="risque-checkbox" [(ngModel)]="risqueSelection.engagements" name="risqueEngagements">
+            <div class="risque-option-main">
+              <div class="risque-option-title"><i class="feather icon-trending-up"></i> Engagements</div>
+              <div class="risque-option-desc">Engagements liés au dossier</div>
+            </div>
+          </label>
+
+          <label class="risque-option" [class.risque-option-selected]="risqueSelection.patrimoines">
+            <input type="checkbox" class="risque-checkbox" [(ngModel)]="risqueSelection.patrimoines" name="risquePatrimoines">
+            <div class="risque-option-main">
+              <div class="risque-option-title"><i class="feather icon-briefcase"></i> Patrimoines</div>
+              <div class="risque-option-desc">Situation patrimoniale</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="risque-section">
+          <div class="risque-section-title">Garanties</div>
+          <div class="risque-grid risque-grid-3">
+            <label class="risque-option" [class.risque-option-selected]="risqueSelection.hypotheques">
+              <input type="checkbox" class="risque-checkbox" [(ngModel)]="risqueSelection.hypotheques" name="risqueHypotheques">
+              <div class="risque-option-main">
+                <div class="risque-option-title"><i class="feather icon-home"></i> Hypothèques</div>
+                <div class="risque-option-desc">Garanties immobilières</div>
+              </div>
+            </label>
+
+            <label class="risque-option" [class.risque-option-selected]="risqueSelection.nantissements">
+              <input type="checkbox" class="risque-checkbox" [(ngModel)]="risqueSelection.nantissements" name="risqueNantissements">
+              <div class="risque-option-main">
+                <div class="risque-option-title"><i class="feather icon-layers"></i> Nantissements</div>
+                <div class="risque-option-desc">Fonds / véhicule</div>
+              </div>
+            </label>
+
+            <label class="risque-option" [class.risque-option-selected]="risqueSelection.cautions">
+              <input type="checkbox" class="risque-checkbox" [(ngModel)]="risqueSelection.cautions" name="risqueCautions">
+              <div class="risque-option-main">
+                <div class="risque-option-title"><i class="feather icon-shield"></i> Cautions</div>
+                <div class="risque-option-desc">Garanties personnelles</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="risque-actions">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeRisqueDialog()">Ignorer</button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="continueRisque()"
+            [disabled]="!(risqueSelection.engagements || risqueSelection.patrimoines || risqueSelection.hypotheques || risqueSelection.nantissements || risqueSelection.cautions)"
+          >
+            Continuer
+          </button>
+        </div>
+      } @else {
+        @if (risqueLoading) {
+          <div class="risque-loading">
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+            Chargement...
+          </div>
+        }
+
+        @if (!risqueLoading) {
+          @if (risqueSelection.engagements) {
+            <div class="mb-4">
+              <div class="fw-bold mb-2">Engagements</div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-md-4">
+                  <label class="form-label contentieux-label">N° compte</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newEngagement.numeroCompte" name="newEngNumeroCompte">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label contentieux-label">Titre créance</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newEngagement.titreCreance" name="newEngTitreCreance">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label contentieux-label">Num risque</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newEngagement.numRisque" name="newEngNumRisque">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label contentieux-label">Date contrat</label>
+                  <input class="form-control contentieux-input" type="date" [(ngModel)]="newEngagement.dateContrat" name="newEngDateContrat">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label contentieux-label">Intérêt</label>
+                  <select class="form-select contentieux-input" [(ngModel)]="newEngagement.interetType" name="newEngInteretType">
+                    <option value="">—</option>
+                    <option value="IC">IC</option>
+                    <option value="IR">IR</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label contentieux-label">Taux</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newEngagement.taux" name="newEngTaux">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label contentieux-label">Échéance</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newEngagement.echeance" name="newEngEcheance">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label contentieux-label">Montant restant</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newEngagement.montantRestant" name="newEngMontantRestant">
+                </div>
+                <div class="col-12 col-md-8 d-flex align-items-end">
+                  <button class="btn btn-outline-primary" type="button" (click)="addEngagement()">Ajouter</button>
+                </div>
+              </div>
+
+              <div class="table-responsive card">
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th>N° compte</th>
+                      <th>Titre</th>
+                      <th>Num risque</th>
+                      <th class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="engagementItems.length === 0">
+                      <td colspan="4">Aucun engagement.</td>
+                    </tr>
+                    <tr *ngFor="let e of engagementItems">
+                      <td><input class="form-control form-control-sm" [(ngModel)]="e.payload.numeroCompte" [name]="'e_numeroCompte_'+e.id"></td>
+                      <td><input class="form-control form-control-sm" [(ngModel)]="e.payload.titreCreance" [name]="'e_titreCreance_'+e.id"></td>
+                      <td><input class="form-control form-control-sm" [(ngModel)]="e.payload.numRisque" [name]="'e_numRisque_'+e.id"></td>
+                      <td class="text-end">
+                        <button class="btn btn-sm btn-outline-secondary me-2" type="button" (click)="saveEngagement(e)" [disabled]="e._saving">Enregistrer</button>
+                        <button class="btn btn-sm btn-outline-danger" type="button" (click)="removeEngagement(e)" [disabled]="e._deleting">Supprimer</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+
+          @if (risqueSelection.patrimoines) {
+            <div class="mb-4">
+              <div class="fw-bold mb-2">Patrimoines</div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-md-4">
+                  <label class="form-label contentieux-label">Nom</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newPatrimoine.nom" name="newPatNom">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label contentieux-label">Prénom</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newPatrimoine.prenom" name="newPatPrenom">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label contentieux-label">Date naissance</label>
+                  <input class="form-control contentieux-input" type="date" [(ngModel)]="newPatrimoine.dateNaissance" name="newPatDateNaissance">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label contentieux-label">Biens immobiliers</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newPatrimoine.biensImmobiliers" name="newPatBiens">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label contentieux-label">Comptes bancaires</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newPatrimoine.comptesBancaires" name="newPatComptes">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label contentieux-label">Investissements / Actions</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newPatrimoine.investissementsActions" name="newPatInv">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label contentieux-label">Crédits / Prêts</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newPatrimoine.creditsPrets" name="newPatCredits">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label contentieux-label">Autres dettes</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newPatrimoine.autresDettes" name="newPatAutres">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label contentieux-label">Dettes fiscales / pénalités</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newPatrimoine.dettesFiscalesPenalites" name="newPatFisc">
+                </div>
+                <div class="col-12">
+                  <button class="btn btn-outline-primary" type="button" (click)="addPatrimoine()">Ajouter</button>
+                </div>
+              </div>
+
+              <div class="table-responsive card">
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th>Nom</th>
+                      <th>Prénom</th>
+                      <th>Numéro dossier</th>
+                      <th class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="patrimoineItems.length === 0">
+                      <td colspan="4">Aucun patrimoine.</td>
+                    </tr>
+                    <tr *ngFor="let p of patrimoineItems">
+                      <td><input class="form-control form-control-sm" [(ngModel)]="p.payload.nom" [name]="'p_nom_'+p.id"></td>
+                      <td><input class="form-control form-control-sm" [(ngModel)]="p.payload.prenom" [name]="'p_prenom_'+p.id"></td>
+                      <td><input class="form-control form-control-sm" [(ngModel)]="p.payload.numeroDossier" [name]="'p_num_'+p.id"></td>
+                      <td class="text-end">
+                        <button class="btn btn-sm btn-outline-secondary me-2" type="button" (click)="savePatrimoine(p)" [disabled]="p._saving">Enregistrer</button>
+                        <button class="btn btn-sm btn-outline-danger" type="button" (click)="removePatrimoine(p)" [disabled]="p._deleting">Supprimer</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+
+          @if (risqueSelection.hypotheques) {
+            <div class="mb-4">
+              <div class="fw-bold mb-2">Garanties — Hypothèques</div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-md-3">
+                  <label class="form-label contentieux-label">Dossier</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newHypotheque.dossier" name="newHypDossier">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label contentieux-label">N° compte</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newHypotheque.numeroCompte" name="newHypCompte">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label contentieux-label">Montant</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newHypotheque.montant" name="newHypMontant">
+                </div>
+                <div class="col-12 col-md-3 d-flex align-items-end">
+                  <button class="btn btn-outline-primary w-100" type="button" (click)="addGarantie('GARANTIE_HYPOTHEQUE')">Ajouter</button>
+                </div>
+              </div>
+
+              <div class="table-responsive card">
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th>N° compte</th>
+                      <th>Montant</th>
+                      <th>Détails (JSON)</th>
+                      <th class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="hypothequeItems.length === 0">
+                      <td colspan="4">Aucune hypothèque.</td>
+                    </tr>
+                    <tr *ngFor="let h of hypothequeItems">
+                      <td><input class="form-control form-control-sm" [(ngModel)]="h.payload.numeroCompte" [name]="'h_compte_'+h.id"></td>
+                      <td><input class="form-control form-control-sm" [(ngModel)]="h.payload.montant" [name]="'h_montant_'+h.id"></td>
+                      <td style="min-width: 340px">
+                        <textarea class="form-control form-control-sm" rows="4" [(ngModel)]="h._json" [name]="'h_json_'+h.id"></textarea>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-sm btn-outline-secondary me-2" type="button" (click)="saveGarantie('GARANTIE_HYPOTHEQUE', h)" [disabled]="h._saving">Enregistrer</button>
+                        <button class="btn btn-sm btn-outline-danger" type="button" (click)="removeGarantie('GARANTIE_HYPOTHEQUE', h)" [disabled]="h._deleting">Supprimer</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+
+          @if (risqueSelection.nantissements) {
+            <div class="mb-4">
+              <div class="fw-bold mb-2">Garanties — Nantissements</div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-md-3">
+                  <label class="form-label contentieux-label">Dossier</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newNantissement.dossier" name="newNanDossier">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label contentieux-label">N° compte</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newNantissement.numeroCompte" name="newNanCompte">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label contentieux-label">Montant</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newNantissement.montant" name="newNanMontant">
+                </div>
+                <div class="col-12 col-md-3 d-flex align-items-end">
+                  <button class="btn btn-outline-primary w-100" type="button" (click)="addGarantie('GARANTIE_NANTISSEMENT')">Ajouter</button>
+                </div>
+              </div>
+
+              <div class="table-responsive card">
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th>N° compte</th>
+                      <th>Montant</th>
+                      <th>Détails (JSON)</th>
+                      <th class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="nantissementItems.length === 0">
+                      <td colspan="4">Aucun nantissement.</td>
+                    </tr>
+                    <tr *ngFor="let n of nantissementItems">
+                      <td><input class="form-control form-control-sm" [(ngModel)]="n.payload.numeroCompte" [name]="'n_compte_'+n.id"></td>
+                      <td><input class="form-control form-control-sm" [(ngModel)]="n.payload.montant" [name]="'n_montant_'+n.id"></td>
+                      <td style="min-width: 340px">
+                        <textarea class="form-control form-control-sm" rows="4" [(ngModel)]="n._json" [name]="'n_json_'+n.id"></textarea>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-sm btn-outline-secondary me-2" type="button" (click)="saveGarantie('GARANTIE_NANTISSEMENT', n)" [disabled]="n._saving">Enregistrer</button>
+                        <button class="btn btn-sm btn-outline-danger" type="button" (click)="removeGarantie('GARANTIE_NANTISSEMENT', n)" [disabled]="n._deleting">Supprimer</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+
+          @if (risqueSelection.cautions) {
+            <div class="mb-4">
+              <div class="fw-bold mb-2">Garanties — Cautions</div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-md-4">
+                  <label class="form-label contentieux-label">N° Dossier</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newCaution.numeroDossier" name="newCauDossier">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label contentieux-label">N° compte</label>
+                  <input class="form-control contentieux-input" [(ngModel)]="newCaution.numeroCompte" name="newCauCompte">
+                </div>
+                <div class="col-12 col-md-4 d-flex align-items-end">
+                  <button class="btn btn-outline-primary w-100" type="button" (click)="addGarantie('GARANTIE_CAUTION')">Ajouter</button>
+                </div>
+              </div>
+
+              <div class="table-responsive card">
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th>N° compte</th>
+                      <th>Montant limite</th>
+                      <th>Détails (JSON)</th>
+                      <th class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="cautionItems.length === 0">
+                      <td colspan="4">Aucune caution.</td>
+                    </tr>
+                    <tr *ngFor="let c of cautionItems">
+                      <td><input class="form-control form-control-sm" [(ngModel)]="c.payload.numeroCompte" [name]="'c_compte_'+c.id"></td>
+                      <td><input class="form-control form-control-sm" [(ngModel)]="c.payload.montantLimite" [name]="'c_montant_'+c.id"></td>
+                      <td style="min-width: 340px">
+                        <textarea class="form-control form-control-sm" rows="4" [(ngModel)]="c._json" [name]="'c_json_'+c.id"></textarea>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-sm btn-outline-secondary me-2" type="button" (click)="saveGarantie('GARANTIE_CAUTION', c)" [disabled]="c._saving">Enregistrer</button>
+                        <button class="btn btn-sm btn-outline-danger" type="button" (click)="removeGarantie('GARANTIE_CAUTION', c)" [disabled]="c._deleting">Supprimer</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+
+          <div class="contentieux-actions">
+            <button type="button" class="btn btn-primary" (click)="closeRisqueDialog()">Terminer</button>
+          </div>
+        }
       }
     </div>
   </div>

@@ -71,6 +71,12 @@ public class PrestataireService {
     private void apply(PrestataireDto dto, PrestataireEntity entity) {
         if (dto.getType() != null) entity.setType(dto.getType());
         if (dto.getNom() != null) entity.setNom(dto.getNom());
+        entity.setPrenom(dto.getPrenom());
+        entity.setCabinet(dto.getCabinet());
+        entity.setNumeroCompte(dto.getNumeroCompte());
+        entity.setMatriculeFiscale(dto.getMatriculeFiscale());
+        entity.setNatureJuridique(dto.getNatureJuridique());
+        entity.setPttNomBanque(dto.getPttNomBanque());
         entity.setEmail(dto.getEmail());
         entity.setTelephone(dto.getTelephone());
         entity.setAdresse(dto.getAdresse());
@@ -85,6 +91,12 @@ public class PrestataireService {
         dto.setId(entity.getId());
         dto.setType(entity.getType());
         dto.setNom(entity.getNom());
+        dto.setPrenom(entity.getPrenom());
+        dto.setCabinet(entity.getCabinet());
+        dto.setNumeroCompte(entity.getNumeroCompte());
+        dto.setMatriculeFiscale(entity.getMatriculeFiscale());
+        dto.setNatureJuridique(entity.getNatureJuridique());
+        dto.setPttNomBanque(entity.getPttNomBanque());
         dto.setEmail(entity.getEmail());
         dto.setTelephone(entity.getTelephone());
         dto.setAdresse(entity.getAdresse());

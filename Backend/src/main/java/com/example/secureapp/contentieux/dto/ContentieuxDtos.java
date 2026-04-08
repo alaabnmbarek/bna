@@ -17,6 +17,8 @@ public class ContentieuxDtos {
             LocalDate dateOuverture,
             BigDecimal montantEngage,
             BigDecimal montantRecupere,
+            BigDecimal montantHonoraires,
+            BigDecimal fraisAdministratifs,
             String observationsAdministratives,
             String observationsFinancieres
     ) {}
@@ -38,6 +40,8 @@ public class ContentieuxDtos {
             LocalDate dateOuverture,
             BigDecimal montantEngage,
             BigDecimal montantRecupere,
+            BigDecimal montantHonoraires,
+            BigDecimal fraisAdministratifs,
             String observationsAdministratives,
             String observationsFinancieres,
             LocalDate dateCloture,
@@ -49,4 +53,3 @@ public class ContentieuxDtos {
             LocalDateTime updatedAt
     ) {}
 }
-

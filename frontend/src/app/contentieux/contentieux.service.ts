@@ -17,6 +17,8 @@ export interface DossierContentieux {
   dateOuverture?: string | null;
   montantEngage?: number | null;
   montantRecupere?: number | null;
+  montantHonoraires?: number | null;
+  fraisAdministratifs?: number | null;
   observationsAdministratives?: string | null;
   observationsFinancieres?: string | null;
   dateCloture?: string | null;
@@ -42,6 +44,13 @@ export interface CreateDossierRequest {
   observationsFinancieres?: string;
 }
 
+export interface ChargeDossierOption {
+  id: number;
+  username: string;
+  fullName: string | null;
+  label: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContentieuxService {
   private url = '/api/contentieux/dossiers';
@@ -50,6 +59,10 @@ export class ContentieuxService {
 
   list(): Observable<DossierContentieux[]> {
     return this.http.get<DossierContentieux[]>(this.url);
+  }
+
+  listChargesDossiers(): Observable<ChargeDossierOption[]> {
+    return this.http.get<ChargeDossierOption[]>(`${this.url}/charges-dossiers`);
   }
 
   create(payload: CreateDossierRequest): Observable<DossierContentieux> {

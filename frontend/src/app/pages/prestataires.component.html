@@ -135,50 +135,168 @@
             <option *ngFor="let t of types" [value]="t">{{ t }}</option>
           </select>
         </div>
-        <div class="col-12 col-md-8">
-          <label class="form-label admin-label">Nom</label>
-          <input class="form-control admin-input" [(ngModel)]="form.nom" name="nom" required>
-        </div>
+        <ng-container *ngIf="form.type === 'AVOCAT'; else nonAvocatFields">
+          <div class="col-12 col-md-4">
+            <label class="form-label admin-label">Nom</label>
+            <input class="form-control admin-input" [(ngModel)]="form.nom" name="nom" required>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label admin-label">Prénom</label>
+            <input class="form-control admin-input" [(ngModel)]="form.prenom" name="prenom" required>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label admin-label">Cabinet</label>
+            <input class="form-control admin-input" [(ngModel)]="form.cabinet" name="cabinet">
+          </div>
 
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">Email</label>
-          <input class="form-control admin-input" [(ngModel)]="form.email" name="email" type="email">
-        </div>
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">Téléphone</label>
-          <input class="form-control admin-input" [(ngModel)]="form.telephone" name="telephone">
-        </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label admin-label">Numéro de compte</label>
+            <input class="form-control admin-input" [(ngModel)]="form.numeroCompte" name="numeroCompte">
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label admin-label">Matricule fiscale</label>
+            <input class="form-control admin-input" [(ngModel)]="form.matriculeFiscale" name="matriculeFiscale">
+          </div>
 
-        <div class="col-12">
-          <label class="form-label admin-label">Adresse</label>
-          <input class="form-control admin-input" [(ngModel)]="form.adresse" name="adresse">
-        </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label admin-label">Email</label>
+            <input class="form-control admin-input" [(ngModel)]="form.email" name="email" type="email">
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label admin-label">Téléphone</label>
+            <input class="form-control admin-input" [(ngModel)]="form.telephone" name="telephone">
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label admin-label">Nature juridique</label>
+            <select class="form-select admin-input" [(ngModel)]="form.natureJuridique" name="natureJuridique">
+              <option [ngValue]="null">—</option>
+              <option value="PERSONNE_PHYSIQUE">Personne physique</option>
+              <option value="PERSONNE_MORALE">Personne morale</option>
+            </select>
+          </div>
 
-        <div class="col-12 col-md-4">
-          <label class="form-label admin-label">Actif</label>
-          <select class="form-select admin-input" [(ngModel)]="form.actif" name="actif">
-            <option [ngValue]="true">Oui</option>
-            <option [ngValue]="false">Non</option>
-          </select>
-        </div>
-        <div class="col-12 col-md-8">
-          <label class="form-label admin-label">Spécialités</label>
-          <input class="form-control admin-input" [(ngModel)]="form.specialites" name="specialites" placeholder="Ex: Recouvrement, Contentieux…">
-        </div>
+          <div class="col-12 col-md-8">
+            <label class="form-label admin-label">PTT / Nom banque</label>
+            <input class="form-control admin-input" [(ngModel)]="form.pttNomBanque" name="pttNomBanque">
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label admin-label">Spécialités</label>
+            <input class="form-control admin-input" [(ngModel)]="form.specialites" name="specialites" placeholder="Ex: Recouvrement, Contentieux…">
+          </div>
+          <div class="col-12 col-md-4 d-flex align-items-end">
+            <button type="button" class="btn btn-outline-primary w-100" (click)="openHonorairesModal()">
+              Note d’Honoraire
+            </button>
+          </div>
+        </ng-container>
+        <ng-template #nonAvocatFields>
+          <div class="col-12 col-md-8">
+            <label class="form-label admin-label">Nom</label>
+            <input class="form-control admin-input" [(ngModel)]="form.nom" name="nom" required>
+          </div>
 
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">Tarifs</label>
-          <input class="form-control admin-input" [(ngModel)]="form.tarifs" name="tarifs" placeholder="Ex: 120 DT/heure ou forfait…">
-        </div>
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">Disponibilités</label>
-          <input class="form-control admin-input" [(ngModel)]="form.disponibilites" name="disponibilites" placeholder="Ex: Lun-Ven 9h-17h">
-        </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label admin-label">Email</label>
+            <input class="form-control admin-input" [(ngModel)]="form.email" name="email" type="email">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label admin-label">Téléphone</label>
+            <input class="form-control admin-input" [(ngModel)]="form.telephone" name="telephone">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label admin-label">Adresse</label>
+            <input class="form-control admin-input" [(ngModel)]="form.adresse" name="adresse">
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label admin-label">Actif</label>
+            <select class="form-select admin-input" [(ngModel)]="form.actif" name="actif">
+              <option [ngValue]="true">Oui</option>
+              <option [ngValue]="false">Non</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-8">
+            <label class="form-label admin-label">Spécialités</label>
+            <input class="form-control admin-input" [(ngModel)]="form.specialites" name="specialites" placeholder="Ex: Recouvrement, Contentieux…">
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label admin-label">Tarifs</label>
+            <input class="form-control admin-input" [(ngModel)]="form.tarifs" name="tarifs" placeholder="Ex: 120 DT/heure ou forfait…">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label admin-label">Disponibilités</label>
+            <input class="form-control admin-input" [(ngModel)]="form.disponibilites" name="disponibilites" placeholder="Ex: Lun-Ven 9h-17h">
+          </div>
+        </ng-template>
       </div>
 
       <div class="admin-modal-actions">
         <button type="button" class="btn btn-outline-secondary" (click)="closeForm()">Annuler</button>
         <button type="submit" class="btn btn-primary">{{ isEditing ? 'Mettre à jour' : 'Créer' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div *ngIf="showHonorairesModalState" class="admin-overlay" (click)="closeHonorairesModal()">
+  <div class="admin-modal hon-modal" (click)="$event.stopPropagation()">
+    <div class="admin-modal-head">
+      <div class="admin-modal-title">Note d’Honoraire</div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeHonorairesModal()">Fermer</button>
+    </div>
+
+    <form class="admin-modal-body" (ngSubmit)="saveHonoraires()">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label admin-label">Dossier</label>
+          <select class="form-select admin-input" [(ngModel)]="honorairesForm.dossierId" name="dossierId" (change)="onDossierChange()" required>
+            <option [ngValue]="null">Sélectionner un dossier…</option>
+            <option *ngFor="let d of dossiers" [ngValue]="d.id">{{ dossierLabel(d) }}</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Référence dossier</label>
+          <input class="form-control admin-input" [value]="honorairesForm.reference || ''" readonly>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Agence</label>
+          <input class="form-control admin-input" [value]="honorairesForm.agence || ''" readonly>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Numéro de compte</label>
+          <input class="form-control admin-input" [value]="honorairesForm.compteActuel || ''" readonly>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Montant total engagé</label>
+          <input class="form-control admin-input" [value]="formatMoney(honorairesForm.montantEngage)" readonly>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Montant des honoraires</label>
+          <input class="form-control admin-input" type="number" step="0.001" [(ngModel)]="honorairesForm.montantHonoraires" name="montantHonoraires" (input)="recalcHonoraires()">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">Frais administratifs</label>
+          <input class="form-control admin-input" type="number" step="0.001" [(ngModel)]="honorairesForm.fraisAdministratifs" name="fraisAdministratifs" (input)="recalcHonoraires()">
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">TVA (19%)</label>
+          <input class="form-control admin-input" [value]="formatMoney(honorairesForm.tva)" readonly>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label admin-label">TOTAL À PAYER</label>
+          <input class="form-control admin-input" [value]="formatMoney(honorairesForm.total)" readonly>
+        </div>
+      </div>
+
+      <div class="admin-modal-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeHonorairesModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary" [disabled]="honorairesSaving">{{ honorairesSaving ? 'Enregistrement…' : 'Enregistrer' }}</button>
       </div>
     </form>
   </div>

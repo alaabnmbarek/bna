@@ -4,11 +4,18 @@ import { Observable } from 'rxjs';
 
 export type PrestataireType = 'HUISSIER' | 'AVOCAT' | 'EXPERT' | 'NOTAIRE';
 export type MissionStatus = 'ASSIGNEE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE';
+export type NatureJuridique = 'PERSONNE_PHYSIQUE' | 'PERSONNE_MORALE';
 
 export interface Prestataire {
   id: number;
   type: PrestataireType;
   nom: string;
+  prenom?: string;
+  cabinet?: string;
+  numeroCompte?: string;
+  matriculeFiscale?: string;
+  natureJuridique?: NatureJuridique | null;
+  pttNomBanque?: string;
   email?: string;
   telephone?: string;
   adresse?: string;
@@ -36,6 +43,28 @@ export interface Mission {
   notePerformance?: number | null;
   commentairePerformance?: string;
   cout?: number | null;
+  createdAt?: string;
+}
+
+export interface CreateNoteHonoraireRequest {
+  dossierId: number;
+  montantHonoraires: number;
+  fraisAdministratifs: number;
+}
+
+export interface NoteHonoraire {
+  id: number;
+  prestataireId: number;
+  dossierId: number;
+  dossierReference?: string | null;
+  dossierObjet?: string | null;
+  compteActuel?: string | null;
+  agence?: string | null;
+  montantEngage?: number | null;
+  montantHonoraires: number;
+  fraisAdministratifs: number;
+  tva: number;
+  total: number;
   createdAt?: string;
 }
 
@@ -81,5 +110,8 @@ export class PrestatairesService {
   updateMission(missionId: number, payload: Partial<Mission>): Observable<Mission> {
     return this.http.patch<Mission>(`${this.missionsUrl}/${missionId}`, payload);
   }
-}
 
+  createNoteHonoraire(prestataireId: number, payload: CreateNoteHonoraireRequest): Observable<NoteHonoraire> {
+    return this.http.post<NoteHonoraire>(`${this.prestatairesUrl}/${prestataireId}/notes-honoraires`, payload);
+  }
+}

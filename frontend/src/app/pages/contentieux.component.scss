@@ -296,6 +296,7 @@
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -340,6 +341,142 @@
 
 .contentieux-modal-body {
   padding: 18px;
+}
+
+.risque-modal {
+  width: min(980px, 100%);
+}
+
+.risque-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.risque-head-meta {
+  display: flex;
+  align-items: center;
+}
+
+.risque-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.72);
+  background: rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.risque-intro {
+  padding: 14px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--app-border);
+  background: linear-gradient(180deg, rgba(0, 104, 71, 0.06), rgba(0, 104, 71, 0.00));
+  margin-bottom: 12px;
+}
+
+.risque-intro-title {
+  font-weight: 1000;
+  color: var(--app-text);
+}
+
+.risque-intro-sub {
+  margin-top: 4px;
+  font-weight: 700;
+  color: var(--app-text-muted);
+  font-size: 13px;
+}
+
+.risque-section {
+  margin-top: 12px;
+}
+
+.risque-section-title {
+  font-weight: 1000;
+  color: var(--app-text);
+  margin: 6px 0 10px;
+}
+
+.risque-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.risque-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.risque-option {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--app-shadow-sm);
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  user-select: none;
+}
+
+.risque-option:hover {
+  border-color: rgba(0, 104, 71, 0.30);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.12);
+}
+
+.risque-option-selected {
+  border-color: rgba(0, 104, 71, 0.55);
+  background: linear-gradient(180deg, rgba(0, 104, 71, 0.10), rgba(0, 104, 71, 0.02));
+}
+
+.risque-checkbox {
+  margin-top: 3px;
+}
+
+.risque-option-title {
+  font-weight: 1000;
+  color: var(--app-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.risque-option-title i {
+  font-size: 16px;
+  color: rgba(0, 104, 71, 0.95);
+}
+
+.risque-option-desc {
+  margin-top: 3px;
+  color: var(--app-text-muted);
+  font-weight: 750;
+  font-size: 13px;
+}
+
+.risque-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.risque-loading {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--app-border);
+  background: rgba(255, 255, 255, 0.72);
+  font-weight: 800;
+  color: var(--app-text-muted);
+  margin-bottom: 12px;
 }
 
 .contentieux-details-grid {
@@ -417,6 +554,11 @@
   .contentieux-head {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .risque-grid,
+  .risque-grid-3 {
+    grid-template-columns: 1fr;
   }
   .contentieux-search {
     width: 100%;

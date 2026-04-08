@@ -39,6 +39,8 @@ public class DossierContentieuxService {
         dossier.setDateOuverture(request.dateOuverture() != null ? request.dateOuverture() : LocalDate.now());
         dossier.setMontantEngage(nvl(request.montantEngage()));
         dossier.setMontantRecupere(nvl(request.montantRecupere()));
+        dossier.setMontantHonoraires(nvl(request.montantHonoraires()));
+        dossier.setFraisAdministratifs(nvl(request.fraisAdministratifs()));
         dossier.setObservationsAdministratives(request.observationsAdministratives());
         dossier.setObservationsFinancieres(request.observationsFinancieres());
         dossier.setCreatedBy(authentication.getName());
@@ -68,6 +70,8 @@ public class DossierContentieuxService {
         dossier.setAgence(request.agence());
         dossier.setObservationsAdministratives(request.observationsAdministratives());
         dossier.setObservationsFinancieres(request.observationsFinancieres());
+        dossier.setMontantHonoraires(nvl(request.montantHonoraires()));
+        dossier.setFraisAdministratifs(nvl(request.fraisAdministratifs()));
         if (dossier.getStatut() != ContentieuxStatus.A_VALIDER) {
             dossier.setCompteActuel(request.compteActuel());
             dossier.setAncienCompte(request.ancienCompte());
@@ -153,6 +157,8 @@ public class DossierContentieuxService {
                 d.getDateOuverture(),
                 d.getMontantEngage(),
                 d.getMontantRecupere(),
+                d.getMontantHonoraires(),
+                d.getFraisAdministratifs(),
                 d.getObservationsAdministratives(),
                 d.getObservationsFinancieres(),
                 d.getDateCloture(),

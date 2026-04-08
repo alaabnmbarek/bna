@@ -6,6 +6,7 @@ import { CardComponent } from '../theme/shared/components/card/card.component';
 import { Prestataire, PrestataireType, PrestatairesService } from '../prestataires/prestataires.service';
 import { AuthService } from '../auth/auth.service';
 import { ProfileService } from '../auth/profile.service';
+import { ContentieuxService, DossierContentieux } from '../contentieux/contentieux.service';
 
 @Component({
   selector: 'app-prestataires-page',
@@ -21,6 +22,32 @@ export class PrestatairesPageComponent implements OnInit {
   isEditing = false;
   editingId: number | null = null;
   profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
+  dossiers: DossierContentieux[] = [];
+  showHonorairesModalState = false;
+  honorairesSaving = false;
+  honorairesForm: {
+    dossierId: number | null;
+    dossierLabel: string | null;
+    reference: string | null;
+    compteActuel: string | null;
+    agence: string | null;
+    montantEngage: number | null;
+    montantHonoraires: number | null;
+    fraisAdministratifs: number | null;
+    tva: number | null;
+    total: number | null;
+  } = {
+    dossierId: null,
+    dossierLabel: null,
+    reference: null,
+    compteActuel: null,
+    agence: null,
+    montantEngage: null,
+    montantHonoraires: null,
+    fraisAdministratifs: null,
+    tva: null,
+    total: null
+  };
 
   q = '';
   type: PrestataireType | '' = '';
@@ -29,6 +56,12 @@ export class PrestatairesPageComponent implements OnInit {
   form: Partial<Prestataire> = {
     type: 'HUISSIER',
     nom: '',
+    prenom: '',
+    cabinet: '',
+    numeroCompte: '',
+    matriculeFiscale: '',
+    natureJuridique: null,
+    pttNomBanque: '',
     email: '',
     telephone: '',
     adresse: '',
@@ -44,7 +77,8 @@ export class PrestatairesPageComponent implements OnInit {
     private service: PrestatairesService,
     private router: Router,
     public auth: AuthService,
-    private profileService: ProfileService
+    private profileService: ProfileService,
+    private contentieux: ContentieuxService
   ) {}
 
   ngOnInit(): void {
@@ -101,6 +135,12 @@ export class PrestatairesPageComponent implements OnInit {
     this.form = {
       type: 'HUISSIER',
       nom: '',
+      prenom: '',
+      cabinet: '',
+      numeroCompte: '',
+      matriculeFiscale: '',
+      natureJuridique: null,
+      pttNomBanque: '',
       email: '',
       telephone: '',
       adresse: '',
@@ -119,7 +159,17 @@ export class PrestatairesPageComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.form.nom || !this.form.type) {
+    if (!this.form.type) {
+      this.showBanner('Type est obligatoire.', 'danger');
+      return;
+    }
+
+    if (this.form.type === 'AVOCAT') {
+      if (!this.form.nom || !this.form.prenom) {
+        this.showBanner('Nom et prénom sont obligatoires.', 'danger');
+        return;
+      }
+    } else if (!this.form.nom) {
       this.showBanner('Nom et type sont obligatoires.', 'danger');
       return;
     }
@@ -165,6 +215,155 @@ export class PrestatairesPageComponent implements OnInit {
 
   open(p: Prestataire): void {
     this.router.navigate(['/prestataires', p.id]);
+  }
+
+  openHonorairesModal(): void {
+    if (this.form.type !== 'AVOCAT') return;
+    this.showHonorairesModalState = true;
+    if (this.dossiers.length === 0) {
+      this.contentieux.list().subscribe({
+        next: (data) => {
+          this.dossiers = data;
+        },
+        error: () => {
+          this.showBanner('Erreur lors du chargement des dossiers.', 'danger');
+        }
+      });
+    }
+  }
+
+  closeHonorairesModal(): void {
+    this.showHonorairesModalState = false;
+    this.honorairesSaving = false;
+    this.honorairesForm = {
+      dossierId: null,
+      dossierLabel: null,
+      reference: null,
+      compteActuel: null,
+      agence: null,
+      montantEngage: null,
+      montantHonoraires: null,
+      fraisAdministratifs: null,
+      tva: null,
+      total: null
+    };
+  }
+
+  dossierLabel(d: DossierContentieux): string {
+    const objet = (d.objet ?? '').trim();
+    const ref = (d.reference ?? '').trim();
+    if (objet) return `${objet} — ${ref}`;
+    return ref || `Dossier #${d.id}`;
+  }
+
+  onDossierChange(): void {
+    const id = this.honorairesForm.dossierId;
+    const selected = id ? this.dossiers.find(d => d.id === id) : undefined;
+    if (!selected) {
+      this.honorairesForm.dossierLabel = null;
+      this.honorairesForm.reference = null;
+      this.honorairesForm.compteActuel = null;
+      this.honorairesForm.agence = null;
+      this.honorairesForm.montantEngage = null;
+      this.honorairesForm.montantHonoraires = null;
+      this.honorairesForm.fraisAdministratifs = null;
+      this.honorairesForm.tva = null;
+      this.honorairesForm.total = null;
+      return;
+    }
+
+    this.honorairesForm.dossierLabel = this.dossierLabel(selected);
+    this.honorairesForm.reference = selected.reference ?? null;
+    this.honorairesForm.compteActuel = selected.compteActuel ?? null;
+    this.honorairesForm.agence = selected.agence ?? null;
+    this.honorairesForm.montantEngage = (selected.montantEngage ?? null) as any;
+
+    const defaultHonoraires = (selected.montantHonoraires ?? null) as any;
+    const defaultFrais = (selected.fraisAdministratifs ?? 150) as any;
+
+    this.honorairesForm.montantHonoraires = this.toNumberOrNull(defaultHonoraires);
+    this.honorairesForm.fraisAdministratifs = this.toNumberOrNull(defaultFrais);
+    this.recalcHonoraires();
+  }
+
+  recalcHonoraires(): void {
+    const honoraires = this.toNumberOrNull(this.honorairesForm.montantHonoraires);
+    const frais = this.toNumberOrNull(this.honorairesForm.fraisAdministratifs);
+    if (honoraires === null || frais === null) {
+      this.honorairesForm.tva = null;
+      this.honorairesForm.total = null;
+      return;
+    }
+    const base = honoraires + frais;
+    const tva = base * 0.19;
+    const total = base + tva;
+    this.honorairesForm.tva = this.round3(tva);
+    this.honorairesForm.total = this.round3(total);
+  }
+
+  saveHonoraires(): void {
+    if (this.form.type !== 'AVOCAT') return;
+    if (!this.honorairesForm.dossierId) {
+      this.showBanner('Veuillez sélectionner un dossier.', 'danger');
+      return;
+    }
+    const montantHonoraires = this.toNumberOrNull(this.honorairesForm.montantHonoraires) ?? 0;
+    const fraisAdministratifs = this.toNumberOrNull(this.honorairesForm.fraisAdministratifs) ?? 0;
+
+    const createNote = (prestataireId: number) => {
+      this.honorairesSaving = true;
+      this.service.createNoteHonoraire(prestataireId, {
+        dossierId: this.honorairesForm.dossierId!,
+        montantHonoraires,
+        fraisAdministratifs
+      }).subscribe({
+        next: () => {
+          this.honorairesSaving = false;
+          this.closeHonorairesModal();
+          this.load();
+          this.showBanner('Note d’honoraire enregistrée.', 'success');
+        },
+        error: () => {
+          this.honorairesSaving = false;
+          this.showBanner('Erreur lors de l’enregistrement de la note d’honoraire.', 'danger');
+        }
+      });
+    };
+
+    if (this.isEditing && this.editingId) {
+      createNote(this.editingId);
+      return;
+    }
+
+    const payload: any = { ...this.form, actif: true };
+    this.honorairesSaving = true;
+    this.service.createPrestataire(payload).subscribe({
+      next: (created) => {
+        this.isEditing = true;
+        this.editingId = created.id;
+        this.form = { ...created };
+        createNote(created.id);
+      },
+      error: () => {
+        this.honorairesSaving = false;
+        this.showBanner('Erreur lors de la création du prestataire.', 'danger');
+      }
+    });
+  }
+
+  formatMoney(v: number | null | undefined): string {
+    if (v === null || v === undefined || Number.isNaN(v as any)) return '';
+    return `${Number(v).toLocaleString('fr-TN', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} DT`;
+  }
+
+  private toNumberOrNull(v: any): number | null {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  private round3(v: number): number {
+    return Math.round(v * 1000) / 1000;
   }
 
   private showBanner(message: string, kind: 'success' | 'info' | 'danger'): void {

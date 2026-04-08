@@ -19,6 +19,24 @@ public class PrestataireEntity {
     private String nom;
 
     @Column(length = 150)
+    private String prenom;
+
+    @Column(length = 200)
+    private String cabinet;
+
+    @Column(length = 60)
+    private String numeroCompte;
+
+    @Column(length = 60)
+    private String matriculeFiscale;
+
+    @Column(length = 40)
+    private String natureJuridique;
+
+    @Column(length = 150)
+    private String pttNomBanque;
+
+    @Column(length = 150)
     private String email;
 
     @Column(length = 30)
@@ -59,6 +77,18 @@ public class PrestataireEntity {
     public void setType(PrestataireType type) { this.type = type; }
     public String getNom() { return nom; }
     public void setNom(String nom) { this.nom = nom; }
+    public String getPrenom() { return prenom; }
+    public void setPrenom(String prenom) { this.prenom = prenom; }
+    public String getCabinet() { return cabinet; }
+    public void setCabinet(String cabinet) { this.cabinet = cabinet; }
+    public String getNumeroCompte() { return numeroCompte; }
+    public void setNumeroCompte(String numeroCompte) { this.numeroCompte = numeroCompte; }
+    public String getMatriculeFiscale() { return matriculeFiscale; }
+    public void setMatriculeFiscale(String matriculeFiscale) { this.matriculeFiscale = matriculeFiscale; }
+    public String getNatureJuridique() { return natureJuridique; }
+    public void setNatureJuridique(String natureJuridique) { this.natureJuridique = natureJuridique; }
+    public String getPttNomBanque() { return pttNomBanque; }
+    public void setPttNomBanque(String pttNomBanque) { this.pttNomBanque = pttNomBanque; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     public String getTelephone() { return telephone; }

@@ -46,6 +46,12 @@ public class DossierContentieuxEntity {
     @Column(precision = 19, scale = 2)
     private BigDecimal montantRecupere;
 
+    @Column(precision = 12, scale = 3)
+    private BigDecimal montantHonoraires;
+
+    @Column(precision = 12, scale = 3)
+    private BigDecimal fraisAdministratifs;
+
     @Column(columnDefinition = "LONGTEXT")
     private String observationsAdministratives;
 
@@ -179,6 +185,22 @@ public class DossierContentieuxEntity {
 
     public void setMontantRecupere(BigDecimal montantRecupere) {
         this.montantRecupere = montantRecupere;
+    }
+
+    public BigDecimal getMontantHonoraires() {
+        return montantHonoraires;
+    }
+
+    public void setMontantHonoraires(BigDecimal montantHonoraires) {
+        this.montantHonoraires = montantHonoraires;
+    }
+
+    public BigDecimal getFraisAdministratifs() {
+        return fraisAdministratifs;
+    }
+
+    public void setFraisAdministratifs(BigDecimal fraisAdministratifs) {
+        this.fraisAdministratifs = fraisAdministratifs;
     }
 
     public String getObservationsAdministratives() {

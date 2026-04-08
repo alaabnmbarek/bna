@@ -1,6 +1,9 @@
 package com.example.secureapp.contentieux;
 
 import com.example.secureapp.contentieux.dto.ContentieuxDtos;
+import com.example.secureapp.contentieux.dto.ChargeDossierDtos;
+import com.example.secureapp.user.UserEntity;
+import com.example.secureapp.user.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -13,9 +16,24 @@ import java.util.Map;
 @RequestMapping("/api/contentieux/dossiers")
 public class DossierContentieuxController {
     private final DossierContentieuxService service;
+    private final UserRepository userRepository;
 
-    public DossierContentieuxController(DossierContentieuxService service) {
+    public DossierContentieuxController(DossierContentieuxService service, UserRepository userRepository) {
         this.service = service;
+        this.userRepository = userRepository;
+    }
+
+    @GetMapping("/charges-dossiers")
+    @PreAuthorize("hasAuthority('CONTENTIOUS_READ')")
+    public ResponseEntity<List<ChargeDossierDtos.ChargeOption>> listChargesDossiers() {
+        List<UserEntity> users = userRepository.findByRole_NameAndEnabledTrueOrderByFullNameAsc("CHARGE_DOSSIER");
+        List<ChargeDossierDtos.ChargeOption> result = users.stream().map(u -> {
+            String fullName = u.getFullName();
+            String username = u.getUsername();
+            String label = (fullName != null && !fullName.isBlank()) ? fullName : username;
+            return new ChargeDossierDtos.ChargeOption(u.getId(), username, fullName, label);
+        }).toList();
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping
