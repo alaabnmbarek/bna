@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
+import { ResetPasswordConfirmComponent } from './reset-password-confirm/reset-password-confirm.component';
 import { UserPageComponent } from './pages/user.component';
 import { AdminPageComponent } from './pages/admin.component';
 import { AuthGuard } from './auth/auth.guard';
@@ -29,7 +30,8 @@ export const routes: Routes = [
     children: [
       { path: 'login', component: LoginComponent },
       { path: 'register', component: RegisterComponent },
-      { path: 'reset-password', component: ResetPasswordComponent }
+      { path: 'reset-password', component: ResetPasswordComponent },
+      { path: 'reset-password/confirm', component: ResetPasswordConfirmComponent }
     ]
   },
   {

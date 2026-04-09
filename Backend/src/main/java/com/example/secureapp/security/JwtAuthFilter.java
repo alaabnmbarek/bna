@@ -35,11 +35,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         log.info("Request: {} {}, AuthHeader: {}", request.getMethod(), requestURI, authHeader != null ? "PRESENT" : "MISSING");
         
         // Don't validate JWT for public endpoints to avoid 401 on expired tokens
-        if (requestURI.equals("/api/auth/login") || 
-            requestURI.equals("/api/auth/register") || 
+        if (requestURI.equals("/api/auth/login") ||
+            requestURI.equals("/api/auth/register") ||
             requestURI.equals("/api/auth/refresh") ||
-            requestURI.equals("/api/auth/reset-password") ||
-            requestURI.equals("/api/auth/confirm-password-change")) {
+            requestURI.startsWith("/api/auth/reset-password") ||
+            requestURI.startsWith("/api/auth/confirm-password-change")) {
             filterChain.doFilter(request, response);
             return;
         }

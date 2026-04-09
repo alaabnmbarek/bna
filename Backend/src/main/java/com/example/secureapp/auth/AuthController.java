@@ -43,11 +43,15 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
     private final EmailService emailService;
     private final PasswordChangeRequestRepository passwordChangeRequestRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Value("${APP_BASE_URL:http://localhost:8080}")
     private String appBaseUrl;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService, UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService, EmailService emailService, PasswordChangeRequestRepository passwordChangeRequestRepository) {
+    @Value("${FRONTEND_BASE_URL:http://localhost:4200}")
+    private String frontendBaseUrl;
+
+    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService, UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService, EmailService emailService, PasswordChangeRequestRepository passwordChangeRequestRepository, PasswordResetTokenRepository passwordResetTokenRepository) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
@@ -56,6 +60,7 @@ public class AuthController {
         this.refreshTokenService = refreshTokenService;
         this.emailService = emailService;
         this.passwordChangeRequestRepository = passwordChangeRequestRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
     }
 
     @PostMapping("/login")
@@ -205,10 +210,54 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> body) {
+        String email = body.getOrDefault("email", "").trim();
         log.info("auth.reset_password email={}", email);
-        // Stub for password reset - would normally send an email with a token
-        return ResponseEntity.ok().build();
+
+        if (!email.isBlank()) {
+            userRepository.findByEmail(email).ifPresent(user -> {
+                if (user.getEmail() == null || user.getEmail().isBlank()) return;
+                PasswordResetToken token = new PasswordResetToken();
+                token.setUser(user);
+                token.setToken(UUID.randomUUID().toString());
+                token.setExpiryDate(LocalDateTime.now().plusMinutes(30));
+                passwordResetTokenRepository.save(token);
+
+                String link = frontendBaseUrl + "/reset-password/confirm?token=" + token.getToken();
+                emailService.sendPasswordResetLink(user.getEmail(), user.getFullName(), link);
+            });
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Si un compte existe pour cet email, un lien de réinitialisation a été envoyé."));
+    }
+
+    public record ResetPasswordConfirmRequest(String token, String newPassword) {}
+
+    @PostMapping("/reset-password/confirm")
+    @Transactional
+    public ResponseEntity<Map<String, String>> confirmResetPassword(@Validated @RequestBody ResetPasswordConfirmRequest request) {
+        PasswordResetToken prt = passwordResetTokenRepository.findByToken(request.token())
+                .orElseThrow(() -> new RuntimeException("Token invalide"));
+
+        if (prt.isUsed() || prt.getExpiryDate().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.status(400).body(Map.of("message", "Le lien est expiré ou a déjà été utilisé."));
+        }
+
+        if (request.newPassword() == null || request.newPassword().isBlank()) {
+            return ResponseEntity.status(400).body(Map.of("message", "Mot de passe invalide."));
+        }
+
+        UserEntity user = prt.getUser();
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        prt.setUsed(true);
+        passwordResetTokenRepository.save(prt);
+
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            emailService.sendPasswordChangeNotification(user.getEmail(), user.getFullName());
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Mot de passe réinitialisé avec succès."));
     }
 }

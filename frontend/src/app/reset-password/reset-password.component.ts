@@ -36,7 +36,6 @@ export class ResetPasswordComponent {
         this.loading = false;
         this.message = 'Si un compte existe pour cet email, un lien de réinitialisation a été envoyé.';
         this.isError = false;
-        this.router.navigate(['/login']);
       },
       error: (err) => {
         this.loading = false;

@@ -67,6 +67,10 @@ export class AuthService {
     return this.http.post('/api/auth/reset-password', { email });
   }
 
+  confirmResetPassword(token: string, newPassword: string) {
+    return this.http.post('/api/auth/reset-password/confirm', { token, newPassword });
+  }
+
   logout() {
     sessionStorage.removeItem(this.tokenKey);
     sessionStorage.removeItem(this.refreshTokenKey);
