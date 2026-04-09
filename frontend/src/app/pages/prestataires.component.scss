@@ -161,6 +161,11 @@
   z-index: 1050;
 }
 
+.admin-overlay-animate {
+  animation: adminFadeIn 160ms ease-out both;
+  backdrop-filter: blur(8px);
+}
+
 .admin-modal {
   width: 100%;
   max-width: 980px;
@@ -169,6 +174,174 @@
   border: 1px solid var(--app-border);
   box-shadow: 0 18px 60px rgba(15, 23, 42, 0.30);
   overflow: hidden;
+}
+
+.admin-row-clickable {
+  cursor: pointer;
+}
+
+.admin-row-clickable:hover td {
+  background: rgba(0, 104, 71, 0.04);
+}
+
+.avocat-profile-modal {
+  max-width: 1040px;
+  animation: adminSlideUp 200ms ease-out both;
+}
+
+.avocat-profile-head {
+  background: linear-gradient(135deg, rgba(0, 104, 71, 0.10) 0%, rgba(15, 23, 42, 0.03) 55%, rgba(255, 255, 255, 0.00) 100%);
+}
+
+.avocat-profile-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.avocat-profile-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avocat-profile-body {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.02) 0%, rgba(255, 255, 255, 0.00) 80%);
+}
+
+.avocat-loading {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--app-border);
+  background: rgba(255, 255, 255, 0.75);
+  font-weight: 900;
+  color: var(--app-text-muted);
+}
+
+.avocat-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--app-border);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.avocat-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  object-fit: cover;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.avocat-hero-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.avocat-name {
+  font-weight: 1100;
+  font-size: 16px;
+  color: var(--app-text);
+}
+
+.avocat-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.avocat-card {
+  border-radius: 18px;
+  border: 1px solid var(--app-border);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--app-shadow-sm);
+  padding: 14px 14px;
+}
+
+.avocat-card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 1100;
+  color: var(--app-text);
+  margin-bottom: 10px;
+}
+
+.avocat-kv {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px dashed rgba(15, 23, 42, 0.10);
+}
+
+.avocat-kv:first-of-type {
+  border-top: 0;
+}
+
+.avocat-k {
+  font-weight: 950;
+  color: var(--app-text-muted);
+  display: inline-flex;
+  align-items: center;
+}
+
+.avocat-v {
+  font-weight: 850;
+  color: var(--app-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avocat-kv-total .avocat-k,
+.avocat-kv-total .avocat-v {
+  color: rgba(0, 104, 71, 0.95);
+  font-weight: 1100;
+}
+
+.avocat-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.avocat-stat {
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(15, 23, 42, 0.02);
+}
+
+.avocat-stat-n {
+  font-weight: 1200;
+  font-size: 18px;
+  color: var(--app-text);
+}
+
+.avocat-stat-l {
+  margin-top: 2px;
+  font-weight: 900;
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+@keyframes adminFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes adminSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .hon-modal {
@@ -244,5 +417,14 @@
   }
   .admin-filters {
     align-items: stretch;
+  }
+}
+
+@media (max-width: 575px) {
+  .avocat-kv {
+    grid-template-columns: 1fr;
+  }
+  .avocat-v {
+    white-space: normal;
   }
 }

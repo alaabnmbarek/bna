@@ -19,7 +19,7 @@
           </li>
           <li class="notification">
             <div class="media">
-              <img class="img-radius" src="assets/images/user/avatar-4.jpg" alt="Notification image">
+              <img class="img-radius" [src]="profileImage" alt="Notification image">
               <div class="media-body">
                 <p><strong>Système BNA</strong><span class="n-time text-muted"><i class="icon feather icon-clock m-r-10"></i>30 min</span></p>
                 <p>Bienvenue sur votre espace sécurisé</p>
@@ -40,7 +40,7 @@
       </a>
       <div class="dropdown-menu-end profile-notification" ngbDropdownMenu>
         <div class="pro-head">
-          <img src="assets/images/user/avatar-4.jpg" class="img-radius" alt="User-Profile-Image">
+          <img [src]="profileImage" class="img-radius" alt="User-Profile-Image">
           <span>{{ auth.username() }}</span>
           <a href="javascript:" (click)="logout()" class="dud-logout" title="Déconnexion">
             <i class="feather icon-log-out"></i>

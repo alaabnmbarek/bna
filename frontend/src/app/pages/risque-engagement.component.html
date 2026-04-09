@@ -25,27 +25,35 @@
       </div>
       <form class="risque-form-body" (ngSubmit)="save()" #f="ngForm">
         <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Dossier</label>
+            <select class="form-select" name="dossierId" [(ngModel)]="dossierId" (change)="onDossierChange()" required>
+              <option [ngValue]="null" disabled>Sélectionner un dossier…</option>
+              <option *ngFor="let d of dossiers" [ngValue]="d.id">{{ dossierLabel(d) }}</option>
+            </select>
+          </div>
+
           <div class="col-12 col-md-6">
             <label class="form-label">N° compte</label>
-            <input class="form-control" type="text" name="numeroCompte" [(ngModel)]="form.numeroCompte" placeholder="Ex: 000123456789" required>
+            <input class="form-control" type="text" name="numeroCompte" [(ngModel)]="form.numeroCompte" placeholder="Ex: 000123456789" [disabled]="!dossierId" required>
           </div>
           <div class="col-12 col-md-6">
             <label class="form-label">Num risque</label>
-            <input class="form-control" type="text" name="numRisque" [(ngModel)]="form.numRisque" placeholder="Ex: RSK-2026-001" required>
+            <input class="form-control" type="text" name="numRisque" [(ngModel)]="form.numRisque" placeholder="Ex: RSK-2026-001" [disabled]="!dossierId" required>
           </div>
 
           <div class="col-12 col-md-6">
             <label class="form-label">Titre créance</label>
-            <input class="form-control" type="text" name="titreCreance" [(ngModel)]="form.titreCreance" placeholder="Ex: Crédit d’investissement" required>
+            <input class="form-control" type="text" name="titreCreance" [(ngModel)]="form.titreCreance" placeholder="Ex: Crédit d’investissement" [disabled]="!dossierId" required>
           </div>
           <div class="col-12 col-md-6">
             <label class="form-label">Date contrat</label>
-            <input class="form-control" type="date" name="dateContrat" [(ngModel)]="form.dateContrat">
+            <input class="form-control" type="date" name="dateContrat" [(ngModel)]="form.dateContrat" [disabled]="!dossierId">
           </div>
 
           <div class="col-12 col-md-6">
             <label class="form-label">Intérêt / Intérêt retard</label>
-            <select class="form-select" name="interetType" [(ngModel)]="form.interetType">
+            <select class="form-select" name="interetType" [(ngModel)]="form.interetType" [disabled]="!dossierId">
               <option value="" selected>Sélectionner…</option>
               <option value="IC">Intérêt (I.C)</option>
               <option value="IR">Intérêt retard (I.R)</option>
@@ -53,23 +61,23 @@
           </div>
           <div class="col-12 col-md-6">
             <label class="form-label">Taux (I.C / I.R)</label>
-            <input class="form-control" type="number" step="0.01" name="taux" [(ngModel)]="form.taux" placeholder="Ex: 8.50">
+            <input class="form-control" type="number" step="0.01" name="taux" [(ngModel)]="form.taux" placeholder="Ex: 8.50" [disabled]="!dossierId">
           </div>
 
           <div class="col-12 col-md-6">
             <label class="form-label">Échéance</label>
-            <input class="form-control" type="date" name="echeance" [(ngModel)]="form.echeance">
+            <input class="form-control" type="date" name="echeance" [(ngModel)]="form.echeance" [disabled]="!dossierId">
           </div>
           <div class="col-12 col-md-6">
             <label class="form-label">Montant restant</label>
-            <input class="form-control" type="number" step="0.01" name="montantRestant" [(ngModel)]="form.montantRestant" placeholder="Ex: 12000.00">
+            <input class="form-control" type="number" step="0.01" name="montantRestant" [(ngModel)]="form.montantRestant" placeholder="Ex: 12000.00" [disabled]="!dossierId">
           </div>
         </div>
 
         <div class="risque-form-actions">
           <button *ngIf="editingId" type="button" class="btn btn-outline-secondary" (click)="cancelEdit(); f.resetForm()">Annuler</button>
           <button type="button" class="btn btn-outline-secondary" (click)="reset(); f.resetForm()">Réinitialiser</button>
-          <button type="submit" class="btn btn-primary">{{ editingId ? 'Mettre à jour' : 'Enregistrer' }}</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading || !dossierId">{{ editingId ? 'Mettre à jour' : 'Enregistrer' }}</button>
         </div>
       </form>
     </div>
@@ -105,17 +113,17 @@
           </thead>
           <tbody>
             <tr *ngFor="let e of filteredEngagements()">
-              <td class="risque-mono">{{ e.numeroCompte }}</td>
-              <td class="risque-cell-muted">{{ e.titreCreance }}</td>
-              <td class="risque-cell-muted col-hide-lg">{{ e.dateContrat || '—' }}</td>
+              <td class="risque-mono">{{ e.payload?.numeroCompte || '—' }}</td>
+              <td class="risque-cell-muted">{{ e.payload?.titreCreance || '—' }}</td>
+              <td class="risque-cell-muted col-hide-lg">{{ e.payload?.dateContrat || '—' }}</td>
               <td class="col-hide-md">
-                <span class="badge bg-secondary-subtle text-secondary" *ngIf="!e.interetType">—</span>
-                <span class="badge bg-info-subtle text-info" *ngIf="e.interetType">{{ e.interetType }}</span>
+                <span class="badge bg-secondary-subtle text-secondary" *ngIf="!(e.payload?.interetType)">—</span>
+                <span class="badge bg-info-subtle text-info" *ngIf="e.payload?.interetType">{{ e.payload?.interetType }}</span>
               </td>
-              <td class="col-hide-md">{{ e.taux || '—' }}</td>
-              <td class="risque-cell-muted col-hide-lg">{{ e.echeance || '—' }}</td>
-              <td class="risque-mono">{{ e.montantRestant || '—' }}</td>
-              <td class="col-hide-md risque-mono">{{ e.numRisque }}</td>
+              <td class="col-hide-md">{{ e.payload?.taux || '—' }}</td>
+              <td class="risque-cell-muted col-hide-lg">{{ e.payload?.echeance || '—' }}</td>
+              <td class="risque-mono">{{ e.payload?.montantRestant || '—' }}</td>
+              <td class="col-hide-md risque-mono">{{ e.payload?.numRisque || '—' }}</td>
               <td class="text-end">
                 <div class="risque-actions-row">
                   <button class="btn btn-sm btn-outline-secondary risque-action-btn" type="button" (click)="openEdit(e)">
@@ -129,7 +137,7 @@
             </tr>
             <tr *ngIf="filteredEngagements().length === 0">
               <td colspan="9">
-                <div class="risque-empty">Aucun engagement.</div>
+                <div class="risque-empty">{{ dossierId ? 'Aucun engagement pour ce dossier.' : 'Veuillez sélectionner un dossier.' }}</div>
               </td>
             </tr>
           </tbody>

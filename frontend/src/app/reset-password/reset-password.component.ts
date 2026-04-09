@@ -8,21 +8,40 @@ import { AuthService } from '../auth/auth.service';
   selector: 'app-reset-password',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './reset-password.component.html'
+  templateUrl: './reset-password.component.html',
+  styleUrl: './reset-password.component.scss'
 })
 export class ResetPasswordComponent {
   email = '';
+  loading = false;
+  message = '';
+  isError = false;
 
   constructor(private auth: AuthService, private router: Router) {}
 
   submit() {
-    this.auth.resetPassword(this.email).subscribe({
+    this.message = '';
+    this.isError = false;
+
+    const email = this.email.trim();
+    if (!email) {
+      this.message = 'Veuillez saisir votre email.';
+      this.isError = true;
+      return;
+    }
+
+    this.loading = true;
+    this.auth.resetPassword(email).subscribe({
       next: () => {
-        alert('If an account exists for this email, a reset link has been sent.');
+        this.loading = false;
+        this.message = 'Si un compte existe pour cet email, un lien de réinitialisation a été envoyé.';
+        this.isError = false;
         this.router.navigate(['/login']);
       },
-      error: () => {
-        alert('An error occurred. Please try again later.');
+      error: (err) => {
+        this.loading = false;
+        this.message = err?.error?.message || 'Une erreur est survenue. Veuillez réessayer plus tard.';
+        this.isError = true;
       }
     });
   }

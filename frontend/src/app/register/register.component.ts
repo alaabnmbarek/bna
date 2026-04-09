@@ -8,27 +8,49 @@ import { AuthService } from '../auth/auth.service';
   selector: 'app-register',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './register.component.html'
+  templateUrl: './register.component.html',
+  styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
   username = '';
   password = '';
   confirmPassword = '';
+  showPassword = false;
+  showConfirmPassword = false;
+  loading = false;
+  message = '';
+  isError = false;
 
   constructor(private auth: AuthService, private router: Router) {}
 
   submit() {
+    this.message = '';
+    this.isError = false;
+
     if (this.password !== this.confirmPassword) {
-      alert('Passwords do not match');
+      this.message = 'Les mots de passe ne correspondent pas.';
+      this.isError = true;
       return;
     }
-    this.auth.register(this.username, this.password).subscribe({
+
+    if (!this.username.trim() || !this.password) {
+      this.message = 'Veuillez renseigner l’identifiant et le mot de passe.';
+      this.isError = true;
+      return;
+    }
+
+    this.loading = true;
+    this.auth.register(this.username.trim(), this.password).subscribe({
       next: () => {
-        alert('Registration successful! You can now sign in.');
+        this.loading = false;
+        this.message = 'Inscription réussie. Vous pouvez maintenant vous connecter.';
+        this.isError = false;
         this.router.navigate(['/login']);
       },
-      error: () => {
-        alert('Registration failed. Username might already be taken.');
+      error: (err) => {
+        this.loading = false;
+        this.message = err?.error?.message || "Échec de l’inscription. L’identifiant est peut-être déjà utilisé.";
+        this.isError = true;
       }
     });
   }

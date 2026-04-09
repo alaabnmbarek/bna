@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { CardComponent } from '../theme/shared/components/card/card.component';
-import { Prestataire, PrestataireType, PrestatairesService } from '../prestataires/prestataires.service';
+import { Mission, NoteHonoraire, Prestataire, PrestataireType, PrestatairesService } from '../prestataires/prestataires.service';
 import { AuthService } from '../auth/auth.service';
 import { ProfileService } from '../auth/profile.service';
 import { ContentieuxService, DossierContentieux } from '../contentieux/contentieux.service';
@@ -25,6 +25,12 @@ export class PrestatairesPageComponent implements OnInit {
   dossiers: DossierContentieux[] = [];
   showHonorairesModalState = false;
   honorairesSaving = false;
+  showAvocatProfileModalState = false;
+  avocatProfileLoading = false;
+  selectedAvocat: Prestataire | null = null;
+  avocatMissions: Mission[] = [];
+  avocatNotes: NoteHonoraire[] = [];
+  avocatAssociatedRows: Array<{ numero: string; type: string; statut: string }> = [];
   honorairesForm: {
     dossierId: number | null;
     dossierLabel: string | null;
@@ -215,6 +221,138 @@ export class PrestatairesPageComponent implements OnInit {
 
   open(p: Prestataire): void {
     this.router.navigate(['/prestataires', p.id]);
+  }
+
+  onRowClick(p: Prestataire): void {
+    if (p.type !== 'AVOCAT') return;
+    this.openAvocatProfile(p.id);
+  }
+
+  openAvocatProfile(prestataireId: number): void {
+    this.showAvocatProfileModalState = true;
+    this.avocatProfileLoading = true;
+    this.selectedAvocat = null;
+    this.avocatMissions = [];
+    this.avocatNotes = [];
+    this.avocatAssociatedRows = [];
+
+    this.service.getPrestataire(prestataireId).subscribe({
+      next: (p) => {
+        if (p.type !== 'AVOCAT') {
+          this.closeAvocatProfileModal();
+          return;
+        }
+        this.selectedAvocat = p;
+        this.loadAvocatExtras(prestataireId);
+      },
+      error: () => {
+        this.avocatProfileLoading = false;
+        this.showBanner('Erreur lors du chargement du profil avocat.', 'danger');
+      }
+    });
+  }
+
+  private loadAvocatExtras(prestataireId: number): void {
+    let pending = 2;
+    const done = () => {
+      pending -= 1;
+      if (pending <= 0) this.avocatProfileLoading = false;
+    };
+
+    this.service.listMissions(prestataireId).subscribe({
+      next: (m) => {
+        this.avocatMissions = m || [];
+        this.rebuildAvocatAssociatedRows();
+        done();
+      },
+      error: () => {
+        done();
+      }
+    });
+
+    this.service.listNotesHonoraires(prestataireId).subscribe({
+      next: (n) => {
+        this.avocatNotes = n || [];
+        this.rebuildAvocatAssociatedRows();
+        done();
+      },
+      error: () => {
+        done();
+      }
+    });
+  }
+
+  closeAvocatProfileModal(): void {
+    this.showAvocatProfileModalState = false;
+    this.avocatProfileLoading = false;
+    this.selectedAvocat = null;
+    this.avocatMissions = [];
+    this.avocatNotes = [];
+    this.avocatAssociatedRows = [];
+  }
+
+  avocatFullName(p: Prestataire | null): string {
+    if (!p) return '';
+    const nom = (p.nom || '').trim();
+    const prenom = (p.prenom || '').trim();
+    return [nom, prenom].filter(Boolean).join(' ');
+  }
+
+  avocatAffairesTraitees(): number {
+    return this.avocatMissions.filter((m) => m.statut === 'TERMINEE').length;
+  }
+
+  latestHonoraire(): NoteHonoraire | null {
+    return this.avocatNotes.length > 0 ? this.avocatNotes[0] : null;
+  }
+
+  missionStatusBadge(status: string): string {
+    if (status === 'TERMINEE') return 'bg-success-subtle text-success';
+    if (status === 'EN_COURS') return 'bg-primary-subtle text-primary';
+    if (status === 'ANNULEE') return 'bg-danger-subtle text-danger';
+    return 'bg-secondary-subtle text-secondary';
+  }
+
+  dossierStatusBadge(status: string): string {
+    if (status === 'TERMINEE') return this.missionStatusBadge(status);
+    if (status === 'EN_COURS') return this.missionStatusBadge(status);
+    if (status === 'ANNULEE') return this.missionStatusBadge(status);
+    return 'bg-secondary-subtle text-secondary';
+  }
+
+  private rebuildAvocatAssociatedRows(): void {
+    const map = new Map<string, { numero: string; type: string; statut: string }>();
+
+    for (const m of this.avocatMissions) {
+      const numero = (m.dossierReference || '').trim();
+      if (!numero) continue;
+      if (!map.has(numero)) {
+        map.set(numero, { numero, type: m.titre || 'Mission', statut: m.statut || '—' });
+      }
+    }
+
+    for (const n of this.avocatNotes) {
+      const numero = (n.dossierReference || '').trim();
+      if (!numero) continue;
+      if (!map.has(numero)) {
+        const label = (n.dossierObjet || '').trim();
+        map.set(numero, { numero, type: label ? `Note d’honoraires — ${label}` : 'Note d’honoraires', statut: '—' });
+      }
+    }
+
+    this.avocatAssociatedRows = Array.from(map.values());
+  }
+
+  editSelectedAvocat(): void {
+    if (!this.selectedAvocat) return;
+    this.edit(this.selectedAvocat);
+    this.closeAvocatProfileModal();
+  }
+
+  formatNatureJuridique(v?: any): string {
+    if (v === 'PERSONNE_PHYSIQUE') return 'Personne physique';
+    if (v === 'PERSONNE_MORALE') return 'Personne morale';
+    return '—';
   }
 
   openHonorairesModal(): void {

@@ -9,12 +9,16 @@ import { HttpClient } from '@angular/common/http';
   selector: 'app-change-password',
   standalone: true,
   imports: [CommonModule, FormsModule, CardComponent],
-  templateUrl: './change-password.component.html'
+  templateUrl: './change-password.component.html',
+  styleUrl: './change-password.component.scss'
 })
 export class ChangePasswordComponent {
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
+  showCurrent = false;
+  showNew = false;
+  showConfirm = false;
   loading = false;
   message = '';
   isError = false;
@@ -30,6 +34,7 @@ export class ChangePasswordComponent {
 
     this.loading = true;
     this.message = '';
+    this.isError = false;
     
     this.http.post<any>('/api/auth/change-password', {
       currentPassword: this.currentPassword,
@@ -40,7 +45,8 @@ export class ChangePasswordComponent {
         this.currentPassword = '';
         this.newPassword = '';
         this.confirmPassword = '';
-        alert("Alerte mail pour validation. L'administrateur devra cliquer sur le lien reçu par mail pour que votre nouveau mot de passe devienne actif.");
+        this.message = "Demande envoyée. Un email de validation a été envoyé : l’administrateur doit valider le lien pour activer le nouveau mot de passe.";
+        this.isError = false;
       },
       error: (err) => {
         this.message = err.error?.message || 'Erreur lors de la modification du mot de passe';

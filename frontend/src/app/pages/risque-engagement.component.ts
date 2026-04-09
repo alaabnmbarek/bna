@@ -4,6 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { AuthService } from '../auth/auth.service';
 import { ProfileService } from '../auth/profile.service';
+import { ContentieuxService, DossierContentieux } from '../contentieux/contentieux.service';
+import { DossierRisqueService, RisqueItem } from '../risque/dossier-risque.service';
+
+type EngagementPayload = {
+  numeroCompte: string;
+  titreCreance: string;
+  dateContrat: string;
+  interetType: '' | 'IC' | 'IR';
+  taux: string;
+  echeance: string;
+  montantRestant: string;
+  numRisque: string;
+};
 
 @Component({
   selector: 'app-risque-engagement',
@@ -13,7 +26,6 @@ import { ProfileService } from '../auth/profile.service';
   styleUrl: './risque-engagement.component.scss'
 })
 export class RisqueEngagementPageComponent implements OnInit {
-  private readonly storageKey = 'pfe.risque.engagements.v1';
   profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
 
   banner: { kind: 'success' | 'info' | 'danger'; message: string } | null = null;
@@ -21,9 +33,11 @@ export class RisqueEngagementPageComponent implements OnInit {
 
   search = '';
   loading = false;
-  editingId: string | null = null;
+  dossiers: DossierContentieux[] = [];
+  dossierId: number | null = null;
+  editingId: number | null = null;
 
-  form = {
+  form: EngagementPayload = {
     numeroCompte: '',
     titreCreance: '',
     dateContrat: '',
@@ -34,22 +48,13 @@ export class RisqueEngagementPageComponent implements OnInit {
     numRisque: ''
   };
 
-  engagements: Array<{
-    id: string;
-    numeroCompte: string;
-    titreCreance: string;
-    dateContrat: string;
-    interetType: '' | 'IC' | 'IR';
-    taux: string;
-    echeance: string;
-    montantRestant: string;
-    numRisque: string;
-    createdAt: string;
-  }> = [];
+  engagements: Array<RisqueItem<EngagementPayload>> = [];
 
   constructor(
     public auth: AuthService,
-    private profileService: ProfileService
+    private profileService: ProfileService,
+    private contentieux: ContentieuxService,
+    private risque: DossierRisqueService
   ) {}
 
   ngOnInit(): void {
@@ -65,16 +70,62 @@ export class RisqueEngagementPageComponent implements OnInit {
       this.profileService.getProfile().subscribe();
     }
 
-    this.engagements = this.storageRead(this.storageKey, []);
+    this.loadDossiers();
+  }
+
+  dossierLabel(d: DossierContentieux): string {
+    const objet = (d.objet ?? '').trim();
+    const ref = (d.reference ?? '').trim();
+    if (objet) return `${ref} — ${objet}`;
+    return ref || `Dossier #${d.id}`;
+  }
+
+  onDossierChange(): void {
+    this.editingId = null;
+    this.reset();
+    this.loadEngagements();
+  }
+
+  private loadDossiers(): void {
+    this.contentieux.list().subscribe({
+      next: (rows) => {
+        this.dossiers = rows || [];
+      },
+      error: () => {
+        this.showBanner('Erreur lors du chargement des dossiers.', 'danger');
+      }
+    });
+  }
+
+  private loadEngagements(): void {
+    if (!this.dossierId) {
+      this.engagements = [];
+      return;
+    }
+    this.loading = true;
+    this.risque.list<EngagementPayload>(this.dossierId, 'ENGAGEMENT').subscribe({
+      next: (items) => {
+        this.engagements = items || [];
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.showBanner('Erreur lors du chargement des engagements.', 'danger');
+      }
+    });
   }
 
   save(): void {
+    if (!this.dossierId) {
+      this.showBanner('Veuillez sélectionner un dossier.', 'danger');
+      return;
+    }
     const requiredOk = this.form.numeroCompte.trim() && this.form.titreCreance.trim() && this.form.numRisque.trim();
     if (!requiredOk) {
       this.showBanner('Veuillez renseigner : N° compte, Titre créance et Num risque.', 'danger');
       return;
     }
-    const payload = {
+    const payload: EngagementPayload = {
       numeroCompte: this.form.numeroCompte.trim(),
       titreCreance: this.form.titreCreance.trim(),
       dateContrat: this.form.dateContrat || '',
@@ -85,48 +136,73 @@ export class RisqueEngagementPageComponent implements OnInit {
       numRisque: this.form.numRisque.trim()
     };
 
+    this.loading = true;
     if (this.editingId) {
-      this.engagements = this.engagements.map((e) => (e.id === this.editingId ? { ...e, ...payload } : e));
-      this.persist();
-      this.showBanner('Engagement mis à jour.', 'success');
-      this.editingId = null;
+      this.risque.update<EngagementPayload>(this.dossierId, 'ENGAGEMENT', this.editingId, payload).subscribe({
+        next: (updated) => {
+          this.engagements = this.engagements.map((e) => (e.id === updated.id ? updated : e));
+          this.loading = false;
+          this.showBanner('Engagement mis à jour.', 'success');
+          this.editingId = null;
+          this.reset();
+        },
+        error: () => {
+          this.loading = false;
+          this.showBanner('Erreur lors de la mise à jour de l’engagement.', 'danger');
+        }
+      });
       return;
     }
 
-    const row = {
-      id: this.newId(),
-      ...payload,
-      createdAt: this.now()
-    };
-    this.engagements = [row, ...this.engagements];
-    this.persist();
-    this.showBanner('Engagement enregistré.', 'success');
+    this.risque.create<EngagementPayload>(this.dossierId, 'ENGAGEMENT', payload).subscribe({
+      next: (created) => {
+        this.engagements = [created, ...this.engagements];
+        this.loading = false;
+        this.showBanner('Engagement enregistré et associé au dossier.', 'success');
+        this.reset();
+      },
+      error: () => {
+        this.loading = false;
+        this.showBanner('Erreur lors de l’enregistrement de l’engagement.', 'danger');
+      }
+    });
   }
 
-  openEdit(row: { id: string } & typeof this.form): void {
+  openEdit(row: RisqueItem<EngagementPayload>): void {
+    if (!this.dossierId) return;
     this.editingId = row.id;
     this.form = {
-      numeroCompte: row.numeroCompte,
-      titreCreance: row.titreCreance,
-      dateContrat: row.dateContrat,
-      interetType: row.interetType,
-      taux: row.taux,
-      echeance: row.echeance,
-      montantRestant: row.montantRestant,
-      numRisque: row.numRisque
+      numeroCompte: row.payload?.numeroCompte ?? '',
+      titreCreance: row.payload?.titreCreance ?? '',
+      dateContrat: row.payload?.dateContrat ?? '',
+      interetType: (row.payload?.interetType ?? '') as any,
+      taux: row.payload?.taux ?? '',
+      echeance: row.payload?.echeance ?? '',
+      montantRestant: row.payload?.montantRestant ?? '',
+      numRisque: row.payload?.numRisque ?? ''
     };
   }
 
-  remove(row: { id: string; numeroCompte: string }): void {
-    const ok = confirm(`Supprimer l’engagement du compte ${row.numeroCompte} ?`);
+  remove(row: RisqueItem<EngagementPayload>): void {
+    if (!this.dossierId) return;
+    const ok = confirm(`Supprimer l’engagement du compte ${row.payload?.numeroCompte || ''} ?`);
     if (!ok) return;
-    this.engagements = this.engagements.filter((e) => e.id !== row.id);
-    this.persist();
-    if (this.editingId === row.id) {
-      this.editingId = null;
-      this.reset();
-    }
-    this.showBanner('Engagement supprimé.', 'info');
+    this.loading = true;
+    this.risque.delete(this.dossierId, 'ENGAGEMENT', row.id).subscribe({
+      next: () => {
+        this.engagements = this.engagements.filter((e) => e.id !== row.id);
+        this.loading = false;
+        if (this.editingId === row.id) {
+          this.editingId = null;
+          this.reset();
+        }
+        this.showBanner('Engagement supprimé.', 'info');
+      },
+      error: () => {
+        this.loading = false;
+        this.showBanner('Erreur lors de la suppression de l’engagement.', 'danger');
+      }
+    });
   }
 
   reset(): void {
@@ -151,51 +227,17 @@ export class RisqueEngagementPageComponent implements OnInit {
     const q = this.search.trim().toLowerCase();
     if (!q) return this.engagements;
     return this.engagements.filter((e) => {
+      const p = e.payload || ({} as EngagementPayload);
       return (
-        e.numeroCompte.toLowerCase().includes(q) ||
-        e.titreCreance.toLowerCase().includes(q) ||
-        e.numRisque.toLowerCase().includes(q)
+        (p.numeroCompte || '').toLowerCase().includes(q) ||
+        (p.titreCreance || '').toLowerCase().includes(q) ||
+        (p.numRisque || '').toLowerCase().includes(q)
       );
     });
   }
 
   filteredCount(): number {
     return this.filteredEngagements().length;
-  }
-
-  private newId(): string {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-      return crypto.randomUUID();
-    }
-    return String(Date.now()) + '-' + Math.random().toString(16).slice(2);
-  }
-
-  private now(): string {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mi = String(d.getMinutes()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
-  }
-
-  private persist(): void {
-    try {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.engagements));
-    } catch {
-      return;
-    }
-  }
-
-  private storageRead<T>(key: string, fallback: T): T {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return fallback;
-      return JSON.parse(raw) as T;
-    } catch {
-      return fallback;
-    }
   }
 
   private showBanner(message: string, kind: 'success' | 'info' | 'danger'): void {

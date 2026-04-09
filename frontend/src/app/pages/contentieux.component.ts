@@ -96,6 +96,7 @@ export class ContentieuxPageComponent implements OnInit {
   showRisqueDialog = false;
   risqueStep: 'select' | 'edit' = 'select';
   risqueLoading = false;
+  risqueDossierId: number | null = null;
   risqueSelection: {
     engagements: boolean;
     patrimoines: boolean;
@@ -112,9 +113,16 @@ export class ContentieuxPageComponent implements OnInit {
 
   engagementItems: Array<RisqueItem<EngagementPayload> & { _saving?: boolean; _deleting?: boolean }> = [];
   patrimoineItems: Array<RisqueItem<PatrimoinePayload> & { _saving?: boolean; _deleting?: boolean }> = [];
-  hypothequeItems: Array<RisqueItem<GarantiePayload> & { _saving?: boolean; _deleting?: boolean; _json?: string }> = [];
-  nantissementItems: Array<RisqueItem<GarantiePayload> & { _saving?: boolean; _deleting?: boolean; _json?: string }> = [];
-  cautionItems: Array<RisqueItem<GarantiePayload> & { _saving?: boolean; _deleting?: boolean; _json?: string }> = [];
+  hypothequeItems: Array<RisqueItem<GarantiePayload> & { _saving?: boolean; _deleting?: boolean }> = [];
+  nantissementItems: Array<RisqueItem<GarantiePayload> & { _saving?: boolean; _deleting?: boolean }> = [];
+  cautionItems: Array<RisqueItem<GarantiePayload> & { _saving?: boolean; _deleting?: boolean }> = [];
+
+  editRisquesLoading = false;
+  editEngagementItems: Array<RisqueItem<EngagementPayload>> = [];
+  editPatrimoineItems: Array<RisqueItem<PatrimoinePayload>> = [];
+  editHypothequeItems: Array<RisqueItem<GarantiePayload>> = [];
+  editNantissementItems: Array<RisqueItem<GarantiePayload>> = [];
+  editCautionItems: Array<RisqueItem<GarantiePayload>> = [];
 
   newEngagement: EngagementPayload = this.blankEngagement();
   newPatrimoine: PatrimoinePayload = this.blankPatrimoine();
@@ -137,8 +145,6 @@ export class ContentieuxPageComponent implements OnInit {
     dateOuverture: '',
     montantEngage: '',
     montantRecupere: '',
-    observationsAdministratives: '',
-    observationsFinancieres: '',
     dateCloture: '',
     motifCloture: ''
   };
@@ -195,6 +201,7 @@ export class ContentieuxPageComponent implements OnInit {
   openNew(): void {
     this.editingId = null;
     this.loadChargeOptions();
+    this.resetEditRisques();
     this.form = {
       reference: '',
       objet: '',
@@ -205,8 +212,6 @@ export class ContentieuxPageComponent implements OnInit {
       dateOuverture: this.today(),
       montantEngage: '',
       montantRecupere: '',
-      observationsAdministratives: '',
-      observationsFinancieres: '',
       dateCloture: '',
       motifCloture: ''
     };
@@ -219,6 +224,7 @@ export class ContentieuxPageComponent implements OnInit {
       return;
     }
     this.editingId = dossier.id;
+    this.loadEditRisques(dossier.id);
     this.form = {
       reference: dossier.reference,
       objet: dossier.objet || '',
@@ -229,8 +235,6 @@ export class ContentieuxPageComponent implements OnInit {
       dateOuverture: dossier.dateOuverture || '',
       montantEngage: dossier.montantEngage != null ? String(dossier.montantEngage) : '',
       montantRecupere: dossier.montantRecupere != null ? String(dossier.montantRecupere) : '',
-      observationsAdministratives: dossier.observationsAdministratives || '',
-      observationsFinancieres: dossier.observationsFinancieres || '',
       dateCloture: dossier.dateCloture || '',
       motifCloture: dossier.motifCloture || ''
     };
@@ -239,6 +243,7 @@ export class ContentieuxPageComponent implements OnInit {
 
   closeForm(): void {
     this.showForm = false;
+    this.resetEditRisques();
   }
 
   submit(): void {
@@ -250,9 +255,7 @@ export class ContentieuxPageComponent implements OnInit {
       chargeDossier: this.form.chargeDossier || undefined,
       dateOuverture: this.form.dateOuverture || undefined,
       montantEngage: this.toNumberOrUndefined(this.form.montantEngage),
-      montantRecupere: this.toNumberOrUndefined(this.form.montantRecupere),
-      observationsAdministratives: this.form.observationsAdministratives,
-      observationsFinancieres: this.form.observationsFinancieres
+      montantRecupere: this.toNumberOrUndefined(this.form.montantRecupere)
     };
 
     if (this.editingId) {
@@ -301,40 +304,59 @@ export class ContentieuxPageComponent implements OnInit {
   openRisqueDialog(): void {
     if (!this.selected) return;
     this.showRisqueDialog = true;
-    this.risqueStep = 'select';
-    this.risqueLoading = false;
-    this.risqueSelection = {
-      engagements: false,
-      patrimoines: false,
-      hypotheques: false,
-      nantissements: false,
-      cautions: false
-    };
-    this.engagementItems = [];
-    this.patrimoineItems = [];
-    this.hypothequeItems = [];
-    this.nantissementItems = [];
-    this.cautionItems = [];
-    this.newEngagement = this.blankEngagement();
-    this.newPatrimoine = this.blankPatrimoine();
-    this.newHypotheque = this.blankHypotheque();
-    this.newNantissement = this.blankNantissement();
-    this.newCaution = this.blankCaution();
+    this.risqueDossierId = this.selected.id;
+    this.resetRisqueState();
   }
 
-  closeRisqueDialog(openDetailsAfter = true): void {
+  onRisqueDossierChange(): void {
+    if (!this.risqueDossierId) return;
+    this.resetRisqueState();
+  }
+
+  closeRisqueDialog(openDetailsAfter?: boolean): void {
+    const lastDossierId = this.risqueDossierId;
+    const shouldOpenDetailsAfter = openDetailsAfter ?? !this.showForm;
     this.showRisqueDialog = false;
     this.risqueStep = 'select';
     this.risqueLoading = false;
-    if (openDetailsAfter) {
+    this.risqueDossierId = null;
+    if (this.showForm && this.editingId && lastDossierId && this.editingId === lastDossierId) {
+      this.loadEditRisques(this.editingId);
+    }
+    if (shouldOpenDetailsAfter) {
       this.actionDialogType = 'details';
       this.showActionDialog = true;
     }
   }
 
+  openRisqueForEditing(): void {
+    if (!this.editingId) return;
+    const dossier = this.dossiers.find((d) => d.id === this.editingId);
+    if (!dossier) return;
+    this.selected = dossier;
+    this.openRisqueDialog();
+  }
+
+  dossierLabel(d: DossierContentieux): string {
+    const ref = (d.reference ?? '').trim();
+    const objet = (d.objet ?? '').trim();
+    if (ref && objet) return `${ref} — ${objet}`;
+    return ref || `Dossier #${d.id}`;
+  }
+
+  risqueDossierRef(): string {
+    const d = this.getRisqueDossier();
+    return d?.reference || '';
+  }
+
+  risqueCompteActuel(): string {
+    const d = this.getRisqueDossier();
+    return d?.compteActuel || '';
+  }
+
   continueRisque(): void {
-    if (!this.selected) return;
-    const dossierId = this.selected.id;
+    const dossierId = this.risqueDossierId ?? this.selected?.id ?? null;
+    if (!dossierId) return;
     const categories: RisqueCategory[] = [];
     if (this.risqueSelection.engagements) categories.push('ENGAGEMENT');
     if (this.risqueSelection.patrimoines) categories.push('PATRIMOINE');
@@ -357,9 +379,9 @@ export class ContentieuxPageComponent implements OnInit {
         next: (items) => {
           if (cat === 'ENGAGEMENT') this.engagementItems = items as any;
           if (cat === 'PATRIMOINE') this.patrimoineItems = items as any;
-          if (cat === 'GARANTIE_HYPOTHEQUE') this.hypothequeItems = (items as any).map((i: any) => ({ ...i, _json: JSON.stringify(i.payload ?? {}, null, 2) }));
-          if (cat === 'GARANTIE_NANTISSEMENT') this.nantissementItems = (items as any).map((i: any) => ({ ...i, _json: JSON.stringify(i.payload ?? {}, null, 2) }));
-          if (cat === 'GARANTIE_CAUTION') this.cautionItems = (items as any).map((i: any) => ({ ...i, _json: JSON.stringify(i.payload ?? {}, null, 2) }));
+          if (cat === 'GARANTIE_HYPOTHEQUE') this.hypothequeItems = items as any;
+          if (cat === 'GARANTIE_NANTISSEMENT') this.nantissementItems = items as any;
+          if (cat === 'GARANTIE_CAUTION') this.cautionItems = items as any;
           pending -= 1;
           if (pending === 0) {
             this.risqueLoading = false;
@@ -379,7 +401,8 @@ export class ContentieuxPageComponent implements OnInit {
   }
 
   addEngagement(): void {
-    if (!this.selected) return;
+    const dossierId = this.risqueDossierId ?? this.selected?.id ?? null;
+    if (!dossierId) return;
     const requiredOk = this.newEngagement.numeroCompte.trim() && this.newEngagement.titreCreance.trim() && this.newEngagement.numRisque.trim();
     if (!requiredOk) {
       this.showBanner('Veuillez renseigner : N° compte, Titre créance et Num risque.', 'danger');
@@ -395,9 +418,12 @@ export class ContentieuxPageComponent implements OnInit {
       montantRestant: this.newEngagement.montantRestant || '',
       numRisque: this.newEngagement.numRisque.trim()
     };
-    this.risque.create<EngagementPayload>(this.selected.id, 'ENGAGEMENT', payload).subscribe({
+    this.risque.create<EngagementPayload>(dossierId, 'ENGAGEMENT', payload).subscribe({
       next: (created) => {
         this.engagementItems = [created as any, ...this.engagementItems];
+        if (this.showForm && this.editingId && this.editingId === dossierId) {
+          this.editEngagementItems = [created as any, ...this.editEngagementItems];
+        }
         this.newEngagement = this.blankEngagement();
         this.showBanner('Engagement enregistré.', 'success');
       },
@@ -406,9 +432,10 @@ export class ContentieuxPageComponent implements OnInit {
   }
 
   saveEngagement(item: RisqueItem<EngagementPayload> & { _saving?: boolean }): void {
-    if (!this.selected) return;
+    const dossierId = this.risqueDossierId ?? this.selected?.id ?? null;
+    if (!dossierId) return;
     item._saving = true;
-    this.risque.update<EngagementPayload>(this.selected.id, 'ENGAGEMENT', item.id, item.payload).subscribe({
+    this.risque.update<EngagementPayload>(dossierId, 'ENGAGEMENT', item.id, item.payload).subscribe({
       next: (updated) => {
         this.engagementItems = this.engagementItems.map((e) => (e.id === updated.id ? ({ ...updated } as any) : e));
         item._saving = false;
@@ -422,11 +449,12 @@ export class ContentieuxPageComponent implements OnInit {
   }
 
   removeEngagement(item: RisqueItem<EngagementPayload> & { _deleting?: boolean }): void {
-    if (!this.selected) return;
+    const dossierId = this.risqueDossierId ?? this.selected?.id ?? null;
+    if (!dossierId) return;
     const ok = confirm(`Supprimer l’engagement du compte ${item.payload.numeroCompte} ?`);
     if (!ok) return;
     item._deleting = true;
-    this.risque.delete(this.selected.id, 'ENGAGEMENT', item.id).subscribe({
+    this.risque.delete(dossierId, 'ENGAGEMENT', item.id).subscribe({
       next: () => {
         this.engagementItems = this.engagementItems.filter((e) => e.id !== item.id);
         this.showBanner('Engagement supprimé.', 'info');
@@ -439,7 +467,8 @@ export class ContentieuxPageComponent implements OnInit {
   }
 
   addPatrimoine(): void {
-    if (!this.selected) return;
+    const dossierId = this.risqueDossierId ?? this.selected?.id ?? null;
+    if (!dossierId) return;
     const requiredOk = this.newPatrimoine.nom.trim() && this.newPatrimoine.prenom.trim();
     if (!requiredOk) {
       this.showBanner('Veuillez renseigner : Nom et Prénom.', 'danger');
@@ -449,7 +478,7 @@ export class ContentieuxPageComponent implements OnInit {
       nom: this.newPatrimoine.nom.trim(),
       prenom: this.newPatrimoine.prenom.trim(),
       dateNaissance: this.newPatrimoine.dateNaissance || '',
-      numeroDossier: this.selected.reference,
+      numeroDossier: this.risqueDossierRef(),
       biensImmobiliers: this.newPatrimoine.biensImmobiliers || '',
       comptesBancaires: this.newPatrimoine.comptesBancaires || '',
       investissementsActions: this.newPatrimoine.investissementsActions || '',
@@ -457,9 +486,12 @@ export class ContentieuxPageComponent implements OnInit {
       autresDettes: this.newPatrimoine.autresDettes || '',
       dettesFiscalesPenalites: this.newPatrimoine.dettesFiscalesPenalites || ''
     };
-    this.risque.create<PatrimoinePayload>(this.selected.id, 'PATRIMOINE', payload).subscribe({
+    this.risque.create<PatrimoinePayload>(dossierId, 'PATRIMOINE', payload).subscribe({
       next: (created) => {
         this.patrimoineItems = [created as any, ...this.patrimoineItems];
+        if (this.showForm && this.editingId && this.editingId === dossierId) {
+          this.editPatrimoineItems = [created as any, ...this.editPatrimoineItems];
+        }
         this.newPatrimoine = this.blankPatrimoine();
         this.showBanner('Patrimoine enregistré.', 'success');
       },
@@ -468,9 +500,10 @@ export class ContentieuxPageComponent implements OnInit {
   }
 
   savePatrimoine(item: RisqueItem<PatrimoinePayload> & { _saving?: boolean }): void {
-    if (!this.selected) return;
+    const dossierId = this.risqueDossierId ?? this.selected?.id ?? null;
+    if (!dossierId) return;
     item._saving = true;
-    this.risque.update<PatrimoinePayload>(this.selected.id, 'PATRIMOINE', item.id, item.payload).subscribe({
+    this.risque.update<PatrimoinePayload>(dossierId, 'PATRIMOINE', item.id, item.payload).subscribe({
       next: (updated) => {
         this.patrimoineItems = this.patrimoineItems.map((p) => (p.id === updated.id ? ({ ...updated } as any) : p));
         item._saving = false;
@@ -484,11 +517,12 @@ export class ContentieuxPageComponent implements OnInit {
   }
 
   removePatrimoine(item: RisqueItem<PatrimoinePayload> & { _deleting?: boolean }): void {
-    if (!this.selected) return;
+    const dossierId = this.risqueDossierId ?? this.selected?.id ?? null;
+    if (!dossierId) return;
     const ok = confirm(`Supprimer le patrimoine de ${item.payload.nom} ${item.payload.prenom} ?`);
     if (!ok) return;
     item._deleting = true;
-    this.risque.delete(this.selected.id, 'PATRIMOINE', item.id).subscribe({
+    this.risque.delete(dossierId, 'PATRIMOINE', item.id).subscribe({
       next: () => {
         this.patrimoineItems = this.patrimoineItems.filter((p) => p.id !== item.id);
         this.showBanner('Patrimoine supprimé.', 'info');
@@ -501,15 +535,19 @@ export class ContentieuxPageComponent implements OnInit {
   }
 
   addGarantie(category: RisqueCategory): void {
-    if (!this.selected) return;
-    const dossierId = this.selected.id;
+    const dossierId = this.risqueDossierId ?? this.selected?.id ?? null;
+    if (!dossierId) return;
     const payload = this.sanitizeGarantiePayload(category);
     this.risque.create<GarantiePayload>(dossierId, category, payload).subscribe({
       next: (created) => {
-        const item: any = { ...created, _json: JSON.stringify(created.payload ?? {}, null, 2) };
-        if (category === 'GARANTIE_HYPOTHEQUE') this.hypothequeItems = [item, ...this.hypothequeItems];
-        if (category === 'GARANTIE_NANTISSEMENT') this.nantissementItems = [item, ...this.nantissementItems];
-        if (category === 'GARANTIE_CAUTION') this.cautionItems = [item, ...this.cautionItems];
+        if (category === 'GARANTIE_HYPOTHEQUE') this.hypothequeItems = [created as any, ...this.hypothequeItems];
+        if (category === 'GARANTIE_NANTISSEMENT') this.nantissementItems = [created as any, ...this.nantissementItems];
+        if (category === 'GARANTIE_CAUTION') this.cautionItems = [created as any, ...this.cautionItems];
+        if (this.showForm && this.editingId && this.editingId === dossierId) {
+          if (category === 'GARANTIE_HYPOTHEQUE') this.editHypothequeItems = [created as any, ...this.editHypothequeItems];
+          if (category === 'GARANTIE_NANTISSEMENT') this.editNantissementItems = [created as any, ...this.editNantissementItems];
+          if (category === 'GARANTIE_CAUTION') this.editCautionItems = [created as any, ...this.editCautionItems];
+        }
         if (category === 'GARANTIE_HYPOTHEQUE') this.newHypotheque = this.blankHypotheque();
         if (category === 'GARANTIE_NANTISSEMENT') this.newNantissement = this.blankNantissement();
         if (category === 'GARANTIE_CAUTION') this.newCaution = this.blankCaution();
@@ -519,20 +557,69 @@ export class ContentieuxPageComponent implements OnInit {
     });
   }
 
-  saveGarantie(category: RisqueCategory, item: RisqueItem<GarantiePayload> & { _saving?: boolean; _json?: string }): void {
-    if (!this.selected) return;
+  private loadEditRisques(dossierId: number): void {
+    this.editRisquesLoading = true;
+    let pending = 5;
+    const done = () => {
+      pending -= 1;
+      if (pending <= 0) this.editRisquesLoading = false;
+    };
+
+    this.risque.list<EngagementPayload>(dossierId, 'ENGAGEMENT').subscribe({
+      next: (items) => {
+        this.editEngagementItems = items || [];
+        done();
+      },
+      error: () => done()
+    });
+    this.risque.list<PatrimoinePayload>(dossierId, 'PATRIMOINE').subscribe({
+      next: (items) => {
+        this.editPatrimoineItems = items || [];
+        done();
+      },
+      error: () => done()
+    });
+    this.risque.list<GarantiePayload>(dossierId, 'GARANTIE_HYPOTHEQUE').subscribe({
+      next: (items) => {
+        this.editHypothequeItems = items || [];
+        done();
+      },
+      error: () => done()
+    });
+    this.risque.list<GarantiePayload>(dossierId, 'GARANTIE_NANTISSEMENT').subscribe({
+      next: (items) => {
+        this.editNantissementItems = items || [];
+        done();
+      },
+      error: () => done()
+    });
+    this.risque.list<GarantiePayload>(dossierId, 'GARANTIE_CAUTION').subscribe({
+      next: (items) => {
+        this.editCautionItems = items || [];
+        done();
+      },
+      error: () => done()
+    });
+  }
+
+  private resetEditRisques(): void {
+    this.editRisquesLoading = false;
+    this.editEngagementItems = [];
+    this.editPatrimoineItems = [];
+    this.editHypothequeItems = [];
+    this.editNantissementItems = [];
+    this.editCautionItems = [];
+  }
+
+  saveGarantie(category: RisqueCategory, item: RisqueItem<GarantiePayload> & { _saving?: boolean }): void {
+    const dossierId = this.risqueDossierId ?? this.selected?.id ?? null;
+    if (!dossierId) return;
     item._saving = true;
-    let payload = item.payload;
-    if (item._json) {
-      const parsed = this.tryParseJson(item._json);
-      if (parsed) payload = parsed;
-    }
-    this.risque.update<GarantiePayload>(this.selected.id, category, item.id, payload).subscribe({
+    this.risque.update<GarantiePayload>(dossierId, category, item.id, item.payload).subscribe({
       next: (updated) => {
-        const merged: any = { ...updated, _json: JSON.stringify(updated.payload ?? {}, null, 2) };
-        if (category === 'GARANTIE_HYPOTHEQUE') this.hypothequeItems = this.hypothequeItems.map((h) => (h.id === updated.id ? merged : h));
-        if (category === 'GARANTIE_NANTISSEMENT') this.nantissementItems = this.nantissementItems.map((n) => (n.id === updated.id ? merged : n));
-        if (category === 'GARANTIE_CAUTION') this.cautionItems = this.cautionItems.map((c) => (c.id === updated.id ? merged : c));
+        if (category === 'GARANTIE_HYPOTHEQUE') this.hypothequeItems = this.hypothequeItems.map((h) => (h.id === updated.id ? (updated as any) : h));
+        if (category === 'GARANTIE_NANTISSEMENT') this.nantissementItems = this.nantissementItems.map((n) => (n.id === updated.id ? (updated as any) : n));
+        if (category === 'GARANTIE_CAUTION') this.cautionItems = this.cautionItems.map((c) => (c.id === updated.id ? (updated as any) : c));
         item._saving = false;
         this.showBanner('Garantie mise à jour.', 'success');
       },
@@ -544,11 +631,12 @@ export class ContentieuxPageComponent implements OnInit {
   }
 
   removeGarantie(category: RisqueCategory, item: RisqueItem<GarantiePayload> & { _deleting?: boolean }): void {
-    if (!this.selected) return;
+    const dossierId = this.risqueDossierId ?? this.selected?.id ?? null;
+    if (!dossierId) return;
     const ok = confirm('Supprimer cette garantie ?');
     if (!ok) return;
     item._deleting = true;
-    this.risque.delete(this.selected.id, category, item.id).subscribe({
+    this.risque.delete(dossierId, category, item.id).subscribe({
       next: () => {
         if (category === 'GARANTIE_HYPOTHEQUE') this.hypothequeItems = this.hypothequeItems.filter((h) => h.id !== item.id);
         if (category === 'GARANTIE_NANTISSEMENT') this.nantissementItems = this.nantissementItems.filter((n) => n.id !== item.id);
@@ -564,7 +652,7 @@ export class ContentieuxPageComponent implements OnInit {
 
   private blankEngagement(): EngagementPayload {
     return {
-      numeroCompte: '',
+      numeroCompte: this.risqueCompteActuel(),
       titreCreance: '',
       dateContrat: '',
       interetType: '',
@@ -592,8 +680,8 @@ export class ContentieuxPageComponent implements OnInit {
 
   private blankHypotheque(): GarantiePayload {
     return {
-      dossier: this.selected?.reference || '',
-      numeroCompte: '',
+      dossier: this.risqueDossierRef(),
+      numeroCompte: this.risqueCompteActuel(),
       montant: '',
       typeBien: '',
       adresse: ''
@@ -602,8 +690,8 @@ export class ContentieuxPageComponent implements OnInit {
 
   private blankNantissement(): GarantiePayload {
     return {
-      dossier: this.selected?.reference || '',
-      numeroCompte: '',
+      dossier: this.risqueDossierRef(),
+      numeroCompte: this.risqueCompteActuel(),
       description: '',
       montant: ''
     };
@@ -611,27 +699,46 @@ export class ContentieuxPageComponent implements OnInit {
 
   private blankCaution(): GarantiePayload {
     return {
-      numeroDossier: this.selected?.reference || '',
-      numeroCompte: '',
+      numeroDossier: this.risqueDossierRef(),
+      numeroCompte: this.risqueCompteActuel(),
       description: '',
       montantLimite: ''
     };
+  }
+
+  private resetRisqueState(): void {
+    this.risqueStep = 'select';
+    this.risqueLoading = false;
+    this.risqueSelection = {
+      engagements: false,
+      patrimoines: false,
+      hypotheques: false,
+      nantissements: false,
+      cautions: false
+    };
+    this.engagementItems = [];
+    this.patrimoineItems = [];
+    this.hypothequeItems = [];
+    this.nantissementItems = [];
+    this.cautionItems = [];
+    this.newEngagement = this.blankEngagement();
+    this.newPatrimoine = this.blankPatrimoine();
+    this.newHypotheque = this.blankHypotheque();
+    this.newNantissement = this.blankNantissement();
+    this.newCaution = this.blankCaution();
+  }
+
+  private getRisqueDossier(): DossierContentieux | null {
+    const id = this.risqueDossierId ?? this.selected?.id ?? null;
+    if (!id) return null;
+    const fromList = this.dossiers.find((d) => d.id === id);
+    return fromList || this.selected || null;
   }
 
   private sanitizeGarantiePayload(category: RisqueCategory): GarantiePayload {
     if (category === 'GARANTIE_HYPOTHEQUE') return { ...this.newHypotheque };
     if (category === 'GARANTIE_NANTISSEMENT') return { ...this.newNantissement };
     return { ...this.newCaution };
-  }
-
-  private tryParseJson(text: string): Record<string, any> | null {
-    try {
-      const parsed = JSON.parse(text);
-      if (!parsed || typeof parsed !== 'object') return null;
-      return parsed as any;
-    } catch {
-      return null;
-    }
   }
 
   confirmAssign(): void {

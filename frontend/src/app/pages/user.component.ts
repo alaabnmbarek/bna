@@ -23,11 +23,17 @@ export class UserPageComponent implements OnInit {
 
   loading = true;
   saving = false;
+  message = '';
+  isError = false;
 
   private profileService = inject(ProfileService);
 
   ngOnInit() {
     this.loadProfile();
+  }
+
+  avatarUrl(): string {
+    return this.profile.profileImage || 'assets/images/user/avatar-4.jpg';
   }
 
   loadProfile() {
@@ -37,7 +43,8 @@ export class UserPageComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error loading profile', err);
+        this.message = err?.error?.message || 'Erreur lors du chargement du profil';
+        this.isError = true;
         this.loading = false;
       }
     });
@@ -49,6 +56,17 @@ export class UserPageComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.profile.profileImage = e.target.result;
+        this.profileService.updateProfile(this.profile).subscribe({
+          next: (data) => {
+            this.profile = data;
+            this.message = 'Photo de profil mise à jour.';
+            this.isError = false;
+          },
+          error: () => {
+            this.message = 'Erreur lors de la mise à jour de la photo.';
+            this.isError = true;
+          }
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -56,21 +74,34 @@ export class UserPageComponent implements OnInit {
 
   removeImage() {
     this.profile.profileImage = '';
+    this.profileService.updateProfile(this.profile).subscribe({
+      next: (data) => {
+        this.profile = data;
+        this.message = 'Photo de profil supprimée.';
+        this.isError = false;
+      },
+      error: () => {
+        this.message = 'Erreur lors de la suppression de la photo.';
+        this.isError = true;
+      }
+    });
   }
 
   saveProfile() {
     this.saving = true;
+    this.message = '';
+    this.isError = false;
     this.profileService.updateProfile(this.profile).subscribe({
       next: (data) => {
         this.profile = data;
         this.saving = false;
-        alert('Profil mis à jour avec succès');
+        this.message = 'Profil mis à jour avec succès.';
+        this.isError = false;
       },
       error: (err) => {
-        console.error('Error saving profile', err);
         this.saving = false;
-        const errorMessage = err.error?.error || 'Erreur lors de la mise à jour du profil';
-        alert(errorMessage);
+        this.message = err.error?.message || err.error?.error || 'Erreur lors de la mise à jour du profil';
+        this.isError = true;
       }
     });
   }

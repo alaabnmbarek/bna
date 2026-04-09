@@ -75,7 +75,7 @@
             <tr *ngIf="loading">
               <td colspan="6" class="text-center">Chargement...</td>
             </tr>
-            <tr *ngFor="let p of prestataires">
+            <tr *ngFor="let p of prestataires" (click)="onRowClick(p)" [class.admin-row-clickable]="p.type === 'AVOCAT'">
               <td>
                 <div class="admin-cell-strong">{{ p.nom }}</div>
                 <div class="admin-cell-muted admin-truncate">{{ p.specialites || '—' }}</div>
@@ -96,13 +96,13 @@
               </td>
               <td class="text-end">
                 <div class="admin-actions-row">
-                  <button class="btn btn-sm btn-outline-primary admin-action-btn" type="button" (click)="open(p)">
+                  <button class="btn btn-sm btn-outline-primary admin-action-btn" type="button" (click)="$event.stopPropagation(); open(p)">
                     <i class="feather icon-folder"></i><span class="admin-action-text">Missions</span>
                   </button>
-                  <button class="btn btn-sm btn-outline-secondary admin-action-btn" type="button" (click)="edit(p)">
+                  <button class="btn btn-sm btn-outline-secondary admin-action-btn" type="button" (click)="$event.stopPropagation(); edit(p)">
                     <i class="feather icon-edit-2"></i><span class="admin-action-text">Modifier</span>
                   </button>
-                  <button class="btn btn-sm btn-outline-danger admin-action-btn" type="button" (click)="deactivate(p)">
+                  <button class="btn btn-sm btn-outline-danger admin-action-btn" type="button" (click)="$event.stopPropagation(); deactivate(p)">
                     <i class="feather icon-slash"></i><span class="admin-action-text">Désactiver</span>
                   </button>
                 </div>
@@ -299,5 +299,155 @@
         <button type="submit" class="btn btn-primary" [disabled]="honorairesSaving">{{ honorairesSaving ? 'Enregistrement…' : 'Enregistrer' }}</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div *ngIf="showAvocatProfileModalState" class="admin-overlay admin-overlay-animate" (click)="closeAvocatProfileModal()">
+  <div class="admin-modal avocat-profile-modal" (click)="$event.stopPropagation()">
+    <div class="admin-modal-head avocat-profile-head">
+      <div class="avocat-profile-title">
+        <div class="admin-modal-title">Profil Avocat</div>
+        <div class="admin-cell-muted">{{ selectedAvocat?.cabinet || '—' }}</div>
+      </div>
+      <div class="avocat-profile-head-actions">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="editSelectedAvocat()" [disabled]="!selectedAvocat || avocatProfileLoading">
+          <i class="feather icon-edit-2 me-2"></i>Modifier profil
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeAvocatProfileModal()">✕</button>
+      </div>
+    </div>
+
+    <div class="admin-modal-body avocat-profile-body">
+      <div *ngIf="avocatProfileLoading" class="avocat-loading">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        Chargement du profil...
+      </div>
+
+      <div *ngIf="!avocatProfileLoading && selectedAvocat" class="row g-3">
+        <div class="col-12">
+          <div class="avocat-hero">
+            <img class="avocat-avatar" [src]="profileImage" alt="Photo avocat">
+            <div class="avocat-hero-meta">
+              <div class="avocat-name">{{ avocatFullName(selectedAvocat) }}</div>
+              <div class="avocat-badges">
+                <span class="badge bg-info-subtle text-info">AVOCAT</span>
+                <span class="badge" [ngClass]="selectedAvocat.actif ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'">
+                  {{ selectedAvocat.actif ? 'Actif' : 'Inactif' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="avocat-card">
+            <div class="avocat-card-title"><i class="feather icon-user me-2"></i>Informations générales</div>
+            <div class="avocat-kv">
+              <div class="avocat-k"><i class="feather icon-mail me-2"></i>Email</div>
+              <div class="avocat-v">{{ selectedAvocat.email || '—' }}</div>
+            </div>
+            <div class="avocat-kv">
+              <div class="avocat-k"><i class="feather icon-phone me-2"></i>Téléphone</div>
+              <div class="avocat-v">{{ selectedAvocat.telephone || '—' }}</div>
+            </div>
+            <div class="avocat-kv">
+              <div class="avocat-k"><i class="feather icon-map-pin me-2"></i>Adresse</div>
+              <div class="avocat-v">{{ selectedAvocat.adresse || '—' }}</div>
+            </div>
+            <div class="avocat-kv">
+              <div class="avocat-k"><i class="feather icon-briefcase me-2"></i>Cabinet</div>
+              <div class="avocat-v">{{ selectedAvocat.cabinet || '—' }}</div>
+            </div>
+            <div class="avocat-kv">
+              <div class="avocat-k"><i class="feather icon-shield me-2"></i>Nature juridique</div>
+              <div class="avocat-v">{{ formatNatureJuridique(selectedAvocat.natureJuridique) }}</div>
+            </div>
+            <div class="avocat-kv">
+              <div class="avocat-k"><i class="feather icon-star me-2"></i>Spécialités</div>
+              <div class="avocat-v">{{ selectedAvocat.specialites || '—' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="avocat-card">
+            <div class="avocat-card-title"><i class="feather icon-file-text me-2"></i>Note d’honoraires</div>
+            <ng-container *ngIf="latestHonoraire() as note; else noNote">
+              <div class="avocat-kv">
+                <div class="avocat-k">Dossier</div>
+                <div class="avocat-v">{{ note.dossierReference || '—' }}</div>
+              </div>
+              <div class="avocat-kv">
+                <div class="avocat-k">Honoraires</div>
+                <div class="avocat-v">{{ formatMoney(note.montantHonoraires) }}</div>
+              </div>
+              <div class="avocat-kv">
+                <div class="avocat-k">Frais</div>
+                <div class="avocat-v">{{ formatMoney(note.fraisAdministratifs) }}</div>
+              </div>
+              <div class="avocat-kv">
+                <div class="avocat-k">TVA</div>
+                <div class="avocat-v">{{ formatMoney(note.tva) }}</div>
+              </div>
+              <div class="avocat-kv avocat-kv-total">
+                <div class="avocat-k">TOTAL</div>
+                <div class="avocat-v">{{ formatMoney(note.total) }}</div>
+              </div>
+              <div class="admin-cell-muted mt-2">Notes enregistrées : {{ avocatNotes.length }}</div>
+            </ng-container>
+            <ng-template #noNote>
+              <div class="admin-cell-muted">Aucune note d’honoraires.</div>
+            </ng-template>
+          </div>
+
+          <div class="avocat-card mt-3">
+            <div class="avocat-card-title"><i class="feather icon-bar-chart-2 me-2"></i>Statistiques</div>
+            <div class="avocat-stats">
+              <div class="avocat-stat">
+                <div class="avocat-stat-n">{{ avocatMissions.length }}</div>
+                <div class="avocat-stat-l">Affaires</div>
+              </div>
+              <div class="avocat-stat">
+                <div class="avocat-stat-n">{{ avocatAffairesTraitees() }}</div>
+                <div class="avocat-stat-l">Traitées</div>
+              </div>
+              <div class="avocat-stat">
+                <div class="avocat-stat-n">{{ selectedAvocat.noteMoyenne ?? '—' }}</div>
+                <div class="avocat-stat-l">Note</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="avocat-card">
+            <div class="avocat-card-title"><i class="feather icon-folder me-2"></i>Dossiers associés</div>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0 align-middle">
+                <thead>
+                  <tr>
+                    <th>Numéro dossier</th>
+                    <th>Type</th>
+                    <th>Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngIf="avocatAssociatedRows.length === 0">
+                    <td colspan="3" class="admin-cell-muted">Aucun dossier associé.</td>
+                  </tr>
+                  <tr *ngFor="let r of avocatAssociatedRows">
+                    <td>{{ r.numero || '—' }}</td>
+                    <td>{{ r.type }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="dossierStatusBadge(r.statut)">{{ r.statut }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

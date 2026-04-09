@@ -1,25 +1,83 @@
-<div class="auth-wrapper">
-  <div class="auth-content text-center">
-    <h3 class="text-white mb-4">E-Banking</h3>
-    <div class="card borderless">
-      <div class="row align-items-center text-center">
-        <div class="col-md-12">
-          <form class="card-body" (ngSubmit)="submit()">
-            <h4 class="mb-3 f-w-400">Signup</h4>
-            <div class="input-group mb-3">
-              <input type="text" class="form-control" placeholder="Username" [(ngModel)]="username" name="username" required>
-            </div>
-            <div class="input-group mb-4">
-              <input type="password" class="form-control" placeholder="Password" [(ngModel)]="password" name="password" required>
-            </div>
-            <div class="input-group mb-4">
-              <input type="password" class="form-control" placeholder="Confirm Password" [(ngModel)]="confirmPassword" name="confirmPassword" required>
-            </div>
-            <button class="btn btn-block btn-primary mb-4" type="submit">Signup</button>
-            <p class="mb-0 text-muted">Already have an account? <a [routerLink]="['/login']" class="f-w-400">Signin</a></p>
-          </form>
-        </div>
+<div class="auth-wrapper register-wrapper">
+  <div class="auth-content">
+    <div class="register-card">
+      <div class="register-head">
+        <div class="register-title">S’inscrire</div>
+        <div class="register-subtitle">Créez votre compte en quelques secondes.</div>
       </div>
+
+      <form (ngSubmit)="submit()" class="register-form">
+        <div class="mb-3">
+          <label class="form-label">Identifiant</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="feather icon-user"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Votre identifiant"
+              [(ngModel)]="username"
+              name="username"
+              autocomplete="username"
+              [disabled]="loading"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Mot de passe</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="feather icon-lock"></i></span>
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              class="form-control"
+              placeholder="Votre mot de passe"
+              [(ngModel)]="password"
+              name="password"
+              autocomplete="new-password"
+              [disabled]="loading"
+              required
+            >
+            <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword" [disabled]="loading">
+              <i class="feather" [ngClass]="showPassword ? 'icon-eye-off' : 'icon-eye'"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label">Confirmer le mot de passe</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="feather icon-shield"></i></span>
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              class="form-control"
+              placeholder="Confirmez le mot de passe"
+              [(ngModel)]="confirmPassword"
+              name="confirmPassword"
+              autocomplete="new-password"
+              [disabled]="loading"
+              required
+            >
+            <button type="button" class="btn btn-outline-secondary" (click)="showConfirmPassword = !showConfirmPassword" [disabled]="loading">
+              <i class="feather" [ngClass]="showConfirmPassword ? 'icon-eye-off' : 'icon-eye'"></i>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="message" class="alert mb-3" [ngClass]="isError ? 'alert-danger' : 'alert-success'">
+          {{ message }}
+        </div>
+
+        <button class="btn btn-primary register-submit" type="submit" [disabled]="loading">
+          <i class="feather icon-user-plus me-2"></i>
+          {{ loading ? 'En cours...' : 'S’inscrire' }}
+        </button>
+
+        <div class="register-footer">
+          <span>Vous avez déjà un compte ?</span>
+          <a [routerLink]="['/login']">Se connecter</a>
+        </div>
+      </form>
     </div>
   </div>
 </div>

@@ -228,28 +228,142 @@
           </div>
         </div>
 
-        <div class="col-12 col-xl-6">
+        <div class="col-12" *ngIf="editingId">
           <div class="contentieux-card">
-            <div class="contentieux-card-title">Suivi administratif et financier</div>
+            <div class="contentieux-card-title d-flex align-items-center justify-content-between">
+              <span>Risques associés</span>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="openRisqueForEditing()">
+                <i class="feather icon-plus-circle me-2"></i>Ajouter / Modifier
+              </button>
+            </div>
 
-            <div class="row g-3 mt-1">
+            <div *ngIf="editRisquesLoading" class="mt-2">
+              <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+              Chargement des risques...
+            </div>
+
+            <div *ngIf="!editRisquesLoading" class="row g-3 mt-1">
               <div class="col-12">
-                <label class="form-label contentieux-label">Observations administratives</label>
-                <textarea class="form-control contentieux-input contentieux-textarea" [(ngModel)]="form.observationsAdministratives" name="observationsAdministratives" rows="6" placeholder="Décisions prises, affectations, actions administratives..."></textarea>
+                <div class="fw-bold mb-2">Engagements</div>
+                <div class="table-responsive card">
+                  <table class="table table-hover mb-0">
+                    <thead>
+                      <tr>
+                        <th>N° compte</th>
+                        <th>Titre</th>
+                        <th>Num risque</th>
+                        <th class="text-end">Montant restant</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngIf="editEngagementItems.length === 0">
+                        <td colspan="4">Aucun engagement.</td>
+                      </tr>
+                      <tr *ngFor="let e of editEngagementItems">
+                        <td class="contentieux-mono">{{ e.payload?.numeroCompte || '—' }}</td>
+                        <td>{{ e.payload?.titreCreance || '—' }}</td>
+                        <td class="contentieux-mono">{{ e.payload?.numRisque || '—' }}</td>
+                        <td class="text-end contentieux-mono">{{ e.payload?.montantRestant || '—' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               <div class="col-12">
-                <label class="form-label contentieux-label">Observations financières</label>
-                <textarea class="form-control contentieux-input contentieux-textarea" [(ngModel)]="form.observationsFinancieres" name="observationsFinancieres" rows="6" placeholder="État financier, montant dû, recouvrement, impacts..."></textarea>
+                <div class="fw-bold mb-2">Patrimoines</div>
+                <div class="table-responsive card">
+                  <table class="table table-hover mb-0">
+                    <thead>
+                      <tr>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Date naissance</th>
+                        <th>Numéro dossier</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngIf="editPatrimoineItems.length === 0">
+                        <td colspan="4">Aucun patrimoine.</td>
+                      </tr>
+                      <tr *ngFor="let p of editPatrimoineItems">
+                        <td>{{ p.payload?.nom || '—' }}</td>
+                        <td>{{ p.payload?.prenom || '—' }}</td>
+                        <td class="contentieux-mono">{{ p.payload?.dateNaissance || '—' }}</td>
+                        <td class="contentieux-mono">{{ p.payload?.numeroDossier || '—' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
-              <div class="col-12 col-md-6">
-                <label class="form-label contentieux-label">Date de clôture</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.dateCloture" name="dateCloture" type="date">
+              <div class="col-12 col-xl-6">
+                <div class="fw-bold mb-2">Garanties — Hypothèques</div>
+                <div class="table-responsive card">
+                  <table class="table table-hover mb-0">
+                    <thead>
+                      <tr>
+                        <th>N° compte</th>
+                        <th class="text-end">Montant</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngIf="editHypothequeItems.length === 0">
+                        <td colspan="2">Aucune hypothèque.</td>
+                      </tr>
+                      <tr *ngFor="let h of editHypothequeItems">
+                        <td class="contentieux-mono">{{ h.payload?.numeroCompte || '—' }}</td>
+                        <td class="text-end contentieux-mono">{{ h.payload?.montant || '—' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              <div class="col-12 col-md-6">
-                <label class="form-label contentieux-label">Motif de clôture</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.motifCloture" name="motifCloture" placeholder="Décision, règlement, annulation...">
+
+              <div class="col-12 col-xl-6">
+                <div class="fw-bold mb-2">Garanties — Nantissements</div>
+                <div class="table-responsive card">
+                  <table class="table table-hover mb-0">
+                    <thead>
+                      <tr>
+                        <th>N° compte</th>
+                        <th class="text-end">Montant</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngIf="editNantissementItems.length === 0">
+                        <td colspan="2">Aucun nantissement.</td>
+                      </tr>
+                      <tr *ngFor="let n of editNantissementItems">
+                        <td class="contentieux-mono">{{ n.payload?.numeroCompte || '—' }}</td>
+                        <td class="text-end contentieux-mono">{{ n.payload?.montant || '—' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="fw-bold mb-2">Garanties — Cautions</div>
+                <div class="table-responsive card">
+                  <table class="table table-hover mb-0">
+                    <thead>
+                      <tr>
+                        <th>N° compte</th>
+                        <th class="text-end">Montant limite</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngIf="editCautionItems.length === 0">
+                        <td colspan="2">Aucune caution.</td>
+                      </tr>
+                      <tr *ngFor="let c of editCautionItems">
+                        <td class="contentieux-mono">{{ c.payload?.numeroCompte || '—' }}</td>
+                        <td class="text-end contentieux-mono">{{ c.payload?.montantLimite || '—' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -351,7 +465,7 @@
   <div class="contentieux-modal risque-modal" (click)="$event.stopPropagation()">
     <div class="contentieux-modal-head">
       <div class="risque-head">
-        <div class="contentieux-modal-title">Données risque — {{ selected?.reference }}</div>
+        <div class="contentieux-modal-title">Données risque — {{ risqueDossierRef() || selected?.reference }}</div>
         <div class="risque-head-meta">
           @if (risqueStep === 'select') { <span class="risque-pill">Étape 1/2</span> }
           @else { <span class="risque-pill">Étape 2/2</span> }
@@ -361,6 +475,13 @@
     </div>
 
     <div class="contentieux-modal-body">
+      <div class="risque-dossier">
+        <div class="risque-dossier-label">Dossier sélectionné</div>
+        <select class="form-select contentieux-input risque-dossier-select" [(ngModel)]="risqueDossierId" name="risqueDossierId" (change)="onRisqueDossierChange()">
+          <option *ngFor="let d of dossiers" [ngValue]="d.id">{{ dossierLabel(d) }}</option>
+        </select>
+      </div>
+
       @if (risqueStep === 'select') {
         <div class="risque-intro">
           <div class="risque-intro-title">Que voulez-vous gérer pour ce dossier ?</div>
@@ -612,20 +733,16 @@
                     <tr>
                       <th>N° compte</th>
                       <th>Montant</th>
-                      <th>Détails (JSON)</th>
                       <th class="text-end">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr *ngIf="hypothequeItems.length === 0">
-                      <td colspan="4">Aucune hypothèque.</td>
+                      <td colspan="3">Aucune hypothèque.</td>
                     </tr>
                     <tr *ngFor="let h of hypothequeItems">
                       <td><input class="form-control form-control-sm" [(ngModel)]="h.payload.numeroCompte" [name]="'h_compte_'+h.id"></td>
                       <td><input class="form-control form-control-sm" [(ngModel)]="h.payload.montant" [name]="'h_montant_'+h.id"></td>
-                      <td style="min-width: 340px">
-                        <textarea class="form-control form-control-sm" rows="4" [(ngModel)]="h._json" [name]="'h_json_'+h.id"></textarea>
-                      </td>
                       <td class="text-end">
                         <button class="btn btn-sm btn-outline-secondary me-2" type="button" (click)="saveGarantie('GARANTIE_HYPOTHEQUE', h)" [disabled]="h._saving">Enregistrer</button>
                         <button class="btn btn-sm btn-outline-danger" type="button" (click)="removeGarantie('GARANTIE_HYPOTHEQUE', h)" [disabled]="h._deleting">Supprimer</button>
@@ -665,20 +782,16 @@
                     <tr>
                       <th>N° compte</th>
                       <th>Montant</th>
-                      <th>Détails (JSON)</th>
                       <th class="text-end">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr *ngIf="nantissementItems.length === 0">
-                      <td colspan="4">Aucun nantissement.</td>
+                      <td colspan="3">Aucun nantissement.</td>
                     </tr>
                     <tr *ngFor="let n of nantissementItems">
                       <td><input class="form-control form-control-sm" [(ngModel)]="n.payload.numeroCompte" [name]="'n_compte_'+n.id"></td>
                       <td><input class="form-control form-control-sm" [(ngModel)]="n.payload.montant" [name]="'n_montant_'+n.id"></td>
-                      <td style="min-width: 340px">
-                        <textarea class="form-control form-control-sm" rows="4" [(ngModel)]="n._json" [name]="'n_json_'+n.id"></textarea>
-                      </td>
                       <td class="text-end">
                         <button class="btn btn-sm btn-outline-secondary me-2" type="button" (click)="saveGarantie('GARANTIE_NANTISSEMENT', n)" [disabled]="n._saving">Enregistrer</button>
                         <button class="btn btn-sm btn-outline-danger" type="button" (click)="removeGarantie('GARANTIE_NANTISSEMENT', n)" [disabled]="n._deleting">Supprimer</button>
@@ -714,20 +827,16 @@
                     <tr>
                       <th>N° compte</th>
                       <th>Montant limite</th>
-                      <th>Détails (JSON)</th>
                       <th class="text-end">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr *ngIf="cautionItems.length === 0">
-                      <td colspan="4">Aucune caution.</td>
+                      <td colspan="3">Aucune caution.</td>
                     </tr>
                     <tr *ngFor="let c of cautionItems">
                       <td><input class="form-control form-control-sm" [(ngModel)]="c.payload.numeroCompte" [name]="'c_compte_'+c.id"></td>
                       <td><input class="form-control form-control-sm" [(ngModel)]="c.payload.montantLimite" [name]="'c_montant_'+c.id"></td>
-                      <td style="min-width: 340px">
-                        <textarea class="form-control form-control-sm" rows="4" [(ngModel)]="c._json" [name]="'c_json_'+c.id"></textarea>
-                      </td>
                       <td class="text-end">
                         <button class="btn btn-sm btn-outline-secondary me-2" type="button" (click)="saveGarantie('GARANTIE_CAUTION', c)" [disabled]="c._saving">Enregistrer</button>
                         <button class="btn btn-sm btn-outline-danger" type="button" (click)="removeGarantie('GARANTIE_CAUTION', c)" [disabled]="c._deleting">Supprimer</button>

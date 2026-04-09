@@ -1,0 +1,88 @@
+.register-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 10px;
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 520px at 12% 8%, rgba(0, 104, 71, 0.32) 0%, rgba(0, 104, 71, 0.00) 60%),
+    radial-gradient(900px 420px at 92% 18%, rgba(0, 104, 71, 0.22) 0%, rgba(0, 104, 71, 0.00) 55%),
+    linear-gradient(180deg, #ffffff 0%, rgba(0, 104, 71, 0.16) 100%);
+}
+
+.register-card {
+  width: min(520px, 100%);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 20px;
+  box-shadow: 0 18px 70px rgba(15, 23, 42, 0.20);
+  padding: 22px 22px;
+}
+
+.register-head {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.register-title {
+  font-size: 22px;
+  font-weight: 1100;
+  color: rgba(15, 23, 42, 0.92);
+}
+
+.register-subtitle {
+  margin-top: 6px;
+  font-weight: 800;
+  color: rgba(15, 23, 42, 0.60);
+  font-size: 13px;
+}
+
+.register-form .form-label {
+  font-weight: 800;
+  color: rgba(15, 23, 42, 0.85);
+}
+
+.register-form .input-group-text {
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.register-form .form-control {
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.register-form .btn {
+  border-radius: 14px;
+}
+
+.register-submit {
+  width: 100%;
+  padding: 10px 18px;
+  font-weight: 900;
+}
+
+.register-footer {
+  margin-top: 14px;
+  text-align: center;
+  font-weight: 800;
+  color: rgba(15, 23, 42, 0.60);
+}
+
+.register-footer a {
+  margin-left: 6px;
+  color: rgba(0, 104, 71, 0.95);
+  text-decoration: none;
+  font-weight: 1000;
+}
+
+.register-footer a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 575px) {
+  .register-card {
+    padding: 18px 16px;
+  }
+}

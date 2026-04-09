@@ -1,3 +1,69 @@
+.profile-wrapper {
+  padding: 10px 6px;
+}
+
+.profile-hero {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--app-border);
+  background: linear-gradient(135deg, rgba(0, 104, 71, 0.10) 0%, rgba(15, 23, 42, 0.03) 55%, rgba(255, 255, 255, 0.00) 100%);
+}
+
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  object-fit: cover;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.profile-name {
+  font-weight: 1100;
+  color: var(--app-text);
+  font-size: 18px;
+}
+
+.profile-sub {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-username {
+  font-weight: 850;
+  color: var(--app-text-muted);
+}
+
+.profile-at {
+  opacity: 0.75;
+  margin-right: 1px;
+}
+
+.profile-hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.profile-btn {
+  border-radius: 14px;
+}
+
+.profile-photo-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+
 .profile-img-container {
   display: inline-block;
   padding: 5px;
@@ -16,8 +82,10 @@
   }
 }
 
-.text-right {
-  text-align: right;
+.profile-photo-hint {
+  font-weight: 800;
+  color: var(--app-text-muted);
+  font-size: 12px;
 }
 
 .form-label {
@@ -28,4 +96,50 @@
 .form-control:disabled {
   background-color: #f4f7fa;
   cursor: not-allowed;
+}
+
+.profile-help {
+  margin-top: 6px;
+  font-weight: 800;
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.profile-submit {
+  border-radius: 14px;
+  padding: 10px 18px;
+}
+
+@media (max-width: 575px) {
+  .profile-wrapper {
+    padding: 8px 0;
+  }
+  .profile-hero {
+    grid-template-columns: 64px 1fr;
+    grid-template-rows: auto auto;
+  }
+  .profile-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+  }
+  .profile-hero-actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+  .profile-btn {
+    width: 100%;
+  }
+  .profile-actions {
+    justify-content: stretch;
+  }
+  .profile-submit {
+    width: 100%;
+  }
 }

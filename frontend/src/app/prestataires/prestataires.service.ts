@@ -114,4 +114,8 @@ export class PrestatairesService {
   createNoteHonoraire(prestataireId: number, payload: CreateNoteHonoraireRequest): Observable<NoteHonoraire> {
     return this.http.post<NoteHonoraire>(`${this.prestatairesUrl}/${prestataireId}/notes-honoraires`, payload);
   }
+
+  listNotesHonoraires(prestataireId: number): Observable<NoteHonoraire[]> {
+    return this.http.get<NoteHonoraire[]>(`${this.prestatairesUrl}/${prestataireId}/notes-honoraires`);
+  }
 }
