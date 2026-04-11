@@ -7,6 +7,6 @@ import java.util.Optional;
 
 public interface DossierContentieuxRepository extends JpaRepository<DossierContentieuxEntity, Long> {
     List<DossierContentieuxEntity> findByDeletedFalseOrderByCreatedAtDesc();
+    List<DossierContentieuxEntity> findByDeletedFalseAndChargeDossierIdOrderByCreatedAtDesc(Long chargeDossierId);
     Optional<DossierContentieuxEntity> findTopByReferenceStartingWithOrderByReferenceDesc(String prefix);
 }
-

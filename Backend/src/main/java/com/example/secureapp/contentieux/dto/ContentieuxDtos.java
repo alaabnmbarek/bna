@@ -14,6 +14,7 @@ public class ContentieuxDtos {
             String ancienCompte,
             String agence,
             String chargeDossier,
+            Long chargeDossierId,
             LocalDate dateOuverture,
             BigDecimal montantEngage,
             BigDecimal montantRecupere,
@@ -23,7 +24,7 @@ public class ContentieuxDtos {
             String observationsFinancieres
     ) {}
 
-    public record AssignRequest(String chargeDossier) {}
+    public record AssignRequest(String chargeDossier, Long chargeDossierId) {}
     public record ChangeAccountRequest(String nouveauCompte) {}
     public record CloseRequest(LocalDate dateCloture, String motifCloture) {}
 
@@ -37,6 +38,7 @@ public class ContentieuxDtos {
             String ancienCompte,
             String agence,
             String chargeDossier,
+            Long chargeDossierId,
             LocalDate dateOuverture,
             BigDecimal montantEngage,
             BigDecimal montantRecupere,

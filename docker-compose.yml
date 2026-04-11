@@ -23,6 +23,8 @@ services:
 
   backend:
     build: ./backend
+    env_file:
+      - ./.env
     environment:
       DB_HOST: db
       DB_PORT: 3306
@@ -32,17 +34,6 @@ services:
       JWT_SECRET: ${JWT_SECRET:-ZmFrZV9zZWNyZXRfY2hhbmdldGhpcy10b2ludGVuZC1iYXNlNjQ=}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-900000}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4200}
-      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:4200}
-      MAIL_HOST: ${MAIL_HOST:-mailhog}
-      MAIL_PORT: ${MAIL_PORT:-1025}
-      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-false}
-      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-false}
-      MAIL_SMTP_STARTTLS_REQUIRED: ${MAIL_SMTP_STARTTLS_REQUIRED:-false}
-      MAIL_SMTP_SSL_TRUST: ${MAIL_SMTP_SSL_TRUST:-smtp.gmail.com}
-      MAIL_DEBUG: ${MAIL_DEBUG:-false}
-      MAIL_USERNAME: ${MAIL_USERNAME:-}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-      MAIL_FROM: ${MAIL_FROM:-no-reply@bna.local}
     ports:
       - "8080:8080"
     depends_on:

@@ -14,6 +14,7 @@ export interface DossierContentieux {
   ancienCompte?: string | null;
   agence?: string | null;
   chargeDossier?: string | null;
+  chargeDossierId?: number | null;
   dateOuverture?: string | null;
   montantEngage?: number | null;
   montantRecupere?: number | null;
@@ -37,6 +38,7 @@ export interface CreateDossierRequest {
   ancienCompte?: string;
   agence?: string;
   chargeDossier?: string;
+  chargeDossierId?: number | null;
   dateOuverture?: string;
   montantEngage?: number | string;
   montantRecupere?: number | string;
@@ -77,8 +79,8 @@ export class ContentieuxService {
     return this.http.patch<DossierContentieux>(`${this.url}/${id}/validate`, {});
   }
 
-  assign(id: number, chargeDossier: string): Observable<DossierContentieux> {
-    return this.http.patch<DossierContentieux>(`${this.url}/${id}/assign`, { chargeDossier });
+  assign(id: number, payload: { chargeDossierId?: number | null; chargeDossier?: string | null }): Observable<DossierContentieux> {
+    return this.http.patch<DossierContentieux>(`${this.url}/${id}/assign`, payload);
   }
 
   changeAccount(id: number, nouveauCompte: string): Observable<DossierContentieux> {

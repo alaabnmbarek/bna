@@ -48,10 +48,10 @@ export class ContentieuxPageComponent implements OnInit {
   search = '';
   loading = false;
   profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
+  currentUserId: number | null = null;
 
   chargeOptions: ChargeDossierOption[] = [];
   chargeOptionsLoading = false;
-  agents: string[] = ['Non affecté'];
 
   banner: { kind: 'success' | 'info' | 'danger'; message: string } | null = null;
   private bannerTimer: ReturnType<typeof setTimeout> | null = null;
@@ -70,6 +70,7 @@ export class ContentieuxPageComponent implements OnInit {
       } else {
         this.profileImage = 'assets/images/user/avatar-4.jpg';
       }
+      this.currentUserId = profile?.id ?? null;
     });
 
     if (this.auth.token()) {
@@ -130,7 +131,7 @@ export class ContentieuxPageComponent implements OnInit {
   newNantissement: GarantiePayload = {};
   newCaution: GarantiePayload = {};
 
-  assignTo = 'Non affecté';
+  assignToId: number | null = null;
   newCompte = '';
   closeDate = '';
   closeMotif = '';
@@ -141,7 +142,7 @@ export class ContentieuxPageComponent implements OnInit {
     nomDebiteur: '',
     compteActuel: '',
     agence: '',
-    chargeDossier: '',
+    chargeDossierId: null as number | null,
     dateOuverture: '',
     montantEngage: '',
     montantRecupere: '',
@@ -169,7 +170,6 @@ export class ContentieuxPageComponent implements OnInit {
     this.contentieux.listChargesDossiers().subscribe({
       next: (rows) => {
         this.chargeOptions = rows || [];
-        this.agents = ['Non affecté', ...this.chargeOptions.map((c) => c.label)];
         this.chargeOptionsLoading = false;
       },
       error: () => {
@@ -208,7 +208,7 @@ export class ContentieuxPageComponent implements OnInit {
       nomDebiteur: '',
       compteActuel: '',
       agence: '',
-      chargeDossier: '',
+      chargeDossierId: this.auth.hasRole('ROLE_CHARGE_DOSSIER') ? this.currentUserId : null,
       dateOuverture: this.today(),
       montantEngage: '',
       montantRecupere: '',
@@ -231,7 +231,7 @@ export class ContentieuxPageComponent implements OnInit {
       nomDebiteur: dossier.nomDebiteur || '',
       compteActuel: dossier.compteActuel || '',
       agence: dossier.agence || '',
-      chargeDossier: dossier.chargeDossier || '',
+      chargeDossierId: dossier.chargeDossierId ?? null,
       dateOuverture: dossier.dateOuverture || '',
       montantEngage: dossier.montantEngage != null ? String(dossier.montantEngage) : '',
       montantRecupere: dossier.montantRecupere != null ? String(dossier.montantRecupere) : '',
@@ -252,7 +252,7 @@ export class ContentieuxPageComponent implements OnInit {
       nomDebiteur: this.form.nomDebiteur,
       compteActuel: this.form.compteActuel,
       agence: this.form.agence,
-      chargeDossier: this.form.chargeDossier || undefined,
+      chargeDossierId: this.form.chargeDossierId ?? undefined,
       dateOuverture: this.form.dateOuverture || undefined,
       montantEngage: this.toNumberOrUndefined(this.form.montantEngage),
       montantRecupere: this.toNumberOrUndefined(this.form.montantRecupere)
@@ -296,7 +296,7 @@ export class ContentieuxPageComponent implements OnInit {
     }
     this.selected = dossier;
     this.loadChargeOptions();
-    this.assignTo = dossier.chargeDossier || 'Non affecté';
+    this.assignToId = dossier.chargeDossierId ?? null;
     this.actionDialogType = 'assign';
     this.showActionDialog = true;
   }
@@ -743,7 +743,7 @@ export class ContentieuxPageComponent implements OnInit {
 
   confirmAssign(): void {
     if (!this.selected) return;
-    this.contentieux.assign(this.selected.id, this.assignTo).subscribe({
+    this.contentieux.assign(this.selected.id, { chargeDossierId: this.assignToId }).subscribe({
       next: (updated) => {
         this.dossiers = this.dossiers.map((d) => (d.id === updated.id ? updated : d));
         this.showBanner('Affectation enregistrée.', 'success');

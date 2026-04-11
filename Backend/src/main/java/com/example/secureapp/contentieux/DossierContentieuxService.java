@@ -1,6 +1,9 @@
 package com.example.secureapp.contentieux;
 
 import com.example.secureapp.contentieux.dto.ContentieuxDtos;
+import com.example.secureapp.user.UserEntity;
+import com.example.secureapp.user.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,13 +16,21 @@ import java.util.List;
 @Service
 public class DossierContentieuxService {
     private final DossierContentieuxRepository repository;
+    private final UserRepository userRepository;
 
-    public DossierContentieuxService(DossierContentieuxRepository repository) {
+    public DossierContentieuxService(DossierContentieuxRepository repository, UserRepository userRepository) {
         this.repository = repository;
+        this.userRepository = userRepository;
     }
 
-    public List<ContentieuxDtos.DossierResponse> list() {
-        return repository.findByDeletedFalseOrderByCreatedAtDesc().stream()
+    public List<ContentieuxDtos.DossierResponse> list(Authentication authentication) {
+        List<DossierContentieuxEntity> rows;
+        if (isChargeDossier(authentication)) {
+            rows = repository.findByDeletedFalseAndChargeDossierIdOrderByCreatedAtDesc(requireCurrentUserId(authentication));
+        } else {
+            rows = repository.findByDeletedFalseOrderByCreatedAtDesc();
+        }
+        return rows.stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -35,7 +46,7 @@ public class DossierContentieuxService {
         dossier.setCompteActuel(request.compteActuel());
         dossier.setAncienCompte(request.ancienCompte());
         dossier.setAgence(request.agence());
-        dossier.setChargeDossier(request.chargeDossier());
+        applyChargeAssignmentFromRequest(dossier, request.chargeDossierId(), request.chargeDossier(), authentication);
         dossier.setDateOuverture(request.dateOuverture() != null ? request.dateOuverture() : LocalDate.now());
         dossier.setMontantEngage(nvl(request.montantEngage()));
         dossier.setMontantRecupere(nvl(request.montantRecupere()));
@@ -54,7 +65,7 @@ public class DossierContentieuxService {
 
     @Transactional
     public ContentieuxDtos.DossierResponse validate(Long id, Authentication authentication) {
-        DossierContentieuxEntity dossier = repository.findById(id).orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
+        DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
         dossier.setStatut(ContentieuxStatus.OUVERT);
         dossier.setValidatedBy(authentication.getName());
         dossier.setValidatedAt(LocalDateTime.now());
@@ -63,8 +74,8 @@ public class DossierContentieuxService {
     }
 
     @Transactional
-    public ContentieuxDtos.DossierResponse update(Long id, ContentieuxDtos.CreateDossierRequest request) {
-        DossierContentieuxEntity dossier = repository.findById(id).orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
+    public ContentieuxDtos.DossierResponse update(Long id, ContentieuxDtos.CreateDossierRequest request, Authentication authentication) {
+        DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
         dossier.setObjet(request.objet());
         dossier.setNomDebiteur(request.nomDebiteur());
         dossier.setAgence(request.agence());
@@ -75,7 +86,7 @@ public class DossierContentieuxService {
         if (dossier.getStatut() != ContentieuxStatus.A_VALIDER) {
             dossier.setCompteActuel(request.compteActuel());
             dossier.setAncienCompte(request.ancienCompte());
-            dossier.setChargeDossier(request.chargeDossier());
+            applyChargeAssignmentFromRequest(dossier, request.chargeDossierId(), request.chargeDossier(), authentication);
             if (request.dateOuverture() != null) dossier.setDateOuverture(request.dateOuverture());
             dossier.setMontantEngage(nvl(request.montantEngage()));
             dossier.setMontantRecupere(nvl(request.montantRecupere()));
@@ -84,24 +95,22 @@ public class DossierContentieuxService {
     }
 
     @Transactional
-    public ContentieuxDtos.DossierResponse assign(Long id, ContentieuxDtos.AssignRequest request) {
-        DossierContentieuxEntity dossier = repository.findById(id).orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
+    public ContentieuxDtos.DossierResponse assign(Long id, ContentieuxDtos.AssignRequest request, Authentication authentication) {
+        DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
         if (dossier.getStatut() == ContentieuxStatus.A_VALIDER) {
             throw new RuntimeException("Validation requise");
         }
-        dossier.setChargeDossier(request.chargeDossier());
+        applyChargeAssignmentFromRequest(dossier, request.chargeDossierId(), request.chargeDossier(), authentication);
         if ((dossier.getStatut() == ContentieuxStatus.OUVERT || dossier.getStatut() == ContentieuxStatus.REOUVERT)
-                && request.chargeDossier() != null
-                && !request.chargeDossier().isBlank()
-                && !"Non affecté".equalsIgnoreCase(request.chargeDossier())) {
+                && dossier.getChargeDossierId() != null) {
             dossier.setStatut(ContentieuxStatus.AFFECTE);
         }
         return toResponse(repository.save(dossier));
     }
 
     @Transactional
-    public ContentieuxDtos.DossierResponse changeAccount(Long id, ContentieuxDtos.ChangeAccountRequest request) {
-        DossierContentieuxEntity dossier = repository.findById(id).orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
+    public ContentieuxDtos.DossierResponse changeAccount(Long id, ContentieuxDtos.ChangeAccountRequest request, Authentication authentication) {
+        DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
         if (dossier.getStatut() == ContentieuxStatus.A_VALIDER) {
             throw new RuntimeException("Validation requise");
         }
@@ -116,8 +125,8 @@ public class DossierContentieuxService {
     }
 
     @Transactional
-    public ContentieuxDtos.DossierResponse close(Long id, ContentieuxDtos.CloseRequest request) {
-        DossierContentieuxEntity dossier = repository.findById(id).orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
+    public ContentieuxDtos.DossierResponse close(Long id, ContentieuxDtos.CloseRequest request, Authentication authentication) {
+        DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
         if (dossier.getStatut() == ContentieuxStatus.A_VALIDER) {
             throw new RuntimeException("Validation requise");
         }
@@ -128,8 +137,8 @@ public class DossierContentieuxService {
     }
 
     @Transactional
-    public ContentieuxDtos.DossierResponse reopen(Long id) {
-        DossierContentieuxEntity dossier = repository.findById(id).orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
+    public ContentieuxDtos.DossierResponse reopen(Long id, Authentication authentication) {
+        DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
         dossier.setStatut(ContentieuxStatus.REOUVERT);
         dossier.setDateCloture(null);
         dossier.setMotifCloture(null);
@@ -137,8 +146,8 @@ public class DossierContentieuxService {
     }
 
     @Transactional
-    public void delete(Long id) {
-        DossierContentieuxEntity dossier = repository.findById(id).orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
+    public void delete(Long id, Authentication authentication) {
+        DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
         dossier.setDeleted(true);
         repository.save(dossier);
     }
@@ -154,6 +163,7 @@ public class DossierContentieuxService {
                 d.getAncienCompte(),
                 d.getAgence(),
                 d.getChargeDossier(),
+                d.getChargeDossierId(),
                 d.getDateOuverture(),
                 d.getMontantEngage(),
                 d.getMontantRecupere(),
@@ -196,6 +206,63 @@ public class DossierContentieuxService {
             if (set.contains(role)) return true;
         }
         return false;
+    }
+
+    private boolean isChargeDossier(Authentication authentication) {
+        return hasAnyRole(authentication, "ROLE_CHARGE_DOSSIER");
+    }
+
+    private Long requireCurrentUserId(Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : null;
+        if (username == null || username.isBlank()) throw new RuntimeException("Utilisateur non trouvé");
+        return userRepository.findByUsername(username).map(UserEntity::getId).orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+    }
+
+    private DossierContentieuxEntity requireAccessibleDossier(Long id, Authentication authentication) {
+        DossierContentieuxEntity dossier = repository.findById(id).orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
+        if (dossier.isDeleted()) {
+            throw new RuntimeException("Dossier non trouvé");
+        }
+        if (isChargeDossier(authentication)) {
+            Long uid = requireCurrentUserId(authentication);
+            if (dossier.getChargeDossierId() == null || !dossier.getChargeDossierId().equals(uid)) {
+                throw new AccessDeniedException("Accès refusé");
+            }
+        }
+        return dossier;
+    }
+
+    private void applyChargeAssignmentFromRequest(DossierContentieuxEntity dossier, Long chargeDossierId, String chargeDossier, Authentication authentication) {
+        if (isChargeDossier(authentication)) {
+            Long uid = requireCurrentUserId(authentication);
+            UserEntity user = userRepository.findById(uid).orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+            dossier.setChargeDossierId(user.getId());
+            dossier.setChargeDossier(resolveUserLabel(user));
+            return;
+        }
+
+        if (chargeDossierId != null) {
+            UserEntity user = userRepository.findById(chargeDossierId).orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+            dossier.setChargeDossierId(user.getId());
+            dossier.setChargeDossier(resolveUserLabel(user));
+            return;
+        }
+
+        if (chargeDossier == null || chargeDossier.isBlank() || "Non affecté".equalsIgnoreCase(chargeDossier)) {
+            dossier.setChargeDossierId(null);
+            dossier.setChargeDossier("Non affecté");
+            return;
+        }
+
+        dossier.setChargeDossierId(null);
+        dossier.setChargeDossier(chargeDossier);
+    }
+
+    private String resolveUserLabel(UserEntity user) {
+        String fullName = user.getFullName();
+        String username = user.getUsername();
+        if (fullName != null && !fullName.isBlank()) return fullName;
+        return username;
     }
 
     private BigDecimal nvl(BigDecimal v) {

@@ -38,8 +38,8 @@ public class DossierContentieuxController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('CONTENTIOUS_READ')")
-    public ResponseEntity<List<ContentieuxDtos.DossierResponse>> list() {
-        return ResponseEntity.ok(service.list());
+    public ResponseEntity<List<ContentieuxDtos.DossierResponse>> list(Authentication authentication) {
+        return ResponseEntity.ok(service.list(authentication));
     }
 
     @PostMapping
@@ -56,38 +56,38 @@ public class DossierContentieuxController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAuthority('CONTENTIOUS_UPDATE')")
-    public ResponseEntity<ContentieuxDtos.DossierResponse> update(@PathVariable("id") Long id, @RequestBody ContentieuxDtos.CreateDossierRequest request) {
-        return ResponseEntity.ok(service.update(id, request));
+    public ResponseEntity<ContentieuxDtos.DossierResponse> update(@PathVariable("id") Long id, @RequestBody ContentieuxDtos.CreateDossierRequest request, Authentication authentication) {
+        return ResponseEntity.ok(service.update(id, request, authentication));
     }
 
     @PatchMapping("/{id}/assign")
     @PreAuthorize("hasAuthority('CONTENTIOUS_ASSIGN')")
-    public ResponseEntity<ContentieuxDtos.DossierResponse> assign(@PathVariable("id") Long id, @RequestBody ContentieuxDtos.AssignRequest request) {
-        return ResponseEntity.ok(service.assign(id, request));
+    public ResponseEntity<ContentieuxDtos.DossierResponse> assign(@PathVariable("id") Long id, @RequestBody ContentieuxDtos.AssignRequest request, Authentication authentication) {
+        return ResponseEntity.ok(service.assign(id, request, authentication));
     }
 
     @PatchMapping("/{id}/change-account")
     @PreAuthorize("hasAuthority('CONTENTIOUS_CHANGE_ACCOUNT')")
-    public ResponseEntity<ContentieuxDtos.DossierResponse> changeAccount(@PathVariable("id") Long id, @RequestBody ContentieuxDtos.ChangeAccountRequest request) {
-        return ResponseEntity.ok(service.changeAccount(id, request));
+    public ResponseEntity<ContentieuxDtos.DossierResponse> changeAccount(@PathVariable("id") Long id, @RequestBody ContentieuxDtos.ChangeAccountRequest request, Authentication authentication) {
+        return ResponseEntity.ok(service.changeAccount(id, request, authentication));
     }
 
     @PatchMapping("/{id}/close")
     @PreAuthorize("hasAuthority('CONTENTIOUS_CLOSE')")
-    public ResponseEntity<ContentieuxDtos.DossierResponse> close(@PathVariable("id") Long id, @RequestBody ContentieuxDtos.CloseRequest request) {
-        return ResponseEntity.ok(service.close(id, request));
+    public ResponseEntity<ContentieuxDtos.DossierResponse> close(@PathVariable("id") Long id, @RequestBody ContentieuxDtos.CloseRequest request, Authentication authentication) {
+        return ResponseEntity.ok(service.close(id, request, authentication));
     }
 
     @PatchMapping("/{id}/reopen")
     @PreAuthorize("hasAuthority('CONTENTIOUS_REOPEN')")
-    public ResponseEntity<ContentieuxDtos.DossierResponse> reopen(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(service.reopen(id));
+    public ResponseEntity<ContentieuxDtos.DossierResponse> reopen(@PathVariable("id") Long id, Authentication authentication) {
+        return ResponseEntity.ok(service.reopen(id, authentication));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('CONTENTIOUS_DELETE')")
-    public ResponseEntity<?> delete(@PathVariable("id") Long id) {
-        service.delete(id);
+    public ResponseEntity<?> delete(@PathVariable("id") Long id, Authentication authentication) {
+        service.delete(id, authentication);
         return ResponseEntity.ok(Map.of("deleted", true));
     }
 }

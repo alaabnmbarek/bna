@@ -3,8 +3,12 @@ package com.example.secureapp.risque;
 import com.example.secureapp.contentieux.DossierContentieuxEntity;
 import com.example.secureapp.contentieux.DossierContentieuxRepository;
 import com.example.secureapp.risque.dto.RisqueDtos;
+import com.example.secureapp.user.UserEntity;
+import com.example.secureapp.user.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,28 +20,31 @@ public class RisqueItemService {
     private final RisqueItemRepository repository;
     private final DossierContentieuxRepository dossierRepository;
     private final ObjectMapper objectMapper;
+    private final UserRepository userRepository;
 
     public RisqueItemService(
             RisqueItemRepository repository,
             DossierContentieuxRepository dossierRepository,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            UserRepository userRepository
     ) {
         this.repository = repository;
         this.dossierRepository = dossierRepository;
         this.objectMapper = objectMapper;
+        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
-    public List<RisqueDtos.ItemResponse> listByDossierAndCategory(Long dossierId, RisqueCategory category) {
-        requireDossier(dossierId);
+    public List<RisqueDtos.ItemResponse> listByDossierAndCategory(Long dossierId, RisqueCategory category, Authentication authentication) {
+        requireDossier(dossierId, authentication);
         return repository.findByDossierIdAndCategoryOrderByUpdatedAtDesc(dossierId, category).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     @Transactional
-    public RisqueDtos.ItemResponse create(Long dossierId, RisqueCategory category, RisqueDtos.UpsertRequest request) {
-        DossierContentieuxEntity dossier = requireDossier(dossierId);
+    public RisqueDtos.ItemResponse create(Long dossierId, RisqueCategory category, RisqueDtos.UpsertRequest request, Authentication authentication) {
+        DossierContentieuxEntity dossier = requireDossier(dossierId, authentication);
         RisqueItemEntity entity = new RisqueItemEntity();
         entity.setDossier(dossier);
         entity.setCategory(category);
@@ -46,8 +53,8 @@ public class RisqueItemService {
     }
 
     @Transactional
-    public RisqueDtos.ItemResponse update(Long dossierId, RisqueCategory category, Long itemId, RisqueDtos.UpsertRequest request) {
-        requireDossier(dossierId);
+    public RisqueDtos.ItemResponse update(Long dossierId, RisqueCategory category, Long itemId, RisqueDtos.UpsertRequest request, Authentication authentication) {
+        requireDossier(dossierId, authentication);
         RisqueItemEntity entity = repository.findById(itemId).orElseThrow(() -> new RuntimeException("Élément risque non trouvé"));
         if (!entity.getDossier().getId().equals(dossierId) || entity.getCategory() != category) {
             throw new RuntimeException("Élément risque non trouvé");
@@ -57,8 +64,8 @@ public class RisqueItemService {
     }
 
     @Transactional
-    public void delete(Long dossierId, RisqueCategory category, Long itemId) {
-        requireDossier(dossierId);
+    public void delete(Long dossierId, RisqueCategory category, Long itemId, Authentication authentication) {
+        requireDossier(dossierId, authentication);
         RisqueItemEntity entity = repository.findById(itemId).orElseThrow(() -> new RuntimeException("Élément risque non trouvé"));
         if (!entity.getDossier().getId().equals(dossierId) || entity.getCategory() != category) {
             throw new RuntimeException("Élément risque non trouvé");
@@ -66,12 +73,29 @@ public class RisqueItemService {
         repository.delete(entity);
     }
 
-    private DossierContentieuxEntity requireDossier(Long dossierId) {
+    private DossierContentieuxEntity requireDossier(Long dossierId, Authentication authentication) {
         DossierContentieuxEntity dossier = dossierRepository.findById(dossierId).orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
         if (dossier.isDeleted()) {
             throw new RuntimeException("Dossier non trouvé");
         }
+        if (isChargeDossier(authentication)) {
+            Long uid = requireCurrentUserId(authentication);
+            if (dossier.getChargeDossierId() == null || !dossier.getChargeDossierId().equals(uid)) {
+                throw new AccessDeniedException("Accès refusé");
+            }
+        }
         return dossier;
+    }
+
+    private boolean isChargeDossier(Authentication authentication) {
+        if (authentication == null || authentication.getAuthorities() == null) return false;
+        return authentication.getAuthorities().stream().anyMatch(a -> "ROLE_CHARGE_DOSSIER".equals(a.getAuthority()));
+    }
+
+    private Long requireCurrentUserId(Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : null;
+        if (username == null || username.isBlank()) throw new RuntimeException("Utilisateur non trouvé");
+        return userRepository.findByUsername(username).map(UserEntity::getId).orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
     }
 
     private RisqueDtos.ItemResponse toResponse(RisqueItemEntity e) {
@@ -103,4 +127,3 @@ public class RisqueItemService {
         }
     }
 }
-

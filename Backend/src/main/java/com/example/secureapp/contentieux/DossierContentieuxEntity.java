@@ -38,6 +38,9 @@ public class DossierContentieuxEntity {
     @Column(length = 150)
     private String chargeDossier;
 
+    @Column(name = "charge_dossier_id")
+    private Long chargeDossierId;
+
     private LocalDate dateOuverture;
 
     @Column(precision = 19, scale = 2)
@@ -161,6 +164,14 @@ public class DossierContentieuxEntity {
 
     public void setChargeDossier(String chargeDossier) {
         this.chargeDossier = chargeDossier;
+    }
+
+    public Long getChargeDossierId() {
+        return chargeDossierId;
+    }
+
+    public void setChargeDossierId(Long chargeDossierId) {
+        this.chargeDossierId = chargeDossierId;
     }
 
     public LocalDate getDateOuverture() {
