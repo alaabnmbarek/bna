@@ -4,6 +4,7 @@ import com.example.secureapp.user.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -16,6 +17,12 @@ import java.util.Set;
 @Configuration
 public class DataInitializer {
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
+
+    @Value("${BOOTSTRAP_ADMIN_PASSWORD:Admin@123}")
+    private String bootstrapAdminPassword;
+
+    @Value("${BOOTSTRAP_RESET_ADMIN_PASSWORD:false}")
+    private boolean bootstrapResetAdminPassword;
 
     @Bean
     @Order(10)
@@ -84,15 +91,18 @@ public class DataInitializer {
 
             if (repo.findByUsername("admin").isPresent()) {
                 UserEntity existingAdmin = repo.findByUsername("admin").get();
-                existingAdmin.setPassword(encoder.encode("Admin@123"));
                 existingAdmin.setRole(adminRole);
                 existingAdmin.setEnabled(true);
+                if (bootstrapResetAdminPassword) {
+                    existingAdmin.setPassword(encoder.encode(bootstrapAdminPassword));
+                    log.info("bootstrap.user reset password for username=admin");
+                }
                 repo.save(existingAdmin);
-                log.info("bootstrap.user updated password for username=admin");
+                log.info("bootstrap.user ensured username=admin role=ADMIN enabled=true");
             } else {
                 UserEntity admin = new UserEntity();
                 admin.setUsername("admin");
-                admin.setPassword(encoder.encode("Admin@123"));
+                admin.setPassword(encoder.encode(bootstrapAdminPassword));
                 admin.setEmail("admin@bna.tn");
                 admin.setFullName("Administrateur Système");
                 admin.setRole(adminRole);
