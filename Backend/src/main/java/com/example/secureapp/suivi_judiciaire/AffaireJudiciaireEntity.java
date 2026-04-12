@@ -3,6 +3,7 @@ package com.example.secureapp.suivi_judiciaire;
 import com.example.secureapp.contentieux.DossierContentieuxEntity;
 import com.example.secureapp.prestataire.PrestataireEntity;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -23,6 +24,18 @@ public class AffaireJudiciaireEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private ProcedureType typeProcedure;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private AssignationTarget assignationTarget;
+
+    @Column(length = 255)
+    private String garantiePatrimoine;
+
+    @Column(precision = 19, scale = 2)
+    private BigDecimal montant;
+
+    private LocalDate dateTransmission;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -68,6 +81,14 @@ public class AffaireJudiciaireEntity {
     public void setReferenceTribunal(String referenceTribunal) { this.referenceTribunal = referenceTribunal; }
     public ProcedureType getTypeProcedure() { return typeProcedure; }
     public void setTypeProcedure(ProcedureType typeProcedure) { this.typeProcedure = typeProcedure; }
+    public AssignationTarget getAssignationTarget() { return assignationTarget; }
+    public void setAssignationTarget(AssignationTarget assignationTarget) { this.assignationTarget = assignationTarget; }
+    public String getGarantiePatrimoine() { return garantiePatrimoine; }
+    public void setGarantiePatrimoine(String garantiePatrimoine) { this.garantiePatrimoine = garantiePatrimoine; }
+    public BigDecimal getMontant() { return montant; }
+    public void setMontant(BigDecimal montant) { this.montant = montant; }
+    public LocalDate getDateTransmission() { return dateTransmission; }
+    public void setDateTransmission(LocalDate dateTransmission) { this.dateTransmission = dateTransmission; }
     public AffaireStatus getStatut() { return statut; }
     public void setStatut(AffaireStatus statut) { this.statut = statut; }
     public String getTribunal() { return tribunal; }

@@ -163,6 +163,23 @@ public class AuthController {
             return ResponseEntity.status(401).build();
         }
 
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message",
+                    "Aucun email n'est associé à votre compte. Veuillez renseigner votre email dans votre profil puis réessayer."
+            ));
+        }
+
+        Optional<UserEntity> adminOpt = userRepository.findAll().stream()
+                .filter(u -> u.getRole() != null && "ADMIN".equals(u.getRole().getName()))
+                .findFirst();
+        if (adminOpt.isEmpty() || adminOpt.get().getEmail() == null || adminOpt.get().getEmail().isBlank()) {
+            return ResponseEntity.status(500).body(Map.of(
+                    "message",
+                    "Email administrateur non configuré. Veuillez définir l'email de l'admin pour valider les changements de mot de passe."
+            ));
+        }
+
         // Créer une demande de changement de mot de passe
         PasswordChangeRequest pwdRequest = new PasswordChangeRequest();
         pwdRequest.setUser(user);
@@ -171,14 +188,12 @@ public class AuthController {
         pwdRequest.setExpiryDate(LocalDateTime.now().plusHours(24));
         passwordChangeRequestRepository.save(pwdRequest);
 
+        emailService.sendPasswordChangeRequestNotification(user.getEmail(), user.getFullName());
+
         // Envoyer l'email à l'administrateur
-        userRepository.findAll().stream()
-                .filter(u -> u.getRole() != null && "ADMIN".equals(u.getRole().getName()))
-                .findFirst()
-                .ifPresent(admin -> {
-                    String confirmLink = appBaseUrl + "/api/auth/confirm-password-change?token=" + pwdRequest.getToken();
-                    emailService.sendAdminApprovalRequest(admin.getEmail(), user.getFullName(), confirmLink);
-                });
+        UserEntity admin = adminOpt.get();
+        String confirmLink = appBaseUrl + "/api/auth/confirm-password-change?token=" + pwdRequest.getToken();
+        emailService.sendAdminApprovalRequest(admin.getEmail(), user.getFullName(), confirmLink);
         
         log.info("auth.change_password_request created username={}", user.getUsername());
         return ResponseEntity.ok(Map.of("message", "Votre demande a été envoyée à l'administrateur pour validation."));
@@ -202,7 +217,7 @@ public class AuthController {
         passwordChangeRequestRepository.save(pwdRequest);
 
         // Informer l'utilisateur par mail
-        if (user.getEmail() != null) {
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
             emailService.sendPasswordChangeNotification(user.getEmail(), user.getFullName());
         }
 

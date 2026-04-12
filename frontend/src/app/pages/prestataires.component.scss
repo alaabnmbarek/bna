@@ -186,6 +186,9 @@
 
 .avocat-profile-modal {
   max-width: 1040px;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
   animation: adminSlideUp 200ms ease-out both;
 }
 
@@ -207,6 +210,17 @@
 
 .avocat-profile-body {
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.02) 0%, rgba(255, 255, 255, 0.00) 80%);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.admin-modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--app-border);
+  background: rgba(15, 23, 42, 0.02);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .avocat-loading {

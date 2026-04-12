@@ -45,11 +45,11 @@ export class ChangePasswordComponent {
         this.currentPassword = '';
         this.newPassword = '';
         this.confirmPassword = '';
-        this.message = "Demande envoyée. Un email de validation a été envoyé : l’administrateur doit valider le lien pour activer le nouveau mot de passe.";
+        this.message = res?.message || "Demande envoyée. Vérifiez votre email et MailHog.";
         this.isError = false;
       },
       error: (err) => {
-        this.message = err.error?.message || 'Erreur lors de la modification du mot de passe';
+        this.message = err.error?.message || err.error?.error || 'Erreur lors de la modification du mot de passe';
         this.isError = true;
         this.loading = false;
       }

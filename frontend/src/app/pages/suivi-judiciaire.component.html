@@ -18,7 +18,6 @@
               <th>Référence Tribunal</th>
               <th>Type Procédure</th>
               <th>Avocat</th>
-              <th>Huissier</th>
               <th>Statut</th>
               <th>Action</th>
             </tr>
@@ -30,7 +29,6 @@
               <td>{{ affaire.referenceTribunal }}</td>
               <td><span class="badge bg-light-primary text-primary">{{ affaire.typeProcedure }}</span></td>
               <td>{{ affaire.avocatNom || '-' }}</td>
-              <td>{{ affaire.huissierNom || '-' }}</td>
               <td>
                 <span class="badge" [ngClass]="{
                   'bg-warning': affaire.statut === 'EN_COURS',
@@ -48,7 +46,7 @@
               </td>
             </tr>
             <tr *ngIf="affaires.length === 0">
-              <td colspan="8" class="text-center py-4">Aucune affaire judiciaire trouvée.</td>
+              <td colspan="7" class="text-center py-4">Aucune affaire judiciaire trouvée.</td>
             </tr>
           </tbody>
         </table>
@@ -59,7 +57,7 @@
 
 <!-- Modal Affaire -->
 <div *ngIf="showAffaireForm" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Déclenchement d'une procédure judiciaire</h5>
@@ -83,9 +81,9 @@
           </div>
           <div class="col-md-6 mb-3">
             <label class="form-label">Type de Procédure</label>
-            <select class="form-select" [(ngModel)]="newAffaire.typeProcedure">
-              <option *ngFor="let type of procedureTypes" [value]="type">{{ type }}</option>
-            </select>
+            <button type="button" class="btn btn-outline-primary w-100 text-start" (click)="openAssignationPopup()">
+              Assignation
+            </button>
           </div>
           <div class="col-md-6 mb-3">
             <label class="form-label">Date d'Ouverture</label>
@@ -105,9 +103,79 @@
   </div>
 </div>
 
+<!-- Popup Assignation -->
+<div *ngIf="showAssignationPopup" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Type d’assignation</h5>
+        <button type="button" class="btn-close" (click)="closeAssignationPopup()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Choix</label>
+          <select class="form-select" [(ngModel)]="newAffaire.assignationTarget">
+            <option [ngValue]="undefined" disabled>Sélectionner</option>
+            <option [ngValue]="'GARANTIE_PATRIMOINE'">Dossier lié à une garantie ou patrimoine</option>
+            <option [ngValue]="'DEBITEUR_PRINCIPAL'">Débiteur principal</option>
+          </select>
+        </div>
+
+        <div *ngIf="newAffaire.assignationTarget === 'GARANTIE_PATRIMOINE'" class="row">
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Garantie ou patrimoine</label>
+            <input type="text" class="form-control" [(ngModel)]="newAffaire.garantiePatrimoine" placeholder="Ex: Hypothèque / Nantissement / Patrimoine...">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Avocat</label>
+            <select class="form-select" [(ngModel)]="newAffaire.avocatId">
+              <option [ngValue]="undefined" disabled>Sélectionner</option>
+              <option *ngFor="let a of avocats" [ngValue]="a.id">{{ a.nom }} {{ a.prenom }}</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Montant</label>
+            <input type="number" class="form-control" [(ngModel)]="newAffaire.montant">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Date de transmission</label>
+            <input type="date" class="form-control" [(ngModel)]="newAffaire.dateTransmission">
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Observation</label>
+            <textarea class="form-control" rows="3" [(ngModel)]="newAffaire.observations"></textarea>
+          </div>
+        </div>
+
+        <div *ngIf="newAffaire.assignationTarget === 'DEBITEUR_PRINCIPAL'" class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Avocat</label>
+            <select class="form-select" [(ngModel)]="newAffaire.avocatId">
+              <option [ngValue]="undefined" disabled>Sélectionner</option>
+              <option *ngFor="let a of avocats" [ngValue]="a.id">{{ a.nom }} {{ a.prenom }}</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Date de transmission</label>
+            <input type="date" class="form-control" [(ngModel)]="newAffaire.dateTransmission">
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Observation</label>
+            <textarea class="form-control" rows="3" [(ngModel)]="newAffaire.observations"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAssignationPopup()">Fermer</button>
+        <button type="button" class="btn btn-primary" (click)="closeAssignationPopup()">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Audiences -->
 <div *ngIf="showAudienceForm" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
-  <div class="modal-dialog modal-xl">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Calendrier des Audiences - {{ selectedAffaire?.referenceTribunal }}</h5>
@@ -165,7 +233,7 @@
 
 <!-- Modal Jugement -->
 <div *ngIf="showJugementForm" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Enregistrement de la décision de justice</h5>

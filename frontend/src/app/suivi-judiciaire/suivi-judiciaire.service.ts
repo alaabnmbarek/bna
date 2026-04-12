@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export type ProcedureType = 'ASSIGNATION' | 'INJONCTION_DE_PAYER' | 'SAISIE_ARRET' | 'SAISIE_IMMOBILIERE' | 'SAISIE_MOBILIERE' | 'APPEL' | 'CASSATION';
+export type AssignationTarget = 'GARANTIE_PATRIMOINE' | 'DEBITEUR_PRINCIPAL';
 export type AffaireStatus = 'EN_COURS' | 'JUGEE' | 'CLOTUREE' | 'SUSPENDUE';
 export type AudienceStatus = 'PROGRAMMEE' | 'REALISEE' | 'REPORTEE' | 'ANNULEE';
 export type DecisionType = 'GAIN' | 'PERTE' | 'REPORT' | 'EXECUTION' | 'RADIATION' | 'NON_LIEU';
@@ -14,6 +15,10 @@ export interface AffaireJudiciaire {
   nomDebiteur?: string;
   referenceTribunal: string;
   typeProcedure: ProcedureType;
+  assignationTarget?: AssignationTarget;
+  garantiePatrimoine?: string;
+  montant?: number;
+  dateTransmission?: string;
   statut?: AffaireStatus;
   tribunal: string;
   dateOuverture: string;

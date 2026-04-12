@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../theme/shared/components/card/card.component';
-import { SuiviJudiciaireService, AffaireJudiciaire, Audience, Jugement, ProcedureType, AffaireStatus, AudienceStatus, DecisionType } from '../suivi-judiciaire/suivi-judiciaire.service';
+import { SuiviJudiciaireService, AffaireJudiciaire, Audience, Jugement, ProcedureType, AudienceStatus, DecisionType, AssignationTarget } from '../suivi-judiciaire/suivi-judiciaire.service';
 import { ContentieuxService, DossierContentieux } from '../contentieux/contentieux.service';
 import { PrestatairesService, Prestataire } from '../prestataires/prestataires.service';
 import { AuthService } from '../auth/auth.service';
@@ -25,9 +25,11 @@ export class SuiviJudiciaireComponent implements OnInit {
   showAffaireForm = false;
   showAudienceForm = false;
   showJugementForm = false;
+  showAssignationPopup = false;
   selectedAffaire: AffaireJudiciaire | null = null;
 
-  procedureTypes: ProcedureType[] = ['ASSIGNATION', 'INJONCTION_DE_PAYER', 'SAISIE_ARRET', 'SAISIE_IMMOBILIERE', 'SAISIE_MOBILIERE', 'APPEL', 'CASSATION'];
+  procedureTypes: ProcedureType[] = ['ASSIGNATION'];
+  assignationTargets: AssignationTarget[] = ['GARANTIE_PATRIMOINE', 'DEBITEUR_PRINCIPAL'];
   audienceStatuses: AudienceStatus[] = ['PROGRAMMEE', 'REALISEE', 'REPORTEE', 'ANNULEE'];
   decisionTypes: DecisionType[] = ['GAIN', 'PERTE', 'REPORT', 'EXECUTION', 'RADIATION', 'NON_LIEU'];
 
@@ -75,6 +77,11 @@ export class SuiviJudiciaireComponent implements OnInit {
       dossierId: 0,
       referenceTribunal: '',
       typeProcedure: 'ASSIGNATION',
+      assignationTarget: undefined,
+      garantiePatrimoine: '',
+      montant: undefined,
+      dateTransmission: new Date().toISOString().split('T')[0],
+      avocatId: undefined,
       tribunal: '',
       dateOuverture: new Date().toISOString().split('T')[0],
       observations: ''
@@ -105,9 +112,45 @@ export class SuiviJudiciaireComponent implements OnInit {
     this.showAffaireForm = true;
   }
 
+  openAssignationPopup(): void {
+    this.newAffaire.typeProcedure = 'ASSIGNATION';
+    if (!this.newAffaire.dateTransmission) {
+      this.newAffaire.dateTransmission = new Date().toISOString().split('T')[0];
+    }
+    this.showAssignationPopup = true;
+  }
+
+  closeAssignationPopup(): void {
+    this.showAssignationPopup = false;
+  }
+
   saveAffaire(): void {
+    if (!this.newAffaire.assignationTarget) {
+      alert('Veuillez choisir le type d’assignation.');
+      return;
+    }
+    if (!this.newAffaire.avocatId) {
+      alert('Veuillez choisir un avocat.');
+      return;
+    }
+    if (!this.newAffaire.dateTransmission) {
+      alert('Veuillez saisir la date de transmission.');
+      return;
+    }
+    if (this.newAffaire.assignationTarget === 'GARANTIE_PATRIMOINE') {
+      if (!this.newAffaire.garantiePatrimoine || !this.newAffaire.garantiePatrimoine.trim()) {
+        alert('Veuillez préciser la garantie ou le patrimoine.');
+        return;
+      }
+      if (this.newAffaire.montant == null || Number.isNaN(Number(this.newAffaire.montant))) {
+        alert('Veuillez saisir le montant.');
+        return;
+      }
+    }
+
     this.suiviService.createAffaire(this.newAffaire).subscribe(() => {
       this.showAffaireForm = false;
+      this.showAssignationPopup = false;
       this.loadAffaires();
     });
   }

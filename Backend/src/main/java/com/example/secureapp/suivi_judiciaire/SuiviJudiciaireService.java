@@ -75,16 +75,36 @@ public class SuiviJudiciaireService {
         AffaireJudiciaireEntity entity = new AffaireJudiciaireEntity();
         entity.setDossierContentieux(dossier);
         entity.setReferenceTribunal(dto.referenceTribunal());
-        entity.setTypeProcedure(dto.typeProcedure());
+        entity.setTypeProcedure(ProcedureType.ASSIGNATION);
+        entity.setAssignationTarget(dto.assignationTarget());
+        entity.setGarantiePatrimoine(dto.garantiePatrimoine());
+        entity.setMontant(dto.montant());
+        entity.setDateTransmission(dto.dateTransmission());
         entity.setStatut(AffaireStatus.EN_COURS);
         entity.setTribunal(dto.tribunal());
         entity.setDateOuverture(dto.dateOuverture());
         entity.setObservations(dto.observations());
 
-        if (dto.avocatId() != null) {
-            PrestataireEntity avocat = prestataireRepository.findById(dto.avocatId())
-                    .orElseThrow(() -> new RuntimeException("Avocat non trouvé"));
-            entity.setAvocat(avocat);
+        if (dto.assignationTarget() == null) {
+            throw new RuntimeException("Type d’assignation obligatoire");
+        }
+        if (dto.avocatId() == null) {
+            throw new RuntimeException("Avocat obligatoire");
+        }
+        PrestataireEntity avocat = prestataireRepository.findById(dto.avocatId())
+                .orElseThrow(() -> new RuntimeException("Avocat non trouvé"));
+        entity.setAvocat(avocat);
+
+        if (dto.dateTransmission() == null) {
+            throw new RuntimeException("Date de transmission obligatoire");
+        }
+        if (dto.assignationTarget() == AssignationTarget.GARANTIE_PATRIMOINE) {
+            if (dto.garantiePatrimoine() == null || dto.garantiePatrimoine().isBlank()) {
+                throw new RuntimeException("Garantie ou patrimoine obligatoire");
+            }
+            if (dto.montant() == null) {
+                throw new RuntimeException("Montant obligatoire");
+            }
         }
 
         if (dto.huissierId() != null) {
@@ -201,6 +221,10 @@ public class SuiviJudiciaireService {
                 entity.getDossierContentieux().getNomDebiteur(),
                 entity.getReferenceTribunal(),
                 entity.getTypeProcedure(),
+                entity.getAssignationTarget(),
+                entity.getGarantiePatrimoine(),
+                entity.getMontant(),
+                entity.getDateTransmission(),
                 entity.getStatut(),
                 entity.getTribunal(),
                 entity.getDateOuverture(),

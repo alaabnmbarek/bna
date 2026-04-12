@@ -40,6 +40,25 @@ public class EmailService {
         }
     }
 
+    public void sendPasswordChangeRequestNotification(String to, String fullName) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        String from = resolveFrom();
+        if (from != null) message.setFrom(from);
+        message.setTo(to);
+        message.setSubject("Demande de changement de mot de passe");
+        message.setText("Bonjour " + (fullName == null || fullName.isBlank() ? "" : fullName) + ",\n\n" +
+                "Une demande de changement de mot de passe a été effectuée pour votre compte sur l'application BNA Contentieux.\n\n" +
+                "Pour des raisons de sécurité, cette demande doit être validée.\n\n" +
+                "Si vous n'êtes pas à l'origine de cette demande, veuillez contacter immédiatement l'administrateur.\n\n" +
+                "Ceci est un message automatique, merci de ne pas y répondre.");
+
+        try {
+            mailSender.send(message);
+        } catch (Exception e) {
+            log.warn("Erreur lors de l'envoi de l'email de notification de demande de changement de mot de passe to={}", to, e);
+        }
+    }
+
     public void sendAdminApprovalRequest(String adminEmail, String userFullName, String confirmLink) {
         SimpleMailMessage message = new SimpleMailMessage();
         String from = resolveFrom();
