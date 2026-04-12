@@ -109,6 +109,13 @@ export class AuthService {
     return roles.includes(role);
   }
 
+  userId(): number | null {
+    const t = this.token();
+    if (!t) return null;
+    const payload = this.decode(t);
+    return payload && payload['uid'] ? Number(payload['uid']) : null;
+  }
+
   private decode(token: string): any | null {
     try {
       const base64Payload = token.split('.')[1];

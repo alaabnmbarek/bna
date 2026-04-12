@@ -1,0 +1,200 @@
+<div class="row">
+  <div class="col-sm-12">
+    <app-card cardTitle="Suivi Judiciaire" [options]="false">
+      <div class="row align-items-center mb-3">
+        <div class="col-sm-6">
+          <button class="btn btn-primary" (click)="openAffaireForm()">
+            <i class="feather icon-plus"></i> Déclencher Procédure
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Dossier</th>
+              <th>Tribunal</th>
+              <th>Référence Tribunal</th>
+              <th>Type Procédure</th>
+              <th>Avocat</th>
+              <th>Huissier</th>
+              <th>Statut</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let affaire of affaires">
+              <td>{{ affaire.dossierReference }} - {{ affaire.nomDebiteur }}</td>
+              <td>{{ affaire.tribunal }}</td>
+              <td>{{ affaire.referenceTribunal }}</td>
+              <td><span class="badge bg-light-primary text-primary">{{ affaire.typeProcedure }}</span></td>
+              <td>{{ affaire.avocatNom || '-' }}</td>
+              <td>{{ affaire.huissierNom || '-' }}</td>
+              <td>
+                <span class="badge" [ngClass]="{
+                  'bg-warning': affaire.statut === 'EN_COURS',
+                  'bg-success': affaire.statut === 'JUGEE',
+                  'bg-secondary': affaire.statut === 'CLOTUREE'
+                }">{{ affaire.statut }}</span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-info" (click)="viewAudiences(affaire)" title="Audiences">
+                  <i class="feather icon-calendar"></i>
+                </button>
+                <button *ngIf="affaire.statut === 'EN_COURS'" class="btn btn-sm btn-success ml-1" (click)="openJugementForm(affaire)" title="Enregistrer Jugement">
+                  <i class="feather icon-check-circle"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="affaires.length === 0">
+              <td colspan="8" class="text-center py-4">Aucune affaire judiciaire trouvée.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Modal Affaire -->
+<div *ngIf="showAffaireForm" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Déclenchement d'une procédure judiciaire</h5>
+        <button type="button" class="btn-close" (click)="showAffaireForm = false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Dossier Contentieux</label>
+            <select class="form-select" [(ngModel)]="newAffaire.dossierId">
+              <option *ngFor="let d of dossiers" [value]="d.id">{{ d.reference }} - {{ d.nomDebiteur }}</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Tribunal</label>
+            <input type="text" class="form-control" [(ngModel)]="newAffaire.tribunal" placeholder="Ex: Tribunal de 1ère Instance de Tunis">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Référence Tribunal (N° Affaire)</label>
+            <input type="text" class="form-control" [(ngModel)]="newAffaire.referenceTribunal">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Type de Procédure</label>
+            <select class="form-select" [(ngModel)]="newAffaire.typeProcedure">
+              <option *ngFor="let type of procedureTypes" [value]="type">{{ type }}</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Date d'Ouverture</label>
+            <input type="date" class="form-control" [(ngModel)]="newAffaire.dateOuverture">
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Observations</label>
+            <textarea class="form-control" rows="3" [(ngModel)]="newAffaire.observations"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="showAffaireForm = false">Annuler</button>
+        <button type="button" class="btn btn-primary" (click)="saveAffaire()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Audiences -->
+<div *ngIf="showAudienceForm" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Calendrier des Audiences - {{ selectedAffaire?.referenceTribunal }}</h5>
+        <button type="button" class="btn-close" (click)="showAudienceForm = false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card p-3 bg-light">
+              <h6>Nouvelle Audience / Report</h6>
+              <div class="mb-2">
+                <label class="form-label">Date et Heure</label>
+                <input type="datetime-local" class="form-control" [(ngModel)]="newAudience.dateAudience">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Objet / Motif</label>
+                <input type="text" class="form-control" [(ngModel)]="newAudience.objet">
+              </div>
+              <button class="btn btn-primary w-100" (click)="saveAudience()">Programmer</button>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Objet</th>
+                    <th>Statut</th>
+                    <th>Compte Rendu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let aud of audiences">
+                    <td>{{ aud.dateAudience | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ aud.objet }}</td>
+                    <td>
+                      <select class="form-select form-select-sm" [(ngModel)]="aud.statut" (change)="suiviService.updateAudience(aud.id!, aud).subscribe()">
+                        <option *ngFor="let s of audienceStatuses" [value]="s">{{ s }}</option>
+                      </select>
+                    </td>
+                    <td>
+                      <textarea class="form-control form-control-sm" rows="1" [(ngModel)]="aud.compteRendu" (blur)="suiviService.updateAudience(aud.id!, aud).subscribe()" placeholder="Saisir compte rendu..."></textarea>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Jugement -->
+<div *ngIf="showJugementForm" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Enregistrement de la décision de justice</h5>
+        <button type="button" class="btn-close" (click)="showJugementForm = false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Date du Jugement</label>
+          <input type="date" class="form-control" [(ngModel)]="newJugement.dateJugement">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Type de Décision</label>
+          <select class="form-select" [(ngModel)]="newJugement.typeDecision">
+            <option *ngFor="let type of decisionTypes" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Montant Récupéré (le cas échéant)</label>
+          <input type="number" class="form-control" [(ngModel)]="newJugement.montantRecupere">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Observations / Détails</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="newJugement.observations"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="showJugementForm = false">Annuler</button>
+        <button type="button" class="btn btn-success" (click)="saveJugement()">Enregistrer le Jugement</button>
+      </div>
+    </div>
+  </div>
+</div>

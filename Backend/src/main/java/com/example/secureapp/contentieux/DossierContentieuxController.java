@@ -25,8 +25,13 @@ public class DossierContentieuxController {
 
     @GetMapping("/charges-dossiers")
     @PreAuthorize("hasAuthority('CONTENTIOUS_READ')")
-    public ResponseEntity<List<ChargeDossierDtos.ChargeOption>> listChargesDossiers() {
-        List<UserEntity> users = userRepository.findByRole_NameAndEnabledTrueOrderByFullNameAsc("CHARGE_DOSSIER");
+    public ResponseEntity<List<ChargeDossierDtos.ChargeOption>> listChargesDossiers(Authentication authentication) {
+        List<UserEntity> users;
+        if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_CHARGE_DOSSIER"))) {
+            users = userRepository.findByUsername(authentication.getName()).map(List::of).orElse(List.of());
+        } else {
+            users = userRepository.findByRole_NameAndEnabledTrueOrderByFullNameAsc("CHARGE_DOSSIER");
+        }
         List<ChargeDossierDtos.ChargeOption> result = users.stream().map(u -> {
             String fullName = u.getFullName();
             String username = u.getUsername();

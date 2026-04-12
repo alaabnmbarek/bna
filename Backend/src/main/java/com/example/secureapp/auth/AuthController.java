@@ -78,7 +78,7 @@ public class AuthController {
             claims.put("uid", user.getId());
             claims.put("permissions", user.getPermissions().stream().map(Enum::name).collect(Collectors.toList()));
             
-            String token = jwtService.generateToken(userDetails, claims);
+            String token = jwtService.generateToken(userDetails, user.getId(), claims);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
             
             long expiresIn = jwtService.getExpirationMs();
@@ -118,7 +118,7 @@ public class AuthController {
                     claims.put("uid", user.getId());
                     claims.put("permissions", user.getPermissions().stream().map(Enum::name).collect(Collectors.toList()));
                     
-                    String token = jwtService.generateToken(user, claims);
+                    String token = jwtService.generateToken(user, user.getId(), claims);
                     
                     List<String> authorities = user.getAuthorities().stream()
                             .map(GrantedAuthority::getAuthority)

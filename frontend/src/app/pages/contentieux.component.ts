@@ -85,6 +85,18 @@ export class ContentieuxPageComponent implements OnInit {
     return this.auth.hasRole('ROLE_RESPONSABLE_CONTENTIEUX') || this.auth.hasRole('ROLE_ADMIN');
   }
 
+  canAssign(): boolean {
+    return this.auth.hasRole('ROLE_RESPONSABLE_CONTENTIEUX') || this.auth.hasRole('ROLE_ADMIN');
+  }
+
+  canDelete(): boolean {
+    return this.auth.hasRole('ROLE_ADMIN');
+  }
+
+  canReopen(): boolean {
+    return this.auth.hasRole('ROLE_RESPONSABLE_CONTENTIEUX') || this.auth.hasRole('ROLE_ADMIN');
+  }
+
   dossiers: DossierContentieux[] = [];
 
   showForm = false;

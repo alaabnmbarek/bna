@@ -61,6 +61,15 @@ export const NavigationItems: NavigationItem[] = [
         role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
       },
       {
+        id: 'suivi-judiciaire',
+        title: 'Suivi Judiciaire',
+        type: 'item',
+        url: '/suivi-judiciaire',
+        icon: 'feather icon-book',
+        breadcrumbs: false,
+        role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
+      },
+      {
         id: 'user-management',
         title: 'Gestion des Utilisateurs',
         type: 'item',

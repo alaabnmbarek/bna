@@ -1,12 +1,13 @@
-version: '3.9'
 services:
   mailhog:
     image: mailhog/mailhog:v1.0.1
+    container_name: mailhog
     ports:
       - "8025:8025"
 
   db:
     image: mysql:8.3
+    container_name: db
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_DATABASE: ${DB_NAME:-securedb}
@@ -22,7 +23,8 @@ services:
       retries: 10
 
   backend:
-    build: ./backend
+    build: ./Backend
+    container_name: backend
     env_file:
       - ./.env
     environment:
@@ -34,6 +36,11 @@ services:
       JWT_SECRET: ${JWT_SECRET:-ZmFrZV9zZWNyZXRfY2hhbmdldGhpcy10b2ludGVuZC1iYXNlNjQ=}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-900000}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4200}
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_SMTP_AUTH: "false"
+      MAIL_SMTP_STARTTLS: "false"
+      MAIL_SMTP_STARTTLS_REQUIRED: "false"
     ports:
       - "8080:8080"
     depends_on:
@@ -44,6 +51,7 @@ services:
 
   frontend:
     build: ./frontend
+    container_name: frontend
     ports:
       - "4200:80"
     depends_on:

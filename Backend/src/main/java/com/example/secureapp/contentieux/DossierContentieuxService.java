@@ -11,7 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class DossierContentieuxService {
@@ -23,15 +26,28 @@ public class DossierContentieuxService {
         this.userRepository = userRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<ContentieuxDtos.DossierResponse> list(Authentication authentication) {
         List<DossierContentieuxEntity> rows;
         if (isChargeDossier(authentication)) {
-            rows = repository.findByDeletedFalseAndChargeDossierIdOrderByCreatedAtDesc(requireCurrentUserId(authentication));
+            UserEntity user = requireCurrentUser(authentication);
+            rows = repository.findAccessibleForCharge(user.getId(), resolveUserLabel(user));
         } else {
             rows = repository.findByDeletedFalseOrderByCreatedAtDesc();
         }
+
+        Map<Long, String> labelsById = new HashMap<>();
+        List<Long> ids = rows.stream()
+                .map(DossierContentieuxEntity::getChargeDossierId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (!ids.isEmpty()) {
+            userRepository.findAllById(ids).forEach(u -> labelsById.put(u.getId(), resolveUserLabel(u)));
+        }
+
         return rows.stream()
-                .map(this::toResponse)
+                .map(d -> toResponse(d, labelsById))
                 .toList();
     }
 
@@ -153,6 +169,12 @@ public class DossierContentieuxService {
     }
 
     private ContentieuxDtos.DossierResponse toResponse(DossierContentieuxEntity d) {
+        String chargeLabel = d.getChargeDossier();
+        if (d.getChargeDossierId() != null) {
+            chargeLabel = userRepository.findById(d.getChargeDossierId())
+                    .map(this::resolveUserLabel)
+                    .orElse(chargeLabel);
+        }
         return new ContentieuxDtos.DossierResponse(
                 d.getId(),
                 d.getReference(),
@@ -162,7 +184,43 @@ public class DossierContentieuxService {
                 d.getCompteActuel(),
                 d.getAncienCompte(),
                 d.getAgence(),
-                d.getChargeDossier(),
+                chargeLabel,
+                d.getChargeDossierId(),
+                d.getDateOuverture(),
+                d.getMontantEngage(),
+                d.getMontantRecupere(),
+                d.getMontantHonoraires(),
+                d.getFraisAdministratifs(),
+                d.getObservationsAdministratives(),
+                d.getObservationsFinancieres(),
+                d.getDateCloture(),
+                d.getMotifCloture(),
+                d.getCreatedBy(),
+                d.getValidatedBy(),
+                d.getValidatedAt(),
+                d.getCreatedAt(),
+                d.getUpdatedAt()
+        );
+    }
+
+    private ContentieuxDtos.DossierResponse toResponse(DossierContentieuxEntity d, Map<Long, String> labelsById) {
+        String chargeLabel = d.getChargeDossier();
+        if (d.getChargeDossierId() != null) {
+            String resolved = labelsById.get(d.getChargeDossierId());
+            if (resolved != null && !resolved.isBlank()) {
+                chargeLabel = resolved;
+            }
+        }
+        return new ContentieuxDtos.DossierResponse(
+                d.getId(),
+                d.getReference(),
+                d.getStatut(),
+                d.getObjet(),
+                d.getNomDebiteur(),
+                d.getCompteActuel(),
+                d.getAncienCompte(),
+                d.getAgence(),
+                chargeLabel,
                 d.getChargeDossierId(),
                 d.getDateOuverture(),
                 d.getMontantEngage(),
@@ -213,9 +271,13 @@ public class DossierContentieuxService {
     }
 
     private Long requireCurrentUserId(Authentication authentication) {
+        return requireCurrentUser(authentication).getId();
+    }
+
+    private UserEntity requireCurrentUser(Authentication authentication) {
         String username = authentication != null ? authentication.getName() : null;
         if (username == null || username.isBlank()) throw new RuntimeException("Utilisateur non trouvé");
-        return userRepository.findByUsername(username).map(UserEntity::getId).orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        return userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
     }
 
     private DossierContentieuxEntity requireAccessibleDossier(Long id, Authentication authentication) {
@@ -224,9 +286,19 @@ public class DossierContentieuxService {
             throw new RuntimeException("Dossier non trouvé");
         }
         if (isChargeDossier(authentication)) {
-            Long uid = requireCurrentUserId(authentication);
-            if (dossier.getChargeDossierId() == null || !dossier.getChargeDossierId().equals(uid)) {
-                throw new AccessDeniedException("Accès refusé");
+            UserEntity user = requireCurrentUser(authentication);
+            Long uid = user.getId();
+
+            if (dossier.getChargeDossierId() != null) {
+                if (!dossier.getChargeDossierId().equals(uid)) {
+                    throw new AccessDeniedException("Accès refusé");
+                }
+            } else {
+                String label = resolveUserLabel(user);
+                String dossierCharge = dossier.getChargeDossier();
+                if (dossierCharge == null || dossierCharge.isBlank() || !dossierCharge.equalsIgnoreCase(label)) {
+                    throw new AccessDeniedException("Accès refusé");
+                }
             }
         }
         return dossier;
