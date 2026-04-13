@@ -53,6 +53,27 @@ export interface ChargeDossierOption {
   label: string;
 }
 
+export type AffaireStatut = 'EN_COURS' | 'TERMINEE' | 'EN_ATTENTE';
+
+export interface AffaireContentieux {
+  id: number;
+  dossierId: number;
+  dossierReference: string;
+  numeroAffaire?: string | null;
+  typeAffaire: string;
+  description?: string | null;
+  statut: AffaireStatut;
+  dateCreation: string;
+}
+
+export interface CreateAffaireRequest {
+  numeroAffaire?: string;
+  typeAffaire: string;
+  description?: string;
+  statut: AffaireStatut;
+  dateCreation: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContentieuxService {
   private url = '/api/contentieux/dossiers';
@@ -97,5 +118,13 @@ export class ContentieuxService {
 
   remove(id: number): Observable<{ deleted: boolean }> {
     return this.http.delete<{ deleted: boolean }>(`${this.url}/${id}`);
+  }
+
+  listAffaires(dossierId: number): Observable<AffaireContentieux[]> {
+    return this.http.get<AffaireContentieux[]>(`${this.url}/${dossierId}/affaires`);
+  }
+
+  createAffaire(dossierId: number, payload: CreateAffaireRequest): Observable<AffaireContentieux> {
+    return this.http.post<AffaireContentieux>(`${this.url}/${dossierId}/affaires`, payload);
   }
 }

@@ -27,7 +27,7 @@
               <td>{{ affaire.dossierReference }} - {{ affaire.nomDebiteur }}</td>
               <td>{{ affaire.tribunal }}</td>
               <td>{{ affaire.referenceTribunal }}</td>
-              <td><span class="badge bg-light-primary text-primary">{{ affaire.typeProcedure }}</span></td>
+              <td><span class="badge bg-light-primary text-primary">{{ procedureLabel(affaire.typeProcedure) }}</span></td>
               <td>{{ affaire.avocatNom || '-' }}</td>
               <td>
                 <span class="badge" [ngClass]="{
@@ -81,8 +81,14 @@
           </div>
           <div class="col-md-6 mb-3">
             <label class="form-label">Type de Procédure</label>
+            <select class="form-select" [(ngModel)]="newAffaire.typeProcedure" (change)="onTypeProcedureChange()">
+              <option *ngFor="let p of procedureTypeOptions" [value]="p.value">{{ p.label }}</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Détails de la procédure</label>
             <button type="button" class="btn btn-outline-primary w-100 text-start" (click)="openAssignationPopup()">
-              Assignation
+              Compléter les informations
             </button>
           </div>
           <div class="col-md-6 mb-3">
@@ -108,12 +114,12 @@
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Type d’assignation</h5>
+        <h5 class="modal-title">Détails de la procédure</h5>
         <button type="button" class="btn-close" (click)="closeAssignationPopup()"></button>
       </div>
       <div class="modal-body">
-        <div class="mb-3">
-          <label class="form-label">Choix</label>
+        <div *ngIf="newAffaire.typeProcedure === 'ASSIGNATION'" class="mb-3">
+          <label class="form-label">Type d’assignation</label>
           <select class="form-select" [(ngModel)]="newAffaire.assignationTarget">
             <option [ngValue]="undefined" disabled>Sélectionner</option>
             <option [ngValue]="'GARANTIE_PATRIMOINE'">Dossier lié à une garantie ou patrimoine</option>
@@ -121,7 +127,7 @@
           </select>
         </div>
 
-        <div *ngIf="newAffaire.assignationTarget === 'GARANTIE_PATRIMOINE'" class="row">
+        <div *ngIf="newAffaire.typeProcedure === 'ASSIGNATION' && newAffaire.assignationTarget === 'GARANTIE_PATRIMOINE'" class="row">
           <div class="col-md-12 mb-3">
             <label class="form-label">Garantie ou patrimoine</label>
             <input type="text" class="form-control" [(ngModel)]="newAffaire.garantiePatrimoine" placeholder="Ex: Hypothèque / Nantissement / Patrimoine...">
@@ -147,7 +153,25 @@
           </div>
         </div>
 
-        <div *ngIf="newAffaire.assignationTarget === 'DEBITEUR_PRINCIPAL'" class="row">
+        <div *ngIf="newAffaire.typeProcedure === 'ASSIGNATION' && newAffaire.assignationTarget === 'DEBITEUR_PRINCIPAL'" class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Avocat</label>
+            <select class="form-select" [(ngModel)]="newAffaire.avocatId">
+              <option [ngValue]="undefined" disabled>Sélectionner</option>
+              <option *ngFor="let a of avocats" [ngValue]="a.id">{{ a.nom }} {{ a.prenom }}</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Date de transmission</label>
+            <input type="date" class="form-control" [(ngModel)]="newAffaire.dateTransmission">
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Observation</label>
+            <textarea class="form-control" rows="3" [(ngModel)]="newAffaire.observations"></textarea>
+          </div>
+        </div>
+
+        <div *ngIf="newAffaire.typeProcedure !== 'ASSIGNATION'" class="row">
           <div class="col-md-6 mb-3">
             <label class="form-label">Avocat</label>
             <select class="form-select" [(ngModel)]="newAffaire.avocatId">
@@ -187,8 +211,26 @@
             <div class="card p-3 bg-light">
               <h6>Nouvelle Audience / Report</h6>
               <div class="mb-2">
-                <label class="form-label">Date et Heure</label>
-                <input type="datetime-local" class="form-control" [(ngModel)]="newAudience.dateAudience">
+                <label class="form-label">Référence audience</label>
+                <input type="text" class="form-control" [(ngModel)]="newAudience.referenceAudience">
+              </div>
+              <div class="row g-2 mb-2">
+                <div class="col-7">
+                  <label class="form-label">Date de l'audience</label>
+                  <input type="date" class="form-control" [(ngModel)]="newAudienceDate">
+                </div>
+                <div class="col-5">
+                  <label class="form-label">Heure</label>
+                  <input type="time" class="form-control" [(ngModel)]="newAudienceTime">
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Tribunal</label>
+                <input type="text" class="form-control" [(ngModel)]="newAudience.tribunal">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Salle</label>
+                <input type="text" class="form-control" [(ngModel)]="newAudience.salle">
               </div>
               <div class="mb-2">
                 <label class="form-label">Objet / Motif</label>
@@ -202,7 +244,10 @@
               <table class="table table-sm">
                 <thead>
                   <tr>
+                    <th>Référence</th>
                     <th>Date</th>
+                    <th>Tribunal</th>
+                    <th>Salle</th>
                     <th>Objet</th>
                     <th>Statut</th>
                     <th>Compte Rendu</th>
@@ -210,7 +255,10 @@
                 </thead>
                 <tbody>
                   <tr *ngFor="let aud of audiences">
+                    <td>{{ aud.referenceAudience || '-' }}</td>
                     <td>{{ aud.dateAudience | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ aud.tribunal || '-' }}</td>
+                    <td>{{ aud.salle || '-' }}</td>
                     <td>{{ aud.objet }}</td>
                     <td>
                       <select class="form-select form-select-sm" [(ngModel)]="aud.statut" (change)="suiviService.updateAudience(aud.id!, aud).subscribe()">

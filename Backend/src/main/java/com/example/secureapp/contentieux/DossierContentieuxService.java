@@ -97,15 +97,15 @@ public class DossierContentieuxService {
         dossier.setAgence(request.agence());
         dossier.setObservationsAdministratives(request.observationsAdministratives());
         dossier.setObservationsFinancieres(request.observationsFinancieres());
-        dossier.setMontantHonoraires(nvl(request.montantHonoraires()));
-        dossier.setFraisAdministratifs(nvl(request.fraisAdministratifs()));
+        if (request.montantHonoraires() != null) dossier.setMontantHonoraires(nvl(request.montantHonoraires()));
+        if (request.fraisAdministratifs() != null) dossier.setFraisAdministratifs(nvl(request.fraisAdministratifs()));
+        if (request.montantEngage() != null) dossier.setMontantEngage(nvl(request.montantEngage()));
+        if (request.montantRecupere() != null) dossier.setMontantRecupere(nvl(request.montantRecupere()));
         if (dossier.getStatut() != ContentieuxStatus.A_VALIDER) {
             dossier.setCompteActuel(request.compteActuel());
             dossier.setAncienCompte(request.ancienCompte());
             applyChargeAssignmentFromRequest(dossier, request.chargeDossierId(), request.chargeDossier(), authentication);
             if (request.dateOuverture() != null) dossier.setDateOuverture(request.dateOuverture());
-            dossier.setMontantEngage(nvl(request.montantEngage()));
-            dossier.setMontantRecupere(nvl(request.montantRecupere()));
         }
         return toResponse(repository.save(dossier));
     }
@@ -166,6 +166,11 @@ public class DossierContentieuxService {
         DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
         dossier.setDeleted(true);
         repository.save(dossier);
+    }
+
+    @Transactional(readOnly = true)
+    public DossierContentieuxEntity getAccessibleEntity(Long id, Authentication authentication) {
+        return requireAccessibleDossier(id, authentication);
     }
 
     private ContentieuxDtos.DossierResponse toResponse(DossierContentieuxEntity d) {

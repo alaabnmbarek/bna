@@ -343,6 +343,154 @@
   padding: 18px;
 }
 
+.affaire-dialog {
+  width: min(980px, 100%);
+}
+
+.affaire-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--app-text-muted);
+  margin-bottom: 4px;
+}
+
+.affaire-breadcrumb .icon-chevron-right {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.affaire-breadcrumb-active {
+  color: #1d4ed8;
+}
+
+.affaire-dossier-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--app-border);
+  background: rgba(29, 78, 216, 0.06);
+  color: rgba(15, 23, 42, 0.8);
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.affaire-dossier-ref {
+  font-weight: 950;
+  color: #0f172a;
+}
+
+.affaire-card {
+  border-radius: 18px;
+  border: 1px solid var(--app-border);
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: var(--app-shadow-sm);
+  padding: 14px;
+}
+
+.affaire-card-title {
+  font-weight: 950;
+  color: var(--app-text);
+  display: flex;
+  align-items: center;
+}
+
+.affaire-section {
+  border-top: 1px dashed rgba(15, 23, 42, 0.12);
+  padding-top: 14px;
+}
+
+.affaire-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.affaire-section-title {
+  font-weight: 950;
+  color: var(--app-text);
+  display: flex;
+  align-items: center;
+}
+
+.affaire-section-sub {
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.affaire-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.04);
+  font-weight: 900;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.78);
+}
+
+.affaire-loading,
+.affaire-empty {
+  padding: 12px 0;
+  color: var(--app-text-muted);
+  font-weight: 700;
+}
+
+.affaire-list {
+  display: grid;
+  gap: 10px;
+}
+
+.affaire-item {
+  border-radius: 16px;
+  border: 1px solid var(--app-border);
+  background: rgba(255, 255, 255, 0.7);
+  padding: 12px 12px;
+}
+
+.affaire-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.affaire-item-type {
+  font-weight: 950;
+  color: var(--app-text);
+  display: flex;
+  align-items: center;
+}
+
+.affaire-item-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+  color: rgba(15, 23, 42, 0.7);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.affaire-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.affaire-item-desc {
+  margin-top: 8px;
+  color: rgba(15, 23, 42, 0.75);
+  font-weight: 600;
+  white-space: pre-wrap;
+}
+
 .risque-modal {
   width: min(980px, 100%);
 }

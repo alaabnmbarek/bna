@@ -8,6 +8,9 @@ public record AudienceDto(
     Long affaireId,
     String referenceTribunal,
     LocalDateTime dateAudience,
+    String referenceAudience,
+    String tribunal,
+    String salle,
     String objet,
     String compteRendu,
     AudienceStatus statut

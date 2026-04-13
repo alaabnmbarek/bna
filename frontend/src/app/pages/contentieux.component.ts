@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../auth/auth.service';
 import { ProfileService } from '../auth/profile.service';
-import { ChargeDossierOption, ContentieuxService, ContentieuxStatus, DossierContentieux } from '../contentieux/contentieux.service';
+import { AffaireContentieux, AffaireStatut, ChargeDossierOption, ContentieuxService, ContentieuxStatus, CreateAffaireRequest, DossierContentieux } from '../contentieux/contentieux.service';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { DossierRisqueService, RisqueCategory, RisqueItem } from '../risque/dossier-risque.service';
 
@@ -105,6 +105,35 @@ export class ContentieuxPageComponent implements OnInit {
   showActionDialog = false;
   actionDialogType: ActionDialogType | null = null;
   selected: DossierContentieux | null = null;
+
+  affaires: AffaireContentieux[] = [];
+  affairesLoading = false;
+  showAffaireDialog = false;
+  affaireSaving = false;
+  affaireForm: CreateAffaireRequest = {
+    typeAffaire: '',
+    description: '',
+    statut: 'EN_COURS',
+    dateCreation: ''
+  };
+  typeAffaireOptions: string[] = [
+    'Recouvrement de créance',
+    'Litige bancaire',
+    'Saisie',
+    'Exécution de jugement',
+    'Assignation',
+    'Appel',
+    'Opposition',
+    'Contentieux commercial',
+    'Contentieux civil',
+    'Contentieux pénal',
+    'Règlement amiable'
+  ];
+  affaireStatuts: Array<{ value: AffaireStatut; label: string }> = [
+    { value: 'EN_COURS', label: 'en_cours' },
+    { value: 'TERMINEE', label: 'terminee' },
+    { value: 'EN_ATTENTE', label: 'en_attente' }
+  ];
 
   showRisqueDialog = false;
   risqueStep: 'select' | 'edit' = 'select';
@@ -266,8 +295,8 @@ export class ContentieuxPageComponent implements OnInit {
       agence: this.form.agence,
       chargeDossierId: this.form.chargeDossierId ?? undefined,
       dateOuverture: this.form.dateOuverture || undefined,
-      montantEngage: this.toNumberOrUndefined(this.form.montantEngage),
-      montantRecupere: this.toNumberOrUndefined(this.form.montantRecupere)
+      montantEngage: this.toDecimalStringOrUndefined(this.form.montantEngage),
+      montantRecupere: this.toDecimalStringOrUndefined(this.form.montantRecupere)
     };
 
     if (this.editingId) {
@@ -338,7 +367,84 @@ export class ContentieuxPageComponent implements OnInit {
     if (shouldOpenDetailsAfter) {
       this.actionDialogType = 'details';
       this.showActionDialog = true;
+      this.loadAffaires();
     }
+  }
+
+  canCreateAffaire(): boolean {
+    return this.auth.hasRole('ROLE_ADMIN') || this.auth.hasRole('ROLE_RESPONSABLE_CONTENTIEUX') || this.auth.hasRole('ROLE_CHARGE_DOSSIER');
+  }
+
+  loadAffaires(): void {
+    if (!this.selected) return;
+    this.affairesLoading = true;
+    this.contentieux.listAffaires(this.selected.id).subscribe({
+      next: (rows) => {
+        this.affaires = rows;
+        this.affairesLoading = false;
+      },
+      error: () => {
+        this.affairesLoading = false;
+        this.showBanner('Erreur lors du chargement des affaires.', 'danger');
+      }
+    });
+  }
+
+  openAffaireCreate(): void {
+    if (!this.selected) return;
+    this.affaireForm = {
+      typeAffaire: '',
+      description: '',
+      statut: 'EN_COURS',
+      dateCreation: this.today()
+    };
+    this.showAffaireDialog = true;
+  }
+
+  closeAffaireDialog(): void {
+    this.showAffaireDialog = false;
+    this.affaireSaving = false;
+  }
+
+  submitAffaire(): void {
+    if (!this.selected) return;
+    if (!this.affaireForm.typeAffaire || !this.affaireForm.typeAffaire.trim()) {
+      this.showBanner("Type d'affaire obligatoire.", 'danger');
+      return;
+    }
+    if (!this.affaireForm.statut) {
+      this.showBanner('Statut obligatoire.', 'danger');
+      return;
+    }
+    if (!this.affaireForm.dateCreation) {
+      this.showBanner('Date de création obligatoire.', 'danger');
+      return;
+    }
+    this.affaireSaving = true;
+    const payload: CreateAffaireRequest = {
+      ...this.affaireForm,
+      typeAffaire: this.affaireForm.typeAffaire.trim()
+    };
+    this.contentieux.createAffaire(this.selected.id, payload).subscribe({
+      next: () => {
+        this.affaireSaving = false;
+        this.showAffaireDialog = false;
+        this.showBanner('Affaire ajoutée au dossier avec succès.', 'success');
+        this.loadAffaires();
+        this.load();
+      },
+      error: (err) => {
+        this.affaireSaving = false;
+        const msg = err?.error?.message || err?.error?.error || "Erreur lors de la création de l'affaire.";
+        this.showBanner(msg, 'danger');
+      }
+    });
+  }
+
+  affaireStatusBadge(statut: AffaireStatut): string {
+    if (statut === 'EN_COURS') return 'badge bg-warning-subtle text-warning';
+    if (statut === 'TERMINEE') return 'badge bg-success-subtle text-success';
+    return 'badge bg-info-subtle text-info';
   }
 
   openRisqueForEditing(): void {
@@ -853,6 +959,10 @@ export class ContentieuxPageComponent implements OnInit {
     this.showActionDialog = false;
     this.actionDialogType = null;
     this.selected = null;
+    this.affaires = [];
+    this.affairesLoading = false;
+    this.showAffaireDialog = false;
+    this.affaireSaving = false;
   }
 
   filteredDossiers(): DossierContentieux[] {
@@ -922,11 +1032,25 @@ export class ContentieuxPageComponent implements OnInit {
     return 'Clôturé';
   }
 
-  private toNumberOrUndefined(value: string): number | undefined {
-    const v = value.trim();
+  private toDecimalStringOrUndefined(value: string): string | undefined {
+    let v = (value ?? '').trim();
     if (!v) return undefined;
-    const n = Number(v.replace(',', '.'));
-    if (!Number.isFinite(n)) return undefined;
-    return n;
+
+    v = v.replace(/\u00A0/g, ' ').replace(/\s+/g, '');
+    v = v.replace(/[^\d,.\-]/g, '');
+
+    const lastDot = v.lastIndexOf('.');
+    const lastComma = v.lastIndexOf(',');
+    if (lastDot !== -1 && lastComma !== -1) {
+      const decimalSep = lastDot > lastComma ? '.' : ',';
+      const thousandsSep = decimalSep === '.' ? ',' : '.';
+      v = v.split(thousandsSep).join('');
+      v = decimalSep === ',' ? v.replace(',', '.') : v;
+    } else if (lastComma !== -1) {
+      v = v.replace(',', '.');
+    }
+
+    if (!/^-?\d+(\.\d+)?$/.test(v)) return undefined;
+    return v;
   }
 }

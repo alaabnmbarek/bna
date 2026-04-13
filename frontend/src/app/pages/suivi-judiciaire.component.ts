@@ -28,7 +28,11 @@ export class SuiviJudiciaireComponent implements OnInit {
   showAssignationPopup = false;
   selectedAffaire: AffaireJudiciaire | null = null;
 
-  procedureTypes: ProcedureType[] = ['ASSIGNATION'];
+  procedureTypeOptions: Array<{ value: ProcedureType; label: string }> = [
+    { value: 'ASSIGNATION', label: "Procédure d'assignation" },
+    { value: 'SAISIE_MOBILIERE', label: 'Procédure de saisie' },
+    { value: 'APPEL', label: "Procédure d'appel" }
+  ];
   assignationTargets: AssignationTarget[] = ['GARANTIE_PATRIMOINE', 'DEBITEUR_PRINCIPAL'];
   audienceStatuses: AudienceStatus[] = ['PROGRAMMEE', 'REALISEE', 'REPORTEE', 'ANNULEE'];
   decisionTypes: DecisionType[] = ['GAIN', 'PERTE', 'REPORT', 'EXECUTION', 'RADIATION', 'NON_LIEU'];
@@ -36,6 +40,8 @@ export class SuiviJudiciaireComponent implements OnInit {
   newAffaire: AffaireJudiciaire = this.blankAffaire();
   newAudience: Audience = this.blankAudience();
   newJugement: Jugement = this.blankJugement();
+  newAudienceDate = '';
+  newAudienceTime = '';
 
   constructor(
     public suiviService: SuiviJudiciaireService,
@@ -92,6 +98,9 @@ export class SuiviJudiciaireComponent implements OnInit {
     return {
       affaireId: 0,
       dateAudience: '',
+      referenceAudience: '',
+      tribunal: '',
+      salle: '',
       objet: '',
       statut: 'PROGRAMMEE'
     };
@@ -112,8 +121,15 @@ export class SuiviJudiciaireComponent implements OnInit {
     this.showAffaireForm = true;
   }
 
+  onTypeProcedureChange(): void {
+    if (this.newAffaire.typeProcedure !== 'ASSIGNATION') {
+      this.newAffaire.assignationTarget = undefined;
+      this.newAffaire.garantiePatrimoine = '';
+      this.newAffaire.montant = undefined;
+    }
+  }
+
   openAssignationPopup(): void {
-    this.newAffaire.typeProcedure = 'ASSIGNATION';
     if (!this.newAffaire.dateTransmission) {
       this.newAffaire.dateTransmission = new Date().toISOString().split('T')[0];
     }
@@ -125,10 +141,6 @@ export class SuiviJudiciaireComponent implements OnInit {
   }
 
   saveAffaire(): void {
-    if (!this.newAffaire.assignationTarget) {
-      alert('Veuillez choisir le type d’assignation.');
-      return;
-    }
     if (!this.newAffaire.avocatId) {
       alert('Veuillez choisir un avocat.');
       return;
@@ -137,14 +149,20 @@ export class SuiviJudiciaireComponent implements OnInit {
       alert('Veuillez saisir la date de transmission.');
       return;
     }
-    if (this.newAffaire.assignationTarget === 'GARANTIE_PATRIMOINE') {
-      if (!this.newAffaire.garantiePatrimoine || !this.newAffaire.garantiePatrimoine.trim()) {
-        alert('Veuillez préciser la garantie ou le patrimoine.');
+    if (this.newAffaire.typeProcedure === 'ASSIGNATION') {
+      if (!this.newAffaire.assignationTarget) {
+        alert('Veuillez choisir le type d’assignation.');
         return;
       }
-      if (this.newAffaire.montant == null || Number.isNaN(Number(this.newAffaire.montant))) {
-        alert('Veuillez saisir le montant.');
-        return;
+      if (this.newAffaire.assignationTarget === 'GARANTIE_PATRIMOINE') {
+        if (!this.newAffaire.garantiePatrimoine || !this.newAffaire.garantiePatrimoine.trim()) {
+          alert('Veuillez préciser la garantie ou le patrimoine.');
+          return;
+        }
+        if (this.newAffaire.montant == null || Number.isNaN(Number(this.newAffaire.montant))) {
+          alert('Veuillez saisir le montant.');
+          return;
+        }
       }
     }
 
@@ -153,6 +171,11 @@ export class SuiviJudiciaireComponent implements OnInit {
       this.showAssignationPopup = false;
       this.loadAffaires();
     });
+  }
+
+  procedureLabel(value?: ProcedureType): string {
+    const v = value || 'ASSIGNATION';
+    return this.procedureTypeOptions.find(o => o.value === v)?.label || v;
   }
 
   viewAudiences(affaire: AffaireJudiciaire): void {
@@ -184,17 +207,31 @@ export class SuiviJudiciaireComponent implements OnInit {
   addAudience(): void {
     this.newAudience = this.blankAudience();
     this.newAudience.affaireId = this.selectedAffaire!.id!;
-    // Use the current date and time as a default for the datetime-local input
     const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    this.newAudience.dateAudience = now.toISOString().slice(0, 16);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    this.newAudienceDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    this.newAudienceTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
   }
 
   saveAudience(): void {
-    if (!this.newAudience.dateAudience || !this.newAudience.objet) {
-      alert('Veuillez saisir la date et l\'objet de l\'audience.');
+    if (!this.newAudienceDate || !this.newAudienceTime) {
+      alert('Veuillez saisir la date et l\'heure de l\'audience.');
       return;
     }
+    if (!this.newAudience.referenceAudience || !this.newAudience.referenceAudience.trim()) {
+      alert('Veuillez saisir la référence audience.');
+      return;
+    }
+    if (!this.newAudience.tribunal || !this.newAudience.tribunal.trim()) {
+      alert('Veuillez saisir le tribunal.');
+      return;
+    }
+    if (!this.newAudience.objet || !this.newAudience.objet.trim()) {
+      alert('Veuillez saisir l\'objet / motif.');
+      return;
+    }
+    this.newAudience.dateAudience = `${this.newAudienceDate}T${this.newAudienceTime}`;
+
     this.suiviService.scheduleAudience(this.newAudience).subscribe({
       next: () => {
         this.viewAudiences(this.selectedAffaire!);

@@ -456,8 +456,168 @@
               <div class="contentieux-detail-v">{{ selected?.validatedBy || '—' }}</div>
             </div>
           </div>
+
+          <div class="affaire-section mt-3">
+            <div class="affaire-section-head">
+              <div class="affaire-section-title">
+                <i class="feather icon-briefcase me-2"></i>
+                Affaires du dossier
+              </div>
+              <button type="button" class="btn btn-sm btn-primary" (click)="openAffaireCreate()" [disabled]="!selected || !canCreateAffaire()">
+                <i class="feather icon-plus me-1"></i>
+                Créer Affaire
+              </button>
+            </div>
+
+            <div class="affaire-section-sub">
+              <span class="affaire-pill">
+                <i class="feather icon-folder me-1"></i>
+                Dossier: {{ selected?.reference }}
+              </span>
+            </div>
+
+            <div *ngIf="affairesLoading" class="affaire-loading">
+              <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+              Chargement des affaires...
+            </div>
+
+            <div *ngIf="!affairesLoading && affaires.length === 0" class="affaire-empty">
+              Aucune affaire liée à ce dossier.
+            </div>
+
+            <div *ngIf="!affairesLoading && affaires.length > 0" class="affaire-list">
+              <div *ngFor="let a of affaires" class="affaire-item">
+                <div class="affaire-item-head">
+                  <div class="affaire-item-type">
+                    <i class="feather icon-file-text me-2"></i>
+                    {{ a.typeAffaire }}
+                  </div>
+                  <span [class]="affaireStatusBadge(a.statut)">{{ a.statut }}</span>
+                </div>
+                <div class="affaire-item-meta">
+              <div class="affaire-meta" *ngIf="a.numeroAffaire">
+                <i class="feather icon-hash me-1"></i>
+                {{ a.numeroAffaire }}
+              </div>
+                  <div class="affaire-meta">
+                    <i class="feather icon-calendar me-1"></i>
+                    {{ a.dateCreation | date:'dd/MM/yyyy' }}
+                  </div>
+                  <div class="affaire-meta">
+                    <i class="feather icon-link me-1"></i>
+                    {{ a.dossierReference }}
+                  </div>
+                </div>
+                <div class="affaire-item-desc" *ngIf="a.description">
+                  {{ a.description }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       }
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showAffaireDialog" class="contentieux-overlay" (click)="closeAffaireDialog()">
+  <div class="contentieux-dialog affaire-dialog" (click)="$event.stopPropagation()">
+    <div class="contentieux-modal-head">
+      <div>
+        <div class="affaire-breadcrumb">
+          <span>Dossiers</span>
+          <i class="feather icon-chevron-right"></i>
+          <span>Affaires</span>
+          <i class="feather icon-chevron-right"></i>
+          <span class="affaire-breadcrumb-active">Create</span>
+        </div>
+        <div class="contentieux-modal-title">Créer une affaire</div>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeAffaireDialog()">Annuler</button>
+    </div>
+
+    <div class="contentieux-modal-body">
+      <div class="affaire-dossier-hint">
+        <i class="feather icon-folder me-2"></i>
+        Cette affaire sera ajoutée au dossier: <span class="affaire-dossier-ref">{{ selected?.reference }}</span>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-12 col-lg-7">
+          <div class="affaire-card">
+            <div class="affaire-card-title"><i class="feather icon-info me-2"></i> General Info</div>
+            <div class="row g-3 mt-1">
+              <div class="col-12">
+                <label class="form-label contentieux-label">N° Affaire</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="feather icon-hash"></i></span>
+                  <input class="form-control contentieux-input" value="Automatique" disabled>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label contentieux-label">Type d'affaire *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="feather icon-edit-3"></i></span>
+                  <select class="form-select contentieux-input" [(ngModel)]="affaireForm.typeAffaire" name="affaireTypeAffaire">
+                    <option value="" disabled>Sélectionner un type</option>
+                    <option *ngFor="let t of typeAffaireOptions" [value]="t">{{ t }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label contentieux-label">Description</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="feather icon-align-left"></i></span>
+                  <textarea class="form-control contentieux-textarea contentieux-input" rows="4" [(ngModel)]="affaireForm.description" name="affaireDescription" placeholder="Détails de l'affaire..."></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-5">
+          <div class="affaire-card">
+            <div class="affaire-card-title"><i class="feather icon-link-2 me-2"></i> Relations</div>
+            <div class="row g-3 mt-1">
+              <div class="col-12">
+                <label class="form-label contentieux-label">Statut *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="feather icon-flag"></i></span>
+                  <select class="form-select contentieux-input" [(ngModel)]="affaireForm.statut" name="affaireStatut">
+                    <option *ngFor="let s of affaireStatuts" [ngValue]="s.value">{{ s.label }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label contentieux-label">Date de création *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="feather icon-calendar"></i></span>
+                  <input class="form-control contentieux-input" type="date" [(ngModel)]="affaireForm.dateCreation" name="affaireDateCreation">
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label contentieux-label">Dossier *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="feather icon-folder"></i></span>
+                  <input class="form-control contentieux-input" [value]="selected?.reference" disabled>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="contentieux-actions mt-3">
+            <button class="btn btn-primary contentieux-submit" type="button" (click)="submitAffaire()" [disabled]="affaireSaving">
+              <span *ngIf="affaireSaving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              <i *ngIf="!affaireSaving" class="feather icon-plus me-2"></i>
+              Créer Affaire
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

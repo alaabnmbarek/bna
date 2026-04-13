@@ -17,6 +17,15 @@ public class AudienceEntity {
     @Column(nullable = false)
     private LocalDateTime dateAudience;
 
+    @Column(length = 100)
+    private String referenceAudience;
+
+    @Column(length = 150)
+    private String tribunal;
+
+    @Column(length = 80)
+    private String salle;
+
     @Column(nullable = false, length = 255)
     private String objet;
 
@@ -48,6 +57,12 @@ public class AudienceEntity {
     public void setAffaireJudiciaire(AffaireJudiciaireEntity affaireJudiciaire) { this.affaireJudiciaire = affaireJudiciaire; }
     public LocalDateTime getDateAudience() { return dateAudience; }
     public void setDateAudience(LocalDateTime dateAudience) { this.dateAudience = dateAudience; }
+    public String getReferenceAudience() { return referenceAudience; }
+    public void setReferenceAudience(String referenceAudience) { this.referenceAudience = referenceAudience; }
+    public String getTribunal() { return tribunal; }
+    public void setTribunal(String tribunal) { this.tribunal = tribunal; }
+    public String getSalle() { return salle; }
+    public void setSalle(String salle) { this.salle = salle; }
     public String getObjet() { return objet; }
     public void setObjet(String objet) { this.objet = objet; }
     public String getCompteRendu() { return compteRendu; }

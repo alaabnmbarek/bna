@@ -75,19 +75,24 @@ public class SuiviJudiciaireService {
         AffaireJudiciaireEntity entity = new AffaireJudiciaireEntity();
         entity.setDossierContentieux(dossier);
         entity.setReferenceTribunal(dto.referenceTribunal());
-        entity.setTypeProcedure(ProcedureType.ASSIGNATION);
-        entity.setAssignationTarget(dto.assignationTarget());
-        entity.setGarantiePatrimoine(dto.garantiePatrimoine());
-        entity.setMontant(dto.montant());
+        ProcedureType procedureType = dto.typeProcedure() != null ? dto.typeProcedure() : ProcedureType.ASSIGNATION;
+        entity.setTypeProcedure(procedureType);
+
+        if (procedureType == ProcedureType.ASSIGNATION) {
+            entity.setAssignationTarget(dto.assignationTarget());
+            entity.setGarantiePatrimoine(dto.garantiePatrimoine());
+            entity.setMontant(dto.montant());
+        } else {
+            entity.setAssignationTarget(null);
+            entity.setGarantiePatrimoine(null);
+            entity.setMontant(null);
+        }
         entity.setDateTransmission(dto.dateTransmission());
         entity.setStatut(AffaireStatus.EN_COURS);
         entity.setTribunal(dto.tribunal());
         entity.setDateOuverture(dto.dateOuverture());
         entity.setObservations(dto.observations());
 
-        if (dto.assignationTarget() == null) {
-            throw new RuntimeException("Type d’assignation obligatoire");
-        }
         if (dto.avocatId() == null) {
             throw new RuntimeException("Avocat obligatoire");
         }
@@ -98,12 +103,17 @@ public class SuiviJudiciaireService {
         if (dto.dateTransmission() == null) {
             throw new RuntimeException("Date de transmission obligatoire");
         }
-        if (dto.assignationTarget() == AssignationTarget.GARANTIE_PATRIMOINE) {
-            if (dto.garantiePatrimoine() == null || dto.garantiePatrimoine().isBlank()) {
-                throw new RuntimeException("Garantie ou patrimoine obligatoire");
+        if (procedureType == ProcedureType.ASSIGNATION) {
+            if (dto.assignationTarget() == null) {
+                throw new RuntimeException("Type d’assignation obligatoire");
             }
-            if (dto.montant() == null) {
-                throw new RuntimeException("Montant obligatoire");
+            if (dto.assignationTarget() == AssignationTarget.GARANTIE_PATRIMOINE) {
+                if (dto.garantiePatrimoine() == null || dto.garantiePatrimoine().isBlank()) {
+                    throw new RuntimeException("Garantie ou patrimoine obligatoire");
+                }
+                if (dto.montant() == null) {
+                    throw new RuntimeException("Montant obligatoire");
+                }
             }
         }
 
@@ -123,6 +133,9 @@ public class SuiviJudiciaireService {
         AudienceEntity entity = new AudienceEntity();
         entity.setAffaireJudiciaire(affaire);
         entity.setDateAudience(dto.dateAudience());
+        entity.setReferenceAudience(dto.referenceAudience());
+        entity.setTribunal(dto.tribunal());
+        entity.setSalle(dto.salle());
         entity.setObjet(dto.objet());
         entity.setStatut(AudienceStatus.PROGRAMMEE);
 
@@ -137,6 +150,9 @@ public class SuiviJudiciaireService {
         requireAccessibleAffaire(entity.getAffaireJudiciaire().getId(), authentication);
         
         entity.setDateAudience(dto.dateAudience());
+        entity.setReferenceAudience(dto.referenceAudience());
+        entity.setTribunal(dto.tribunal());
+        entity.setSalle(dto.salle());
         entity.setObjet(dto.objet());
         entity.setCompteRendu(dto.compteRendu());
         entity.setStatut(dto.statut());
@@ -242,6 +258,9 @@ public class SuiviJudiciaireService {
                 entity.getAffaireJudiciaire().getId(),
                 entity.getAffaireJudiciaire().getReferenceTribunal(),
                 entity.getDateAudience(),
+                entity.getReferenceAudience(),
+                entity.getTribunal(),
+                entity.getSalle(),
                 entity.getObjet(),
                 entity.getCompteRendu(),
                 entity.getStatut()

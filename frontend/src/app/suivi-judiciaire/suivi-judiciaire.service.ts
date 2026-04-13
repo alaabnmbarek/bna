@@ -34,6 +34,9 @@ export interface Audience {
   affaireId: number;
   referenceTribunal?: string;
   dateAudience: string;
+  referenceAudience?: string;
+  tribunal?: string;
+  salle?: string;
   objet: string;
   compteRendu?: string;
   statut?: AudienceStatus;
