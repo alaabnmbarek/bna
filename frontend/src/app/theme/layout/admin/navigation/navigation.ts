@@ -43,6 +43,61 @@ export const NavigationItems: NavigationItem[] = [
     role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'],
     children: [
       {
+        id: 'risk-area',
+        title: 'Risque',
+        type: 'collapse',
+        icon: 'feather icon-alert-triangle',
+        breadcrumbs: false,
+        role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'],
+        children: [
+          {
+            id: 'risque-engagement',
+            title: 'Risque Engagements',
+            type: 'item',
+            url: '/risque/engagement',
+            icon: 'feather icon-trending-up',
+            breadcrumbs: false,
+            role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
+          },
+          {
+            id: 'risque-patrimoines',
+            title: 'Risque Patrimoines',
+            type: 'item',
+            url: '/risque/patrimoines',
+            icon: 'feather icon-home',
+            breadcrumbs: false,
+            role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
+          },
+          {
+            id: 'risque-garanties-nantissement',
+            title: 'Garanties (Nantissement)',
+            type: 'item',
+            url: '/risque/garanties/nantissement',
+            icon: 'feather icon-link',
+            breadcrumbs: false,
+            role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
+          },
+          {
+            id: 'risque-garanties-hypotheque',
+            title: 'Garanties (Hypothèque)',
+            type: 'item',
+            url: '/risque/garanties/hypotheque',
+            icon: 'feather icon-map-pin',
+            breadcrumbs: false,
+            role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
+          },
+          {
+            id: 'risque-garanties-cautions',
+            title: 'Garanties (Cautions)',
+            type: 'item',
+            url: '/risque/garanties/cautions',
+            icon: 'feather icon-shield',
+            breadcrumbs: false,
+            role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
+          }
+        ]
+      },
+      {
         id: 'contentieux-management',
         title: 'Gestion Dossier Contentieux',
         type: 'item',

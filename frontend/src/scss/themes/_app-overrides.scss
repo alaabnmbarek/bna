@@ -7,6 +7,7 @@ body {
   background: var(--app-bg);
   color: var(--app-text);
   letter-spacing: 0.1px;
+  font-family: var(--app-font-sans);
 }
 
 h1,
@@ -38,6 +39,17 @@ h6 {
   border-radius: var(--app-radius-sm);
   font-weight: 800;
   letter-spacing: 0.2px;
+  transition: transform var(--app-dur-2) var(--app-ease), box-shadow var(--app-dur-2) var(--app-ease), background var(--app-dur-2) var(--app-ease), border-color var(--app-dur-2) var(--app-ease), color var(--app-dur-2) var(--app-ease);
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.10);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
 }
 
 .btn-primary {
@@ -62,6 +74,7 @@ h6 {
   border: 1px solid var(--app-border);
   padding: 0.65rem 0.85rem;
   background: var(--app-surface);
+  transition: border-color var(--app-dur-2) var(--app-ease), box-shadow var(--app-dur-2) var(--app-ease), background var(--app-dur-2) var(--app-ease);
 }
 
 .form-control:focus,
@@ -88,6 +101,132 @@ h6 {
 .badge {
   border-radius: 999px;
   font-weight: 800;
+}
+
+.pcoded-main-container {
+  background: var(--app-bg);
+}
+
+.pcoded-content {
+  padding: 18px 18px 22px;
+  background: radial-gradient(1200px 500px at 0% 0%, rgba(79, 70, 229, 0.06), transparent 55%),
+    radial-gradient(1200px 500px at 100% 0%, rgba(0, 104, 71, 0.06), transparent 55%),
+    var(--app-bg);
+  min-height: calc(100vh - 70px);
+}
+
+.pcoded-content > * {
+  animation: appPageIn var(--app-dur-3) var(--app-ease) both;
+}
+
+.pcoded-content .card,
+.pcoded-content .contentieux-dialog,
+.pcoded-content .modal-content {
+  animation: appCardIn var(--app-dur-3) var(--app-ease) both;
+}
+
+.pcoded-content .card:hover {
+  transform: translateY(-1px);
+  transition: transform var(--app-dur-2) var(--app-ease), box-shadow var(--app-dur-2) var(--app-ease);
+  box-shadow: var(--app-shadow);
+}
+
+.pcoded-content .table-responsive {
+  border-radius: var(--app-radius-lg);
+  border: 1px solid var(--app-border);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--app-shadow-sm);
+  overflow: hidden;
+}
+
+.pcoded-content .table {
+  margin-bottom: 0;
+}
+
+.pcoded-content .table tbody tr {
+  transition: background var(--app-dur-2) var(--app-ease), transform var(--app-dur-2) var(--app-ease);
+}
+
+.pcoded-content .table tbody tr:hover {
+  background: rgba(79, 70, 229, 0.04);
+}
+
+.pcoded-content .table tbody td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.pcoded-content .badge.bg-success,
+.pcoded-content .badge.bg-success-subtle {
+  background: rgba(34, 197, 94, 0.14) !important;
+  color: rgba(21, 128, 61, 1) !important;
+}
+
+.pcoded-content .badge.bg-warning,
+.pcoded-content .badge.bg-warning-subtle {
+  background: rgba(245, 158, 11, 0.16) !important;
+  color: rgba(180, 83, 9, 1) !important;
+}
+
+.pcoded-content .badge.bg-danger,
+.pcoded-content .badge.bg-danger-subtle {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: rgba(185, 28, 28, 1) !important;
+}
+
+.modal.show .modal-dialog {
+  animation: appModalIn var(--app-dur-3) var(--app-ease) both;
+}
+
+.modal-content {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.22);
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--app-border);
+}
+
+.modal-footer {
+  border-top: 1px solid var(--app-border);
+}
+
+.contentieux-overlay {
+  animation: appFadeIn var(--app-dur-2) var(--app-ease) both;
+}
+
+.contentieux-dialog {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.22);
+  animation: appModalIn var(--app-dur-3) var(--app-ease) both;
+}
+
+@keyframes appFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes appPageIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes appCardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes appModalIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .pcoded-navbar .pcoded-inner-navbar > li > a {

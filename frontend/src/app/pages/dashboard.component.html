@@ -36,34 +36,107 @@
       {{ banner.message }}
     </div>
 
-    <div class="dash-kpis">
-      <div class="dash-kpi dash-kpi-total">
-        <div class="dash-kpi-k">Total dossiers</div>
-        <div class="dash-kpi-v">{{ countAll() }}</div>
+    <div class="dash-hero">
+      <div class="dash-hero-kpis">
+        <div class="dash-kpi-card dash-kpi-primary">
+          <div class="dash-kpi-top">
+            <div class="dash-kpi-k">Total dossiers</div>
+            <div class="dash-kpi-chip">+ {{ countBy('A_VALIDER') }} à valider</div>
+          </div>
+          <div class="dash-kpi-v">{{ countAll() }}</div>
+          <apx-chart
+            [series]="sparkTotalOptions.series"
+            [chart]="sparkTotalOptions.chart"
+            [stroke]="sparkTotalOptions.stroke"
+            [colors]="sparkTotalOptions.colors"
+            [dataLabels]="sparkTotalOptions.dataLabels"
+            [tooltip]="sparkTotalOptions.tooltip"
+          ></apx-chart>
+        </div>
+
+        <div class="dash-kpi-card dash-kpi-success">
+          <div class="dash-kpi-top">
+            <div class="dash-kpi-k">En cours</div>
+            <div class="dash-kpi-chip">Taux {{ recouvrementRate() | number:'1.0-1' }}%</div>
+          </div>
+          <div class="dash-kpi-v">{{ countOpen() }}</div>
+          <apx-chart
+            [series]="sparkOpenOptions.series"
+            [chart]="sparkOpenOptions.chart"
+            [stroke]="sparkOpenOptions.stroke"
+            [colors]="sparkOpenOptions.colors"
+            [dataLabels]="sparkOpenOptions.dataLabels"
+            [tooltip]="sparkOpenOptions.tooltip"
+          ></apx-chart>
+        </div>
+
+        <div class="dash-kpi-card dash-kpi-sky">
+          <div class="dash-kpi-top">
+            <div class="dash-kpi-k">Montant engagé</div>
+            <div class="dash-kpi-chip">Total</div>
+          </div>
+          <div class="dash-kpi-v">{{ sumEngage() | number:'1.0-0' }}</div>
+          <apx-chart
+            [series]="sparkEngageOptions.series"
+            [chart]="sparkEngageOptions.chart"
+            [stroke]="sparkEngageOptions.stroke"
+            [colors]="sparkEngageOptions.colors"
+            [dataLabels]="sparkEngageOptions.dataLabels"
+            [tooltip]="sparkEngageOptions.tooltip"
+          ></apx-chart>
+        </div>
+
+        <div class="dash-kpi-card dash-kpi-bna">
+          <div class="dash-kpi-top">
+            <div class="dash-kpi-k">Montant récupéré</div>
+            <div class="dash-kpi-chip">6 mois</div>
+          </div>
+          <div class="dash-kpi-v">{{ sumRecupere() | number:'1.0-0' }}</div>
+          <apx-chart
+            [series]="sparkRecupOptions.series"
+            [chart]="sparkRecupOptions.chart"
+            [stroke]="sparkRecupOptions.stroke"
+            [colors]="sparkRecupOptions.colors"
+            [dataLabels]="sparkRecupOptions.dataLabels"
+            [tooltip]="sparkRecupOptions.tooltip"
+          ></apx-chart>
+        </div>
       </div>
-      <div class="dash-kpi dash-kpi-pending">
-        <div class="dash-kpi-k">À valider</div>
-        <div class="dash-kpi-v">{{ countBy('A_VALIDER') }}</div>
-      </div>
-      <div class="dash-kpi dash-kpi-open">
-        <div class="dash-kpi-k">En cours</div>
-        <div class="dash-kpi-v">{{ countOpen() }}</div>
-      </div>
-      <div class="dash-kpi dash-kpi-closed">
-        <div class="dash-kpi-k">Clôturés</div>
-        <div class="dash-kpi-v">{{ countClosed() }}</div>
-      </div>
-      <div class="dash-kpi dash-kpi-money">
-        <div class="dash-kpi-k">Montant engagé</div>
-        <div class="dash-kpi-v">{{ sumEngage() | number:'1.0-0' }}</div>
-      </div>
-      <div class="dash-kpi dash-kpi-money">
-        <div class="dash-kpi-k">Montant récupéré</div>
-        <div class="dash-kpi-v">{{ sumRecupere() | number:'1.0-0' }}</div>
-      </div>
-      <div class="dash-kpi dash-kpi-rate">
-        <div class="dash-kpi-k">Taux recouvrement</div>
-        <div class="dash-kpi-v">{{ recouvrementRate() | number:'1.0-1' }}%</div>
+
+      <div class="dash-hero-right">
+        <div class="dash-widget dash-pipeline-top">
+          <div class="dash-widget-head">
+            <div class="dash-widget-title">Pipeline</div>
+            <span class="dash-widget-pill">{{ pipelineTotal() }}</span>
+          </div>
+          <div class="dash-pipeline-rail">
+            <div class="dash-pipeline-seg seg-amiable" [style.width.%]="pipelinePct(pipeline.amiable)"></div>
+            <div class="dash-pipeline-seg seg-jud" [style.width.%]="pipelinePct(pipeline.judiciaire)"></div>
+            <div class="dash-pipeline-seg seg-exec" [style.width.%]="pipelinePct(pipeline.execution)"></div>
+          </div>
+          <div class="dash-pipeline-legend">
+            <div><span class="dot dot-amiable"></span> Amiable ({{ pipeline.amiable }})</div>
+            <div><span class="dot dot-jud"></span> Judiciaire ({{ pipeline.judiciaire }})</div>
+            <div><span class="dot dot-exec"></span> Exécution ({{ pipeline.execution }})</div>
+          </div>
+        </div>
+
+        <div class="dash-widget dash-urgences">
+          <div class="dash-widget-head">
+            <div class="dash-widget-title">Urgences (48h)</div>
+            <span class="dash-widget-pill">{{ urgences.length }}</span>
+          </div>
+          <div class="dash-urgences-list">
+            <div class="dash-urg-item" *ngFor="let u of urgences">
+              <div class="dash-urg-left">
+                <div class="dash-urg-title">{{ u.referenceTribunal || ('Affaire #' + u.affaireId) }}</div>
+                <div class="dash-urg-sub">{{ u.objet }}</div>
+              </div>
+              <div class="dash-urg-date">{{ u.dateAudience | date:'dd/MM HH:mm' }}</div>
+            </div>
+            <div class="dash-empty" *ngIf="!loading && urgences.length === 0">Aucune audience dans les 48h.</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -72,16 +145,118 @@
         <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
           <div class="dash-panel">
             <div class="dash-panel-head">
+              <div class="dash-panel-title">Dossiers par Zone (Carte)</div>
+              <div class="dash-panel-sub">Densité des dossiers par région.</div>
+            </div>
+
+            <div class="tn-widget">
+              <div class="tn-map-wrap">
+                <svg class="tn-map" viewBox="0 0 240 520" role="img" aria-label="Carte Tunisie - densité">
+                  <defs>
+                    <linearGradient id="tnBase" x1="0" x2="1" y1="0" y2="1">
+                      <stop offset="0" stop-color="rgba(22,163,74,0.10)"></stop>
+                      <stop offset="0.55" stop-color="rgba(99,102,241,0.10)"></stop>
+                      <stop offset="1" stop-color="rgba(255,255,255,0.0)"></stop>
+                    </linearGradient>
+                    <filter id="tnGlow" x="-40%" y="-40%" width="180%" height="180%">
+                      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="rgba(15,23,42,0.12)"></feDropShadow>
+                      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="rgba(255,255,255,0.35)"></feDropShadow>
+                    </filter>
+                    <filter id="tnTopo" x="-20%" y="-20%" width="140%" height="140%">
+                      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" seed="2" result="noise"></feTurbulence>
+                      <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+                    </filter>
+                    <clipPath id="tnClip">
+                      <path d="M145 24 L165 38 L184 78 L174 124 L198 160 L186 214 L160 278 L132 380 L144 478 L118 446 L92 356 L104 250 L78 196 L66 120 L92 64 L116 38 Z"></path>
+                    </clipPath>
+                  </defs>
+
+                  <rect x="0" y="0" width="240" height="520" fill="url(#tnBase)"></rect>
+
+                  <g clip-path="url(#tnClip)" filter="url(#tnGlow)">
+                    <rect x="-40" y="-40" width="320" height="600" fill="rgba(255,255,255,0.55)" filter="url(#tnTopo)"></rect>
+
+                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Bizerte'))" d="M118 44 L150 44 L160 76 L146 112 L118 120 L96 92 Z" (mouseenter)="showZoneTip($event,'Bizerte')" (mouseleave)="hideZoneTip()"></path>
+                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Tunis'))" d="M150 70 L176 82 L172 118 L148 136 L132 122 L146 96 Z" (mouseenter)="showZoneTip($event,'Tunis')" (mouseleave)="hideZoneTip()"></path>
+                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Sousse'))" d="M132 140 L168 140 L166 194 L138 216 L116 192 Z" (mouseenter)="showZoneTip($event,'Sousse')" (mouseleave)="hideZoneTip()"></path>
+                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Sfax'))" d="M122 218 L156 232 L156 306 L132 342 L112 314 Z" (mouseenter)="showZoneTip($event,'Sfax')" (mouseleave)="hideZoneTip()"></path>
+                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Gafsa'))" d="M84 220 L116 204 L112 314 L96 342 L78 300 Z" (mouseenter)="showZoneTip($event,'Gafsa')" (mouseleave)="hideZoneTip()"></path>
+                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Gabès'))" d="M132 348 L156 314 L164 372 L150 446 L122 478 L112 438 Z" (mouseenter)="showZoneTip($event,'Gabès')" (mouseleave)="hideZoneTip()"></path>
+                  </g>
+
+                  <path class="tn-outline" d="M145 24 L165 38 L184 78 L174 124 L198 160 L186 214 L160 278 L132 380 L144 478 L118 446 L92 356 L104 250 L78 196 L66 120 L92 64 L116 38 Z"></path>
+                </svg>
+
+                <div class="tn-tip" *ngIf="zoneTip.visible" [style.left.px]="zoneTip.x" [style.top.px]="zoneTip.y">
+                  <div class="tn-tip-title">{{ zoneTip.name }}</div>
+                  <div class="tn-tip-grid">
+                    <div class="tn-tip-k">Dossiers</div>
+                    <div class="tn-tip-v">{{ zoneTip.total }}</div>
+                    <div class="tn-tip-k">Engagé</div>
+                    <div class="tn-tip-v">{{ zoneTip.engage | number:'1.0-0' }}</div>
+                    <div class="tn-tip-k">Récupéré</div>
+                    <div class="tn-tip-v">{{ zoneTip.recupere | number:'1.0-0' }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tn-top">
+                <div class="tn-top-head">
+                  <div class="tn-top-title">Top 5 Regions</div>
+                </div>
+                <div class="tn-top-row" *ngFor="let z of topZones; let i = index">
+                  <div class="tn-top-rank">{{ i + 1 }}</div>
+                  <div class="tn-top-name">{{ z.name }}</div>
+                  <div class="tn-top-val">{{ z.total }}</div>
+                  <div class="tn-top-bar">
+                    <div class="tn-top-fill" [style.width.%]="z.pct"></div>
+                  </div>
+                </div>
+                <div class="dash-empty" *ngIf="!loading && topZones.length === 0">Aucune donnée.</div>
+              </div>
+            </div>
+          </div>
+        </app-card>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
+          <div class="dash-panel">
+            <div class="dash-panel-head">
               <div class="dash-panel-title">Répartition par statut</div>
             </div>
+            <div class="dash-donut">
+              <apx-chart
+                [series]="statusDonutOptions.series"
+                [chart]="statusDonutOptions.chart"
+                [labels]="statusDonutOptions.labels"
+                [colors]="statusDonutOptions.colors"
+                [dataLabels]="statusDonutOptions.dataLabels"
+                [legend]="statusDonutOptions.legend"
+                [plotOptions]="statusDonutOptions.plotOptions"
+                [stroke]="statusDonutOptions.stroke"
+              ></apx-chart>
+            </div>
+          </div>
+        </app-card>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
+          <div class="dash-panel">
+            <div class="dash-panel-head">
+              <div class="dash-panel-title">Évolution (6 mois)</div>
+              <div class="dash-panel-sub">Montants récupérés (tendance).</div>
+            </div>
             <apx-chart
-              [series]="statusDonutOptions.series"
-              [chart]="statusDonutOptions.chart"
-              [labels]="statusDonutOptions.labels"
-              [colors]="statusDonutOptions.colors"
-              [legend]="statusDonutOptions.legend"
-              [dataLabels]="statusDonutOptions.dataLabels"
-              [plotOptions]="statusDonutOptions.plotOptions"
+              [series]="recupLineOptions.series"
+              [chart]="recupLineOptions.chart"
+              [stroke]="recupLineOptions.stroke"
+              [dataLabels]="recupLineOptions.dataLabels"
+              [colors]="recupLineOptions.colors"
+              [xaxis]="recupLineOptions.xaxis"
+              [grid]="recupLineOptions.grid"
+              [tooltip]="recupLineOptions.tooltip"
             ></apx-chart>
           </div>
         </app-card>
@@ -91,18 +266,47 @@
         <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
           <div class="dash-panel">
             <div class="dash-panel-head">
-              <div class="dash-panel-title">Montants (Total)</div>
+              <div class="dash-panel-title">Pipeline du contentieux</div>
+              <div class="dash-panel-sub">Amiable ➔ Judiciaire ➔ Exécution</div>
             </div>
-            <apx-chart
-              [series]="amountsBarOptions.series"
-              [chart]="amountsBarOptions.chart"
-              [plotOptions]="amountsBarOptions.plotOptions"
-              [dataLabels]="amountsBarOptions.dataLabels"
-              [colors]="amountsBarOptions.colors"
-              [xaxis]="amountsBarOptions.xaxis"
-              [grid]="amountsBarOptions.grid"
-              [tooltip]="amountsBarOptions.tooltip"
-            ></apx-chart>
+            <div class="dash-pipeline">
+              <div class="dash-pipe-row">
+                <div class="dash-pipe-label">Amiable</div>
+                <div class="dash-pipe-track">
+                  <div class="dash-pipe-fill fill-amiable" [style.width.%]="pipelinePct(pipeline.amiable)"></div>
+                </div>
+                <div class="dash-pipe-val">{{ pipeline.amiable }}</div>
+              </div>
+              <div class="dash-pipe-row">
+                <div class="dash-pipe-label">Judiciaire</div>
+                <div class="dash-pipe-track">
+                  <div class="dash-pipe-fill fill-jud" [style.width.%]="pipelinePct(pipeline.judiciaire)"></div>
+                </div>
+                <div class="dash-pipe-val">{{ pipeline.judiciaire }}</div>
+              </div>
+              <div class="dash-pipe-row">
+                <div class="dash-pipe-label">Exécution</div>
+                <div class="dash-pipe-track">
+                  <div class="dash-pipe-fill fill-exec" [style.width.%]="pipelinePct(pipeline.execution)"></div>
+                </div>
+                <div class="dash-pipe-val">{{ pipeline.execution }}</div>
+              </div>
+            </div>
+
+            <div class="dash-panel-head mt-3">
+              <div class="dash-panel-title">Performance prestataires</div>
+              <div class="dash-panel-sub">Top par montant récupéré.</div>
+            </div>
+            <div class="dash-perf">
+              <div class="dash-perf-row" *ngFor="let p of prestatairePerf">
+                <div class="dash-perf-name">{{ p.name }}</div>
+                <div class="dash-perf-track">
+                  <div class="dash-perf-fill" [style.width.%]="perfPct(p.recupere)"></div>
+                </div>
+                <div class="dash-perf-val">{{ formatMoney(p.recupere) }}</div>
+              </div>
+              <div class="dash-empty" *ngIf="!loading && prestatairePerf.length === 0">Aucune donnée prestataire.</div>
+            </div>
           </div>
         </app-card>
       </div>
@@ -116,6 +320,12 @@
                 <div class="dash-panel-sub">Basé sur la dernière date disponible (mise à jour/création).</div>
               </div>
               <div class="dash-tools">
+                <div class="dash-pills">
+                  <button class="dash-pill" [class.active]="quickFilter==='ALL'" type="button" (click)="setQuickFilter('ALL')">Tout</button>
+                  <button class="dash-pill" [class.active]="quickFilter==='URGENT_48H'" type="button" (click)="setQuickFilter('URGENT_48H')">Urgent</button>
+                  <button class="dash-pill" [class.active]="quickFilter==='EN_RETARD'" type="button" (click)="setQuickFilter('EN_RETARD')">En retard</button>
+                  <button class="dash-pill" [class.active]="quickFilter==='CE_MOIS'" type="button" (click)="setQuickFilter('CE_MOIS')">Ce mois</button>
+                </div>
                 <div class="dash-search">
                   <i class="feather icon-search"></i>
                   <input type="text" [(ngModel)]="search" placeholder="Rechercher (réf, débiteur, compte…)" />
@@ -132,6 +342,7 @@
                     <th>Débiteur</th>
                     <th class="col-hide-md">Compte</th>
                     <th class="col-hide-md">Chargé</th>
+                    <th class="text-end">Quick Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -145,7 +356,19 @@
                     <td><span [class]="badgeClass(d.statut)">{{ statusLabel(d.statut) }}</span></td>
                     <td>{{ d.nomDebiteur || '—' }}</td>
                     <td class="col-hide-md dash-mono">{{ d.compteActuel || '—' }}</td>
-                    <td class="col-hide-md">{{ d.chargeDossier || '—' }}</td>
+                    <td class="col-hide-md">
+                      <div class="dash-charge">
+                        <div class="dash-avatar">{{ (d.chargeDossier || '—').slice(0, 1) }}</div>
+                        <div class="dash-charge-name">{{ d.chargeDossier || '—' }}</div>
+                      </div>
+                    </td>
+                    <td class="text-end">
+                      <div class="dash-qa">
+                        <a class="dash-qa-btn" [routerLink]="['/contentieux']" title="Voir"><i class="feather icon-eye"></i></a>
+                        <button class="dash-qa-btn" type="button" title="Alerte"><i class="feather icon-bell"></i></button>
+                        <button class="dash-qa-btn" type="button" title="Report"><i class="feather icon-flag"></i></button>
+                      </div>
+                    </td>
                   </tr>
                   <tr *ngIf="!loading && filteredLatest().length === 0">
                     <td colspan="5">

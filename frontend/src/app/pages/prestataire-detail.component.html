@@ -1,87 +1,84 @@
 <app-card [cardTitle]="prestataire ? ('Prestataire: ' + prestataire.nom) : 'Prestataire'" [options]="false">
-  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-    <div class="text-muted" *ngIf="prestataire">
+  <div class="prestataire-head">
+    <div class="prestataire-meta text-muted" *ngIf="prestataire">
       <div><span class="fw-semibold">Type:</span> {{ prestataire.type }}</div>
       <div><span class="fw-semibold">Contact:</span> {{ prestataire.email }} {{ prestataire.telephone ? '• ' + prestataire.telephone : '' }}</div>
       <div><span class="fw-semibold">Disponibilités:</span> {{ prestataire.disponibilites }}</div>
     </div>
-    <div class="app-head-right">
-      <div class="app-user-chip">
-        <img class="app-user-avatar" [src]="profileImage" alt="User avatar">
-        <div class="app-user-meta">
-          <div class="app-user-name">{{ auth.username() }}</div>
-          <div class="app-user-role">{{ auth.role()?.replace('ROLE_', '') }}</div>
-        </div>
-        <i class="fa fa-chevron-down app-user-caret" aria-hidden="true"></i>
-      </div>
+    <div class="prestataire-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="toggleAssign()">
+        <i class="feather icon-plus me-2"></i>
+        Affecter Mission
+      </button>
       <button class="btn btn-outline-secondary" (click)="back()">Retour</button>
     </div>
   </div>
 
-  <hr>
-
-  <div class="row g-2">
-    <div class="col-md-4">
-      <label class="form-label">Titre</label>
-      <input class="form-control" [(ngModel)]="missionForm.titre">
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Référence dossier</label>
-      <input class="form-control" [(ngModel)]="missionForm.dossierReference">
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Statut</label>
-      <select class="form-select" [(ngModel)]="missionForm.statut">
-        <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
-      </select>
-    </div>
-    <div class="col-12">
-      <label class="form-label">Description</label>
-      <textarea class="form-control" rows="2" [(ngModel)]="missionForm.description"></textarea>
-    </div>
-    <div class="col-12 d-flex justify-content-end">
-      <button class="btn btn-primary" (click)="createMission()">Affecter Mission</button>
+  <div *ngIf="showAssignForm" class="assign-panel mt-3">
+    <div class="row g-2">
+      <div class="col-md-4">
+        <label class="form-label">Titre</label>
+        <input class="form-control" [(ngModel)]="missionForm.titre">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Référence dossier</label>
+        <input class="form-control" [(ngModel)]="missionForm.dossierReference">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Statut</label>
+        <select class="form-select" [(ngModel)]="missionForm.statut">
+          <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" rows="2" [(ngModel)]="missionForm.description"></textarea>
+      </div>
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-outline-secondary" type="button" (click)="toggleAssign()">Annuler</button>
+        <button class="btn btn-primary" type="button" (click)="createMission()">Affecter</button>
+      </div>
     </div>
   </div>
 
-  <hr>
-
   <div *ngIf="loading" class="text-muted">Chargement...</div>
 
+  <div class="missions-tools" *ngIf="!loading">
+    <div class="missions-filters">
+      <button class="filter-chip" [class.active]="missionFilter === 'ALL'" type="button" (click)="missionFilter='ALL'">Toutes</button>
+      <button class="filter-chip" [class.active]="missionFilter === 'EN_COURS'" type="button" (click)="missionFilter='EN_COURS'">En cours</button>
+      <button class="filter-chip" [class.active]="missionFilter === 'TERMINEE'" type="button" (click)="missionFilter='TERMINEE'">Terminées</button>
+      <button class="filter-chip" [class.active]="missionFilter === 'EN_RETARD'" type="button" (click)="missionFilter='EN_RETARD'">En retard</button>
+    </div>
+    <div class="input-group" style="max-width: 420px;">
+      <span class="input-group-text"><i class="feather icon-search"></i></span>
+      <input class="form-control" [(ngModel)]="missionSearch" placeholder="Rechercher (code, type, statut, affaire...)">
+    </div>
+  </div>
+
   <div class="table-responsive" *ngIf="!loading">
-    <table class="table table-hover align-middle">
+    <table class="table align-middle">
       <thead>
         <tr>
-          <th>Mission</th>
+          <th class="text-nowrap">Code mission</th>
+          <th>Type</th>
           <th>Statut</th>
-          <th>Performance</th>
-          <th class="text-end">Action</th>
+          <th class="text-nowrap">Date début</th>
+          <th class="text-nowrap">Date fin</th>
+          <th class="text-nowrap">Affaire liée</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let m of missions">
-          <td>
-            <div class="fw-semibold">{{ m.titre }}</div>
-            <div class="text-muted small">{{ m.dossierReference }}</div>
-            <div class="text-muted small">{{ m.description }}</div>
-          </td>
-          <td style="width: 180px">
-            <select class="form-select form-select-sm" [(ngModel)]="update[m.id].statut">
-              <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
-            </select>
-          </td>
-          <td style="width: 320px">
-            <div class="d-flex gap-2">
-              <input class="form-control form-control-sm" type="number" min="1" max="5" placeholder="Note (1-5)" [(ngModel)]="update[m.id].notePerformance">
-              <input class="form-control form-control-sm" placeholder="Commentaire" [(ngModel)]="update[m.id].commentairePerformance">
-            </div>
-          </td>
-          <td class="text-end" style="width: 140px">
-            <button class="btn btn-outline-primary btn-sm" (click)="saveMission(m.id)">Enregistrer</button>
-          </td>
+        <tr *ngFor="let m of displayedMissions" class="missions-row">
+          <td class="fw-bold text-nowrap">{{ m.codeMission || ('#' + m.id) }}</td>
+          <td>{{ m.typeMission || '—' }}</td>
+          <td><span [class]="statusBadgeClass(m)">{{ statusLabel(m) }}</span></td>
+          <td class="text-nowrap">{{ m.dateDebut ? (m.dateDebut | date:'dd/MM/yyyy') : '—' }}</td>
+          <td class="text-nowrap">{{ (m.dateFin || m.dateEcheance) ? ((m.dateFin || m.dateEcheance) | date:'dd/MM/yyyy') : '—' }}</td>
+          <td class="text-nowrap">{{ m.affaireNumero || '—' }}</td>
         </tr>
-        <tr *ngIf="missions.length === 0">
-          <td colspan="4" class="text-center text-muted py-4">Aucune mission</td>
+        <tr *ngIf="displayedMissions.length === 0">
+          <td colspan="6" class="text-center text-muted py-4">Aucune mission</td>
         </tr>
       </tbody>
     </table>

@@ -10,6 +10,12 @@
   --app-primary: #006847;
   --app-primary-600: #005a3e;
   --app-accent: #1abc9c;
+  --app-indigo: #4f46e5;
+  --app-indigo-600: #4338ca;
+  --app-violet: #7c3aed;
+  --app-orange: #f59e0b;
+  --app-red: #ef4444;
+  --app-green: #22c55e;
 
   --app-nav-bg: #0b1220;
   --app-sidebar-bg: #0b1220;
@@ -19,6 +25,8 @@
   --app-nav-hover-bg: rgba(255, 255, 255, 0.08);
   --app-nav-active-bg: rgba(255, 255, 255, 0.12);
 
+  --app-font-sans: "Open Sans", Inter, Roboto, Poppins, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+
   --app-radius-sm: 12px;
   --app-radius: 16px;
   --app-radius-lg: 18px;
@@ -26,6 +34,12 @@
   --app-shadow-sm: 0 8px 22px rgba(15, 23, 42, 0.08);
 
   --app-ring: 0 0 0 4px rgba(0, 104, 71, 0.12);
+  --app-ring-indigo: 0 0 0 4px rgba(79, 70, 229, 0.18);
+
+  --app-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --app-dur-1: 160ms;
+  --app-dur-2: 240ms;
+  --app-dur-3: 320ms;
 }
 
 :root {

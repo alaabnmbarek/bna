@@ -42,12 +42,12 @@
             </div>
           </div>
 
-          <div *ngIf="showAssignForm" class="row g-3 mt-1">
+          <form *ngIf="showAssignForm" class="row g-3 mt-1" (submit)="$event.preventDefault(); submitMission()">
             <div class="col-12">
               <label class="form-label">Type mission *</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-list"></i></span>
-                <select class="form-select" [(ngModel)]="formMission.typeMission" name="typeMission">
+                <select class="form-select" [(ngModel)]="formMission.typeMission" name="assign_typeMission">
                   <option *ngFor="let t of missionTypes" [ngValue]="t.value">{{ t.label }}</option>
                 </select>
               </div>
@@ -57,7 +57,7 @@
               <label class="form-label">Code mission</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-hash"></i></span>
-                <input class="form-control" [(ngModel)]="formMission.codeMission" name="codeMission" placeholder="Ex: MIS-2026-01">
+                <input class="form-control" [(ngModel)]="formMission.codeMission" name="assign_codeMission" placeholder="Ex: MIS-2026-01">
               </div>
             </div>
 
@@ -65,7 +65,7 @@
               <label class="form-label">Durée estimée (jours)</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-clock"></i></span>
-                <input class="form-control" [(ngModel)]="formMission.dureeEstimee" name="dureeEstimee" type="number" min="0" placeholder="Ex: 15">
+                <input class="form-control" [(ngModel)]="formMission.dureeEstimee" name="assign_dureeEstimee" type="number" min="0" placeholder="Ex: 15">
               </div>
             </div>
 
@@ -73,7 +73,7 @@
               <label class="form-label">Description</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-align-left"></i></span>
-                <textarea class="form-control" [(ngModel)]="formMission.description" name="description" rows="3" placeholder="Détails de la mission..."></textarea>
+                <textarea class="form-control" [(ngModel)]="formMission.description" name="assign_description" rows="3" placeholder="Détails de la mission..."></textarea>
               </div>
             </div>
 
@@ -81,7 +81,7 @@
               <label class="form-label">Prestataire assigné (type) *</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-user"></i></span>
-                <select class="form-select" [(ngModel)]="formMission.prestataireType" (ngModelChange)="onPrestataireTypeChange()" name="prestataireType">
+                <select class="form-select" [(ngModel)]="formMission.prestataireType" (ngModelChange)="onPrestataireTypeChange()" name="assign_prestataireType">
                   <option [ngValue]="''" disabled>Sélectionner</option>
                   <option [ngValue]="'AVOCAT'">Avocat</option>
                   <option [ngValue]="'HUISSIER'">Huissier</option>
@@ -94,7 +94,7 @@
               <label class="form-label">Nom prestataire *</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-users"></i></span>
-                <select class="form-select" [(ngModel)]="formMission.prestataireId" name="prestataireId" [disabled]="!formMission.prestataireType">
+                <select class="form-select" [(ngModel)]="formMission.prestataireId" name="assign_prestataireId" [disabled]="!formMission.prestataireType">
                   <option [ngValue]="null" disabled>Sélectionner</option>
                   <option *ngFor="let p of filteredPrestataires" [ngValue]="p.id">
                     {{ p.nom }} {{ p.prenom || '' }}
@@ -123,7 +123,7 @@
               <label class="form-label">Procédure *</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-book"></i></span>
-                <select class="form-select" [(ngModel)]="formMission.procedureId" (ngModelChange)="onProcedureChange()" name="procedureId">
+                <select class="form-select" [(ngModel)]="formMission.procedureId" (ngModelChange)="onProcedureChange()" name="assign_procedureId">
                   <option [ngValue]="null" disabled>Sélectionner</option>
                   <option *ngFor="let pr of procedures" [ngValue]="pr.id">
                     {{ pr.dossierReference }} — {{ pr.referenceTribunal }} — {{ pr.tribunal }}
@@ -137,14 +137,20 @@
                 <button class="btn btn-outline-secondary" type="button" (click)="cancelAssignForm()" [disabled]="savingMission">
                   Annuler
                 </button>
-                <button class="btn btn-primary" type="button" (click)="submitMission()" [disabled]="savingMission">
+                <button class="btn btn-primary" type="submit" [disabled]="savingMission">
                   <span *ngIf="savingMission" class="spinner-border spinner-border-sm me-2" role="status"></span>
                   <i *ngIf="!savingMission" class="feather icon-check me-2"></i>
                   Affecter
                 </button>
               </div>
             </div>
-          </div>
+
+            <div class="col-12" *ngIf="missionCreateError">
+              <div class="alert alert-danger mb-0">
+                {{ missionCreateError }}
+              </div>
+            </div>
+          </form>
 
           <div *ngIf="!showAssignForm" class="missions-collapsed-hint">
             Cliquez sur “Affecter Mission” pour ouvrir le formulaire.
@@ -170,12 +176,12 @@
             </div>
           </div>
 
-          <div *ngIf="showResultForm" class="row g-3 mt-1">
+          <form *ngIf="showResultForm" class="row g-3 mt-1" (submit)="$event.preventDefault(); submitResult()">
             <div class="col-12">
               <label class="form-label">Mission *</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-activity"></i></span>
-                <select class="form-select" [(ngModel)]="formResult.missionId" (ngModelChange)="loadResultForMission()" name="resultMissionId">
+                <select class="form-select" [(ngModel)]="formResult.missionId" (ngModelChange)="loadResultForMission()" name="result_missionId">
                   <option [ngValue]="null" disabled>Sélectionner</option>
                   <option *ngFor="let m of missions" [ngValue]="m.id">
                     #{{ m.id }} — {{ missionTypeLabel(m.typeMission || null) }} — {{ m.dossierReference || '—' }}
@@ -188,7 +194,7 @@
               <label class="form-label">Statut mission *</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-flag"></i></span>
-                <select class="form-select" [(ngModel)]="formResult.statut" name="resultStatut">
+                <select class="form-select" [(ngModel)]="formResult.statut" name="result_statut">
                   <option [ngValue]="''" disabled>Sélectionner</option>
                   <option *ngFor="let s of resultStatuses" [ngValue]="s.value">{{ s.label }}</option>
                 </select>
@@ -199,7 +205,7 @@
               <label class="form-label">Date début</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-play"></i></span>
-                <input class="form-control" type="date" [(ngModel)]="formResult.dateDebut" name="resultDateDebut">
+                <input class="form-control" type="date" [(ngModel)]="formResult.dateDebut" name="result_dateDebut">
               </div>
             </div>
 
@@ -207,7 +213,7 @@
               <label class="form-label">Date fin</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-stop-circle"></i></span>
-                <input class="form-control" type="date" [(ngModel)]="formResult.dateFin" name="resultDateFin">
+                <input class="form-control" type="date" [(ngModel)]="formResult.dateFin" name="result_dateFin">
               </div>
             </div>
 
@@ -215,7 +221,7 @@
               <label class="form-label">Montant récupérée</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-dollar-sign"></i></span>
-                <input class="form-control" [(ngModel)]="formResult.montantRecuperee" name="montantRecuperee" placeholder="Ex: 1200.00">
+                <input class="form-control" [(ngModel)]="formResult.montantRecuperee" name="result_montantRecuperee" placeholder="Ex: 1200.00">
               </div>
             </div>
 
@@ -233,7 +239,7 @@
 
             <div class="col-12">
               <label class="form-label">Résultat</label>
-              <textarea class="form-control" [(ngModel)]="formResult.resultat" name="resultat" rows="3" placeholder="Résultat / observations..."></textarea>
+              <textarea class="form-control" [(ngModel)]="formResult.resultat" name="result_resultat" rows="3" placeholder="Résultat / observations..."></textarea>
             </div>
 
             <div class="col-12">
@@ -241,14 +247,14 @@
                 <button class="btn btn-outline-secondary" type="button" (click)="cancelResultForm()" [disabled]="savingResult || uploadingProof">
                   Annuler
                 </button>
-                <button class="btn btn-success" type="button" (click)="submitResult()" [disabled]="savingResult">
+                <button class="btn btn-success" type="submit" [disabled]="savingResult">
                   <span *ngIf="savingResult" class="spinner-border spinner-border-sm me-2" role="status"></span>
                   <i *ngIf="!savingResult" class="feather icon-save me-2"></i>
                   Enregistrer
                 </button>
               </div>
             </div>
-          </div>
+          </form>
 
           <div *ngIf="!showResultForm" class="missions-collapsed-hint">
             Cliquez sur “Résultat de mission” pour ouvrir le formulaire.
@@ -295,7 +301,7 @@
                   <td class="text-nowrap fw-bold">{{ missionCodeOrAuto(m) }}</td>
                   <td>{{ missionTypeLabelOrInfer(m) }}</td>
                   <td><span [class]="statusBadgeClass(m)">{{ statusLabel(m) }}</span></td>
-                  <td class="text-nowrap">{{ m.dateDebut ? (m.dateDebut | date:'dd/MM/yyyy') : '—' }}</td>
+                  <td class="text-nowrap">{{ m.dateDebut ? (m.dateDebut | date:'dd/MM/yyyy') : (m.createdAt ? (m.createdAt | date:'dd/MM/yyyy') : '—') }}</td>
                   <td class="text-nowrap">{{ (m.dateFin || m.dateEcheance) ? ((m.dateFin || m.dateEcheance) | date:'dd/MM/yyyy') : '—' }}</td>
                   <td class="text-nowrap">{{ prestataireNameById(m.prestataireId) }}</td>
                 </tr>

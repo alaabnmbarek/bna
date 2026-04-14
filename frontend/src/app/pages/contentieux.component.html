@@ -469,6 +469,69 @@
           <div class="affaire-section mt-3">
             <div class="affaire-section-head">
               <div class="affaire-section-title">
+                <i class="feather icon-shield me-2"></i>
+                Risques associés au dossier
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="openRisqueDialog()" [disabled]="!selected">
+                <i class="feather icon-edit-3 me-1"></i>
+                Gérer en détail
+              </button>
+            </div>
+
+            <div *ngIf="detailRisqueLoading" class="affaire-loading">
+              <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+              Chargement des risques associés...
+            </div>
+
+            <div *ngIf="!detailRisqueLoading" class="risque-grid risque-grid-3 mt-2">
+              <button type="button" class="risque-option risque-option-button" [class.risque-option-selected]="detailRisqueSelection.engagements" (click)="toggleDetailRisque('engagements')">
+                <div class="risque-option-main">
+                  <div class="risque-option-title"><i class="feather icon-trending-up"></i> Engagements</div>
+                  <div class="risque-option-desc">{{ detailRisqueCounts.engagements }} élément(s)</div>
+                </div>
+              </button>
+
+              <button type="button" class="risque-option risque-option-button" [class.risque-option-selected]="detailRisqueSelection.patrimoines" (click)="toggleDetailRisque('patrimoines')">
+                <div class="risque-option-main">
+                  <div class="risque-option-title"><i class="feather icon-briefcase"></i> Patrimoines</div>
+                  <div class="risque-option-desc">{{ detailRisqueCounts.patrimoines }} élément(s)</div>
+                </div>
+              </button>
+
+              <button type="button" class="risque-option risque-option-button" [class.risque-option-selected]="detailRisqueSelection.hypotheques" (click)="toggleDetailRisque('hypotheques')">
+                <div class="risque-option-main">
+                  <div class="risque-option-title"><i class="feather icon-home"></i> Hypothèques</div>
+                  <div class="risque-option-desc">{{ detailRisqueCounts.hypotheques }} élément(s)</div>
+                </div>
+              </button>
+
+              <button type="button" class="risque-option risque-option-button" [class.risque-option-selected]="detailRisqueSelection.nantissements" (click)="toggleDetailRisque('nantissements')">
+                <div class="risque-option-main">
+                  <div class="risque-option-title"><i class="feather icon-layers"></i> Nantissements</div>
+                  <div class="risque-option-desc">{{ detailRisqueCounts.nantissements }} élément(s)</div>
+                </div>
+              </button>
+
+              <button type="button" class="risque-option risque-option-button" [class.risque-option-selected]="detailRisqueSelection.cautions" (click)="toggleDetailRisque('cautions')">
+                <div class="risque-option-main">
+                  <div class="risque-option-title"><i class="feather icon-shield"></i> Cautions</div>
+                  <div class="risque-option-desc">{{ detailRisqueCounts.cautions }} élément(s)</div>
+                </div>
+              </button>
+            </div>
+
+            <div class="risque-actions" *ngIf="!detailRisqueLoading">
+              <button type="button" class="btn btn-primary" (click)="saveDetailRisqueSelection()" [disabled]="!hasSelectedDetailRisques() || detailRisqueSaving">
+                <span *ngIf="detailRisqueSaving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                <i *ngIf="!detailRisqueSaving" class="feather icon-save me-2"></i>
+                Enregistrer dans le dossier
+              </button>
+            </div>
+          </div>
+
+          <div class="affaire-section mt-3">
+            <div class="affaire-section-head">
+              <div class="affaire-section-title">
                 <i class="feather icon-briefcase me-2"></i>
                 Affaires du dossier
               </div>

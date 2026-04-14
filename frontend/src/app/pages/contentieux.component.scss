@@ -595,6 +595,12 @@
   user-select: none;
 }
 
+.risque-option-button {
+  width: 100%;
+  text-align: left;
+  appearance: none;
+}
+
 .risque-option:hover {
   border-color: rgba(0, 104, 71, 0.30);
   transform: translateY(-1px);

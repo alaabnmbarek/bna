@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -11,14 +11,19 @@ import { ProfileService } from '../auth/profile.service';
   selector: 'app-prestataire-detail-page',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, CardComponent],
-  templateUrl: './prestataire-detail.component.html'
+  templateUrl: './prestataire-detail.component.html',
+  styleUrl: './prestataire-detail.component.scss'
 })
-export class PrestataireDetailPageComponent implements OnInit {
+export class PrestataireDetailPageComponent implements OnInit, OnDestroy {
   prestataire: Prestataire | null = null;
   missions: Mission[] = [];
   loading = false;
   prestataireId!: number;
   profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
+  showAssignForm = false;
+  missionSearch = '';
+  missionFilter: 'ALL' | 'EN_COURS' | 'TERMINEE' | 'EN_RETARD' = 'ALL';
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
 
   missionForm: Partial<Mission> = {
     titre: '',
@@ -28,7 +33,7 @@ export class PrestataireDetailPageComponent implements OnInit {
   };
 
   update: Record<number, Partial<Mission>> = {};
-  readonly statuses: MissionStatus[] = ['ASSIGNEE', 'EN_COURS', 'TERMINEE', 'ANNULEE'];
+  readonly statuses: MissionStatus[] = ['ASSIGNEE', 'EN_COURS', 'TERMINEE', 'ECHOUEE', 'ANNULEE'];
 
   constructor(
     private route: ActivatedRoute,
@@ -57,6 +62,13 @@ export class PrestataireDetailPageComponent implements OnInit {
       return;
     }
     this.load();
+    this.refreshTimer = setInterval(() => {
+      if (!this.loading && this.prestataireId) this.loadMissions();
+    }, 15000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.refreshTimer) clearInterval(this.refreshTimer);
   }
 
   load(): void {
@@ -95,6 +107,64 @@ export class PrestataireDetailPageComponent implements OnInit {
     });
   }
 
+  toggleAssign(): void {
+    this.showAssignForm = !this.showAssignForm;
+  }
+
+  get displayedMissions(): Mission[] {
+    const q = (this.missionSearch || '').trim().toLowerCase();
+    let rows = this.missions.slice();
+
+    if (this.missionFilter === 'EN_COURS') {
+      rows = rows.filter(m => m.statut === 'EN_COURS' || m.statut === 'ASSIGNEE');
+      rows = rows.filter(m => !this.isOverdue(m));
+    } else if (this.missionFilter === 'TERMINEE') {
+      rows = rows.filter(m => m.statut === 'TERMINEE');
+    } else if (this.missionFilter === 'EN_RETARD') {
+      rows = rows.filter(m => this.isOverdue(m));
+    }
+
+    if (q) {
+      rows = rows.filter(m => {
+        const code = (m.codeMission || '').toLowerCase();
+        const type = (m.typeMission || '').toLowerCase();
+        const statut = this.statusLabel(m).toLowerCase();
+        const affaire = (m.affaireNumero || '').toLowerCase();
+        return code.includes(q) || type.includes(q) || statut.includes(q) || affaire.includes(q);
+      });
+    }
+
+    rows.sort((a, b) => {
+      const da = a.dateDebut ? new Date(a.dateDebut).getTime() : -Infinity;
+      const db = b.dateDebut ? new Date(b.dateDebut).getTime() : -Infinity;
+      return db - da;
+    });
+
+    return rows;
+  }
+
+  isOverdue(m: Mission): boolean {
+    if (m.statut === 'TERMINEE' || m.statut === 'ANNULEE') return false;
+    if (!m.dateEcheance) return false;
+    const t = new Date(m.dateEcheance).getTime();
+    if (!Number.isFinite(t)) return false;
+    return t < new Date().setHours(0, 0, 0, 0);
+  }
+
+  statusLabel(m: Mission): string {
+    if (this.isOverdue(m) && (m.statut === 'ASSIGNEE' || m.statut === 'EN_COURS')) return 'EN_RETARD';
+    return m.statut;
+  }
+
+  statusBadgeClass(m: Mission): string {
+    const s = this.statusLabel(m);
+    if (s === 'TERMINEE') return 'badge bg-success-subtle text-success';
+    if (s === 'EN_RETARD') return 'badge bg-danger-subtle text-danger';
+    if (s === 'EN_COURS' || s === 'ASSIGNEE') return 'badge bg-warning-subtle text-warning';
+    if (s === 'ECHOUEE') return 'badge bg-danger-subtle text-danger';
+    return 'badge bg-secondary-subtle text-secondary';
+  }
+
   createMission(): void {
     if (!this.missionForm.titre) {
       alert('Titre obligatoire');
@@ -104,6 +174,7 @@ export class PrestataireDetailPageComponent implements OnInit {
     this.service.createMission(this.prestataireId, payload).subscribe({
       next: () => {
         this.missionForm = { titre: '', description: '', dossierReference: '', statut: 'ASSIGNEE' };
+        this.showAssignForm = false;
         this.loadMissions();
       },
       error: (err) => {

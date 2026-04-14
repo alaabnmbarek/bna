@@ -86,6 +86,7 @@ export class MissionsPageComponent implements OnInit {
 
   banner: { kind: 'success' | 'info' | 'danger'; message: string } | null = null;
   private bannerTimer: ReturnType<typeof setTimeout> | null = null;
+  missionCreateError: string | null = null;
 
   constructor(
     private prestatairesService: PrestatairesService,
@@ -227,7 +228,7 @@ export class MissionsPageComponent implements OnInit {
           return getDate(m.dateFin || m.dateEcheance || null);
         case 'dateDebut':
         default:
-          return getDate(m.dateDebut || null);
+          return getDate(m.dateDebut || m.createdAt || null);
       }
     };
 
@@ -282,20 +283,27 @@ export class MissionsPageComponent implements OnInit {
   }
 
   submitMission(): void {
+    this.missionCreateError = null;
     if (!this.formMission.typeMission) {
       this.showBanner('Type mission obligatoire.', 'danger');
+      alert('Type mission obligatoire.');
       return;
     }
     if (!this.formMission.prestataireType) {
       this.showBanner('Prestataire assigné (type) obligatoire.', 'danger');
+      alert('Prestataire assigné (type) obligatoire.');
       return;
     }
     if (!this.formMission.prestataireId) {
       this.showBanner('Nom prestataire obligatoire.', 'danger');
+      alert('Nom prestataire obligatoire.');
       return;
     }
-    if (!this.formMission.procedureId) {
-      this.showBanner('Procédure obligatoire.', 'danger');
+    const pid = Number(this.formMission.prestataireId);
+    if (!Number.isFinite(pid) || pid <= 0) {
+      const msg = `Prestataire invalide: ${String(this.formMission.prestataireId)}`;
+      this.showBanner(msg, 'danger');
+      this.missionCreateError = msg;
       return;
     }
 
@@ -308,24 +316,31 @@ export class MissionsPageComponent implements OnInit {
       titre,
       description: this.formMission.description || undefined,
       dureeEstimee: this.toIntOrUndefined(this.formMission.dureeEstimee),
-      procedureId: this.formMission.procedureId,
+      procedureId: this.formMission.procedureId || undefined,
       dossierReference: proc?.dossierReference || undefined,
       statut: 'ASSIGNEE'
     };
 
     this.savingMission = true;
-    this.prestatairesService.createMission(this.formMission.prestataireId, payload).subscribe({
+    this.prestatairesService.createMission(pid, payload).subscribe({
       next: (m) => {
         this.savingMission = false;
         this.missions = [m, ...this.missions];
+        this.missionSearch = '';
         this.formMission = this.blankMissionForm();
         this.showAssignForm = false;
         this.showBanner('Mission affectée avec succès.', 'success');
+        this.prestatairesService.listAllMissions().subscribe({
+          next: (rows) => (this.missions = rows || []),
+          error: () => {}
+        });
       },
       error: (err) => {
         this.savingMission = false;
-        const msg = err?.error?.message || err?.error?.error || "Erreur lors de l'affectation de la mission.";
+        const msg = err?.error?.message || err?.error?.error || `Erreur lors de l'affectation de la mission. (${err?.status || ''})`;
         this.showBanner(msg, 'danger');
+        alert(msg);
+        this.missionCreateError = msg;
       }
     });
   }

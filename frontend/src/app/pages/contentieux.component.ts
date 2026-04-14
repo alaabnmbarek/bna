@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { ProfileService } from '../auth/profile.service';
 import { AffaireContentieux, AffaireStatut, ChargeDossierOption, ContentieuxService, ContentieuxStatus, CreateAffaireRequest, DossierContentieux, DossierDetailsResponse } from '../contentieux/contentieux.service';
@@ -112,6 +113,28 @@ export class ContentieuxPageComponent implements OnInit {
   affaireSaving = false;
   dossierDetails: DossierDetailsResponse | null = null;
   dossierDetailsLoading = false;
+  detailRisqueLoading = false;
+  detailRisqueSaving = false;
+  detailRisqueSelection: {
+    engagements: boolean;
+    patrimoines: boolean;
+    hypotheques: boolean;
+    nantissements: boolean;
+    cautions: boolean;
+  } = {
+    engagements: false,
+    patrimoines: false,
+    hypotheques: false,
+    nantissements: false,
+    cautions: false
+  };
+  detailRisqueCounts = {
+    engagements: 0,
+    patrimoines: 0,
+    hypotheques: 0,
+    nantissements: 0,
+    cautions: 0
+  };
   affaireForm: CreateAffaireRequest = {
     typeAffaire: '',
     description: '',
@@ -350,7 +373,8 @@ export class ContentieuxPageComponent implements OnInit {
     if (!this.selected) return;
     this.showRisqueDialog = true;
     this.risqueDossierId = this.selected.id;
-    this.resetRisqueState();
+    this.risqueSelection = { ...this.detailRisqueSelection };
+    this.resetRisqueEditorState();
   }
 
   onRisqueDossierChange(): void {
@@ -362,8 +386,7 @@ export class ContentieuxPageComponent implements OnInit {
     const lastDossierId = this.risqueDossierId;
     const shouldOpenDetailsAfter = openDetailsAfter ?? !this.showForm;
     this.showRisqueDialog = false;
-    this.risqueStep = 'select';
-    this.risqueLoading = false;
+    this.resetRisqueState();
     this.risqueDossierId = null;
     if (this.showForm && this.editingId && lastDossierId && this.editingId === lastDossierId) {
       this.loadEditRisques(this.editingId);
@@ -835,7 +858,7 @@ export class ContentieuxPageComponent implements OnInit {
 
   private resetRisqueState(): void {
     this.risqueStep = 'select';
-    this.risqueLoading = false;
+    this.resetRisqueEditorState();
     this.risqueSelection = {
       engagements: false,
       patrimoines: false,
@@ -843,6 +866,10 @@ export class ContentieuxPageComponent implements OnInit {
       nantissements: false,
       cautions: false
     };
+  }
+
+  private resetRisqueEditorState(): void {
+    this.risqueLoading = false;
     this.engagementItems = [];
     this.patrimoineItems = [];
     this.hypothequeItems = [];
@@ -853,6 +880,158 @@ export class ContentieuxPageComponent implements OnInit {
     this.newHypotheque = this.blankHypotheque();
     this.newNantissement = this.blankNantissement();
     this.newCaution = this.blankCaution();
+  }
+
+  toggleDetailRisque(key: keyof ContentieuxPageComponent['detailRisqueSelection']): void {
+    this.detailRisqueSelection[key] = !this.detailRisqueSelection[key];
+  }
+
+  hasSelectedDetailRisques(): boolean {
+    return Object.values(this.detailRisqueSelection).some(Boolean);
+  }
+
+  saveDetailRisqueSelection(): void {
+    if (!this.selected) return;
+    const dossierId = this.selected.id;
+    const creates: Array<Promise<any>> = [];
+
+    if (this.detailRisqueSelection.engagements && this.detailRisqueCounts.engagements === 0) {
+      creates.push(firstValueFrom(this.risque.create<EngagementPayload>(dossierId, 'ENGAGEMENT', this.defaultEngagementPayload())));
+    }
+    if (this.detailRisqueSelection.patrimoines && this.detailRisqueCounts.patrimoines === 0) {
+      creates.push(firstValueFrom(this.risque.create<PatrimoinePayload>(dossierId, 'PATRIMOINE', this.defaultPatrimoinePayload())));
+    }
+    if (this.detailRisqueSelection.hypotheques && this.detailRisqueCounts.hypotheques === 0) {
+      creates.push(firstValueFrom(this.risque.create<GarantiePayload>(dossierId, 'GARANTIE_HYPOTHEQUE', this.defaultGarantiePayload('GARANTIE_HYPOTHEQUE'))));
+    }
+    if (this.detailRisqueSelection.nantissements && this.detailRisqueCounts.nantissements === 0) {
+      creates.push(firstValueFrom(this.risque.create<GarantiePayload>(dossierId, 'GARANTIE_NANTISSEMENT', this.defaultGarantiePayload('GARANTIE_NANTISSEMENT'))));
+    }
+    if (this.detailRisqueSelection.cautions && this.detailRisqueCounts.cautions === 0) {
+      creates.push(firstValueFrom(this.risque.create<GarantiePayload>(dossierId, 'GARANTIE_CAUTION', this.defaultGarantiePayload('GARANTIE_CAUTION'))));
+    }
+
+    if (creates.length === 0) {
+      this.showBanner('Les éléments sélectionnés sont déjà associés à ce dossier.', 'info');
+      return;
+    }
+
+    this.detailRisqueSaving = true;
+    Promise.all(creates)
+      .then(() => {
+        this.detailRisqueSaving = false;
+        this.showBanner('Risques associés enregistrés dans le dossier.', 'success');
+        this.loadDossierDetails();
+        if (this.editingId === dossierId) this.loadEditRisques(dossierId);
+      })
+      .catch(() => {
+        this.detailRisqueSaving = false;
+        this.showBanner('Erreur lors de l’enregistrement des risques associés.', 'danger');
+      });
+  }
+
+  private defaultEngagementPayload(): EngagementPayload {
+    return {
+      numeroCompte: this.selected?.compteActuel || '',
+      titreCreance: 'Engagement à compléter',
+      dateContrat: '',
+      interetType: '',
+      taux: '',
+      echeance: '',
+      montantRestant: '',
+      numRisque: this.selected?.reference || 'A_COMPLETER'
+    };
+  }
+
+  private defaultPatrimoinePayload(): PatrimoinePayload {
+    return {
+      nom: this.selected?.nomDebiteur || 'À compléter',
+      prenom: '',
+      dateNaissance: '',
+      numeroDossier: this.selected?.reference || '',
+      biensImmobiliers: '',
+      comptesBancaires: '',
+      investissementsActions: '',
+      creditsPrets: '',
+      autresDettes: '',
+      dettesFiscalesPenalites: ''
+    };
+  }
+
+  private defaultGarantiePayload(category: RisqueCategory): GarantiePayload {
+    if (category === 'GARANTIE_HYPOTHEQUE') {
+      return {
+        dossier: this.selected?.reference || '',
+        numeroCompte: this.selected?.compteActuel || '',
+        montant: '',
+        typeBien: 'À compléter',
+        adresse: ''
+      };
+    }
+    if (category === 'GARANTIE_NANTISSEMENT') {
+      return {
+        dossier: this.selected?.reference || '',
+        numeroCompte: this.selected?.compteActuel || '',
+        description: 'Nantissement à compléter',
+        montant: ''
+      };
+    }
+    return {
+      numeroDossier: this.selected?.reference || '',
+      numeroCompte: this.selected?.compteActuel || '',
+      description: 'Caution à compléter',
+      montantLimite: ''
+    };
+  }
+
+  private loadDetailRisqueSummary(dossierId: number): void {
+    this.detailRisqueLoading = true;
+    let pending = 5;
+    const done = () => {
+      pending -= 1;
+      if (pending <= 0) this.detailRisqueLoading = false;
+    };
+
+    this.risque.list<EngagementPayload>(dossierId, 'ENGAGEMENT').subscribe({
+      next: (items) => {
+        this.detailRisqueCounts.engagements = items.length;
+        this.detailRisqueSelection.engagements = items.length > 0;
+        done();
+      },
+      error: () => done()
+    });
+    this.risque.list<PatrimoinePayload>(dossierId, 'PATRIMOINE').subscribe({
+      next: (items) => {
+        this.detailRisqueCounts.patrimoines = items.length;
+        this.detailRisqueSelection.patrimoines = items.length > 0;
+        done();
+      },
+      error: () => done()
+    });
+    this.risque.list<GarantiePayload>(dossierId, 'GARANTIE_HYPOTHEQUE').subscribe({
+      next: (items) => {
+        this.detailRisqueCounts.hypotheques = items.length;
+        this.detailRisqueSelection.hypotheques = items.length > 0;
+        done();
+      },
+      error: () => done()
+    });
+    this.risque.list<GarantiePayload>(dossierId, 'GARANTIE_NANTISSEMENT').subscribe({
+      next: (items) => {
+        this.detailRisqueCounts.nantissements = items.length;
+        this.detailRisqueSelection.nantissements = items.length > 0;
+        done();
+      },
+      error: () => done()
+    });
+    this.risque.list<GarantiePayload>(dossierId, 'GARANTIE_CAUTION').subscribe({
+      next: (items) => {
+        this.detailRisqueCounts.cautions = items.length;
+        this.detailRisqueSelection.cautions = items.length > 0;
+        done();
+      },
+      error: () => done()
+    });
   }
 
   private getRisqueDossier(): DossierContentieux | null {
@@ -975,10 +1154,12 @@ export class ContentieuxPageComponent implements OnInit {
         this.affaires = data.affaires || [];
         this.affairesLoading = false;
         this.dossierDetailsLoading = false;
+        this.loadDetailRisqueSummary(this.selected!.id);
       },
       error: () => {
         this.affairesLoading = false;
         this.dossierDetailsLoading = false;
+        this.detailRisqueLoading = false;
         this.showBanner('Erreur lors du chargement des détails du dossier.', 'danger');
       }
     });
@@ -994,6 +1175,22 @@ export class ContentieuxPageComponent implements OnInit {
     this.affaireSaving = false;
     this.dossierDetails = null;
     this.dossierDetailsLoading = false;
+    this.detailRisqueLoading = false;
+    this.detailRisqueSaving = false;
+    this.detailRisqueSelection = {
+      engagements: false,
+      patrimoines: false,
+      hypotheques: false,
+      nantissements: false,
+      cautions: false
+    };
+    this.detailRisqueCounts = {
+      engagements: 0,
+      patrimoines: 0,
+      hypotheques: 0,
+      nantissements: 0,
+      cautions: 0
+    };
   }
 
   filteredDossiers(): DossierContentieux[] {
