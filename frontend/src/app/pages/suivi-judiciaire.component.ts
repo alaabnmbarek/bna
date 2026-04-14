@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { SuiviJudiciaireService, AffaireJudiciaire, Audience, Jugement, ProcedureType, AudienceStatus, DecisionType, AssignationTarget } from '../suivi-judiciaire/suivi-judiciaire.service';
-import { ContentieuxService, DossierContentieux } from '../contentieux/contentieux.service';
+import { AffaireContentieux, ContentieuxService, DossierContentieux, DossierDetailsResponse } from '../contentieux/contentieux.service';
 import { PrestatairesService, Prestataire } from '../prestataires/prestataires.service';
 import { AuthService } from '../auth/auth.service';
 
@@ -18,6 +18,12 @@ export class SuiviJudiciaireComponent implements OnInit {
   affaires: AffaireJudiciaire[] = [];
   audiences: Audience[] = [];
   dossiers: DossierContentieux[] = [];
+  dossierAffaires: AffaireContentieux[] = [];
+  dossierAffairesLoading = false;
+  selectedNumeroAffaire = '';
+  showDossierDetails = false;
+  dossierDetailsLoading = false;
+  dossierDetails: DossierDetailsResponse | null = null;
   avocats: Prestataire[] = [];
   huissiers: Prestataire[] = [];
   
@@ -118,7 +124,62 @@ export class SuiviJudiciaireComponent implements OnInit {
 
   openAffaireForm(): void {
     this.newAffaire = this.blankAffaire();
+    this.dossierAffaires = [];
+    this.selectedNumeroAffaire = '';
     this.showAffaireForm = true;
+  }
+
+  openDossierDetails(dossierId: number): void {
+    const id = Number(dossierId);
+    if (!id || !Number.isFinite(id)) return;
+    this.showDossierDetails = true;
+    this.dossierDetailsLoading = true;
+    this.dossierDetails = null;
+    this.contentieuxService.getDossierDetails(id).subscribe({
+      next: (data) => {
+        this.dossierDetails = data;
+        this.dossierDetailsLoading = false;
+      },
+      error: () => {
+        this.dossierDetailsLoading = false;
+      }
+    });
+  }
+
+  closeDossierDetails(): void {
+    this.showDossierDetails = false;
+    this.dossierDetailsLoading = false;
+    this.dossierDetails = null;
+  }
+
+  onDossierChange(dossierId: number): void {
+    this.dossierAffaires = [];
+    this.selectedNumeroAffaire = '';
+    this.newAffaire.referenceTribunal = '';
+
+    const id = Number(dossierId);
+    if (!id || !Number.isFinite(id)) return;
+
+    this.dossierAffairesLoading = true;
+    this.contentieuxService.listAffaires(id).subscribe({
+      next: (rows) => {
+        this.dossierAffaires = rows || [];
+        this.dossierAffairesLoading = false;
+        const first = this.dossierAffaires.find(a => !!a.numeroAffaire);
+        if (this.dossierAffaires.length === 1 && first?.numeroAffaire) {
+          this.selectedNumeroAffaire = first.numeroAffaire;
+          this.newAffaire.referenceTribunal = first.numeroAffaire;
+        }
+      },
+      error: () => {
+        this.dossierAffairesLoading = false;
+      }
+    });
+  }
+
+  onNumeroAffaireChange(numero: string): void {
+    this.selectedNumeroAffaire = numero || '';
+    this.newAffaire.referenceTribunal = this.selectedNumeroAffaire;
   }
 
   onTypeProcedureChange(): void {
@@ -141,6 +202,18 @@ export class SuiviJudiciaireComponent implements OnInit {
   }
 
   saveAffaire(): void {
+    if (!this.newAffaire.dossierId) {
+      alert('Veuillez choisir un dossier.');
+      return;
+    }
+    if (!this.newAffaire.referenceTribunal || !this.newAffaire.referenceTribunal.trim()) {
+      alert('Veuillez choisir le N° Affaire.');
+      return;
+    }
+    if (!this.newAffaire.tribunal || !this.newAffaire.tribunal.trim()) {
+      alert('Veuillez saisir le tribunal.');
+      return;
+    }
     if (!this.newAffaire.avocatId) {
       alert('Veuillez choisir un avocat.');
       return;
@@ -176,6 +249,17 @@ export class SuiviJudiciaireComponent implements OnInit {
   procedureLabel(value?: ProcedureType): string {
     const v = value || 'ASSIGNATION';
     return this.procedureTypeOptions.find(o => o.value === v)?.label || v;
+  }
+
+  procedureLabelAny(value?: string | null): string {
+    const v = (value || 'ASSIGNATION') as ProcedureType | string;
+    const hit = this.procedureTypeOptions.find(o => o.value === v);
+    return hit?.label || String(value || 'ASSIGNATION');
+  }
+
+  prestataireLabel(pr: { nom: string; prenom?: string | null }): string {
+    const full = `${pr?.nom || ''} ${pr?.prenom || ''}`.trim();
+    return full || '—';
   }
 
   viewAudiences(affaire: AffaireJudiciaire): void {

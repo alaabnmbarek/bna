@@ -18,6 +18,7 @@ import { RolesPageComponent } from './pages/roles.component';
 import { PrestatairesPageComponent } from './pages/prestataires.component';
 import { PrestataireDetailPageComponent } from './pages/prestataire-detail.component';
 import { SuiviJudiciaireComponent } from './pages/suivi-judiciaire.component';
+import { MissionsPageComponent } from './pages/missions.component';
 import { AdminComponent } from './theme/layout/admin/admin.component';
 import { GuestComponent } from './theme/layout/guest/guest.component';
 
@@ -55,6 +56,7 @@ export const routes: Routes = [
       { path: 'prestataires', component: PrestatairesPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
       { path: 'prestataires/:id', component: PrestataireDetailPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
       { path: 'suivi-judiciaire', component: SuiviJudiciaireComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
+      { path: 'missions', component: MissionsPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
       { path: '', component: RoleLandingPageComponent }
     ]
   },

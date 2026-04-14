@@ -3,8 +3,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export type PrestataireType = 'HUISSIER' | 'AVOCAT' | 'EXPERT' | 'NOTAIRE';
-export type MissionStatus = 'ASSIGNEE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE';
+export type MissionStatus = 'ASSIGNEE' | 'EN_COURS' | 'TERMINEE' | 'ECHOUEE' | 'ANNULEE';
 export type NatureJuridique = 'PERSONNE_PHYSIQUE' | 'PERSONNE_MORALE';
+export type MissionType = 'MISSION_ASSIGNATION' | 'MISSION_RECOUVREMENT_JUDICIAIRE' | 'MISSION_SIGNIFICATION' | 'MISSION_EXPERTISE';
+export type MissionResultStatus = 'EN_COURS' | 'TERMINEE' | 'ECHOUEE';
 
 export interface Prestataire {
   id: number;
@@ -32,9 +34,16 @@ export interface Prestataire {
 export interface Mission {
   id: number;
   prestataireId: number;
+  typeMission?: MissionType | null;
+  codeMission?: string | null;
   titre: string;
   description?: string;
   dossierReference?: string;
+  procedureId?: number | null;
+  procedureType?: string | null;
+  affaireNumero?: string | null;
+  procedureTribunal?: string | null;
+  dureeEstimee?: number | null;
   statut: MissionStatus;
   dateDebut?: string;
   dateEcheance?: string;
@@ -44,6 +53,20 @@ export interface Mission {
   commentairePerformance?: string;
   cout?: number | null;
   createdAt?: string;
+}
+
+export interface MissionResult {
+  id: number;
+  missionId: number;
+  statut: MissionResultStatus;
+  dateDebut?: string | null;
+  dateFin?: string | null;
+  resultat?: string | null;
+  montantRecuperee?: number | null;
+  hasPreuve?: boolean;
+  preuveFileName?: string | null;
+  preuveContentType?: string | null;
+  createdAt?: string | null;
 }
 
 export interface CreateNoteHonoraireRequest {
@@ -103,6 +126,10 @@ export class PrestatairesService {
     return this.http.get<Mission[]>(`${this.prestatairesUrl}/${prestataireId}/missions`);
   }
 
+  listAllMissions(): Observable<Mission[]> {
+    return this.http.get<Mission[]>(this.missionsUrl);
+  }
+
   createMission(prestataireId: number, payload: Partial<Mission>): Observable<Mission> {
     return this.http.post<Mission>(`${this.prestatairesUrl}/${prestataireId}/missions`, payload);
   }
@@ -110,6 +137,26 @@ export class PrestatairesService {
   updateMission(missionId: number, payload: Partial<Mission>): Observable<Mission> {
     return this.http.patch<Mission>(`${this.missionsUrl}/${missionId}`, payload);
   }
+
+  getMissionResult(missionId: number): Observable<MissionResult | null> {
+    return this.http.get<MissionResult | null>(`${this.missionsUrl}/${missionId}/result`);
+  }
+
+  upsertMissionResult(missionId: number, payload: Partial<MissionResult>): Observable<MissionResult> {
+    return this.http.post<MissionResult>(`${this.missionsUrl}/${missionId}/result`, payload);
+  }
+
+  uploadMissionProof(missionId: number, file: File): Observable<MissionResult> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<MissionResult>(`${this.missionsUrl}/${missionId}/result/proof`, form);
+  }
+
+  downloadMissionProof(missionId: number): Observable<Blob> {
+    return this.http.get(`${this.missionsUrl}/${missionId}/result/proof`, { responseType: 'blob' });
+  }
+
+
 
   createNoteHonoraire(prestataireId: number, payload: CreateNoteHonoraireRequest): Observable<NoteHonoraire> {
     return this.http.post<NoteHonoraire>(`${this.prestatairesUrl}/${prestataireId}/notes-honoraires`, payload);

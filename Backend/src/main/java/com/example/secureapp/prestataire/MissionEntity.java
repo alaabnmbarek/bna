@@ -1,6 +1,7 @@
 package com.example.secureapp.prestataire;
 
 import jakarta.persistence.*;
+import com.example.secureapp.suivi_judiciaire.AffaireJudiciaireEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,6 +18,13 @@ public class MissionEntity {
     @JoinColumn(name = "prestataire_id", nullable = false)
     private PrestataireEntity prestataire;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 40)
+    private MissionType typeMission;
+
+    @Column(length = 80)
+    private String codeMission;
+
     @Column(nullable = false, length = 200)
     private String titre;
 
@@ -25,6 +33,12 @@ public class MissionEntity {
 
     @Column(length = 100)
     private String dossierReference;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "procedure_id")
+    private AffaireJudiciaireEntity procedure;
+
+    private Integer dureeEstimee;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -63,12 +77,20 @@ public class MissionEntity {
     public void setId(Long id) { this.id = id; }
     public PrestataireEntity getPrestataire() { return prestataire; }
     public void setPrestataire(PrestataireEntity prestataire) { this.prestataire = prestataire; }
+    public MissionType getTypeMission() { return typeMission; }
+    public void setTypeMission(MissionType typeMission) { this.typeMission = typeMission; }
+    public String getCodeMission() { return codeMission; }
+    public void setCodeMission(String codeMission) { this.codeMission = codeMission; }
     public String getTitre() { return titre; }
     public void setTitre(String titre) { this.titre = titre; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public String getDossierReference() { return dossierReference; }
     public void setDossierReference(String dossierReference) { this.dossierReference = dossierReference; }
+    public AffaireJudiciaireEntity getProcedure() { return procedure; }
+    public void setProcedure(AffaireJudiciaireEntity procedure) { this.procedure = procedure; }
+    public Integer getDureeEstimee() { return dureeEstimee; }
+    public void setDureeEstimee(Integer dureeEstimee) { this.dureeEstimee = dureeEstimee; }
     public MissionStatus getStatut() { return statut; }
     public void setStatut(MissionStatus statut) { this.statut = statut; }
     public LocalDate getDateDebut() { return dateDebut; }

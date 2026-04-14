@@ -74,6 +74,55 @@ export interface CreateAffaireRequest {
   dateCreation: string;
 }
 
+export interface DossierDetailsResponse {
+  dossier: {
+    id: number;
+    reference: string;
+    nomDebiteur: string;
+    statut: ContentieuxStatus;
+    createdAt: string;
+    compteActuel?: string | null;
+    agence?: string | null;
+    chargeDossier?: string | null;
+    montantEngage?: number | null;
+    montantRecupere?: number | null;
+  };
+  affaires: AffaireContentieux[];
+  procedures: Array<{
+    id: number;
+    dossierId: number;
+    referenceTribunal: string;
+    typeProcedure: string;
+    tribunal: string;
+    description?: string | null;
+    statut: string;
+    dateOuverture: string;
+    avocatNom?: string | null;
+    huissierNom?: string | null;
+    typeDecision?: string | null;
+    dateJugement?: string | null;
+  }>;
+  missions: Array<{
+    id: number;
+    titre: string;
+    statut: string;
+    dateDebut?: string | null;
+    dateEcheance?: string | null;
+    dateFin?: string | null;
+    prestataireId?: number | null;
+    prestataireNom?: string | null;
+  }>;
+  prestataires: Array<{
+    id: number;
+    type: string;
+    nom: string;
+    prenom?: string | null;
+    email?: string | null;
+    telephone?: string | null;
+  }>;
+  documents: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContentieuxService {
   private url = '/api/contentieux/dossiers';
@@ -126,5 +175,9 @@ export class ContentieuxService {
 
   createAffaire(dossierId: number, payload: CreateAffaireRequest): Observable<AffaireContentieux> {
     return this.http.post<AffaireContentieux>(`${this.url}/${dossierId}/affaires`, payload);
+  }
+
+  getDossierDetails(dossierId: number): Observable<DossierDetailsResponse> {
+    return this.http.get<DossierDetailsResponse>(`/api/dossiers/${dossierId}/details`);
   }
 }

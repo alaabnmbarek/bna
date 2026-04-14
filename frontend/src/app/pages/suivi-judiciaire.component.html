@@ -24,7 +24,11 @@
           </thead>
           <tbody>
             <tr *ngFor="let affaire of affaires">
-              <td>{{ affaire.dossierReference }} - {{ affaire.nomDebiteur }}</td>
+              <td>
+                <a href="javascript:" (click)="openDossierDetails(affaire.dossierId)">
+                  {{ affaire.dossierReference }} - {{ affaire.nomDebiteur }}
+                </a>
+              </td>
               <td>{{ affaire.tribunal }}</td>
               <td>{{ affaire.referenceTribunal }}</td>
               <td><span class="badge bg-light-primary text-primary">{{ procedureLabel(affaire.typeProcedure) }}</span></td>
@@ -55,6 +59,150 @@
   </div>
 </div>
 
+<!-- Modal Dossier Details -->
+<div *ngIf="showDossierDetails" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);" (click)="closeDossierDetails()">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Détails du dossier</h5>
+        <button type="button" class="btn-close" (click)="closeDossierDetails()"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="dossierDetailsLoading" class="py-2">
+          <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+          Chargement...
+        </div>
+
+        <div *ngIf="!dossierDetailsLoading && dossierDetails">
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="card p-3">
+                <h6 class="mb-3">Informations générales</h6>
+                <div class="row g-3">
+                  <div class="col-12 col-md-3">
+                    <div class="text-muted small">Numéro du dossier</div>
+                    <div class="fw-bold">{{ dossierDetails.dossier.reference }}</div>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <div class="text-muted small">Client / Partie concernée</div>
+                    <div class="fw-bold">{{ dossierDetails.dossier.nomDebiteur }}</div>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <div class="text-muted small">Statut</div>
+                    <div class="fw-bold">{{ dossierDetails.dossier.statut }}</div>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <div class="text-muted small">Date de création</div>
+                    <div class="fw-bold">{{ dossierDetails.dossier.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+              <div class="card p-3 h-100">
+                <h6 class="mb-3">Affaires liées au dossier</h6>
+                <div *ngIf="dossierDetails.affaires.length === 0" class="text-muted">Aucune affaire liée.</div>
+                <div class="table-responsive" *ngIf="dossierDetails.affaires.length > 0">
+                  <table class="table table-sm mb-0">
+                    <thead>
+                      <tr>
+                        <th>N° Affaire</th>
+                        <th>Type</th>
+                        <th>Statut</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let a of dossierDetails.affaires">
+                        <td class="text-nowrap">{{ a.numeroAffaire || '—' }}</td>
+                        <td>{{ a.typeAffaire }}</td>
+                        <td>{{ a.statut }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+              <div class="card p-3 h-100">
+                <h6 class="mb-3">Procédures associées</h6>
+                <div *ngIf="dossierDetails.procedures.length === 0" class="text-muted">Aucune procédure associée.</div>
+                <div class="table-responsive" *ngIf="dossierDetails.procedures.length > 0">
+                  <table class="table table-sm mb-0">
+                    <thead>
+                      <tr>
+                        <th>Type</th>
+                        <th>N° Tribunal</th>
+                        <th>Statut</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let p of dossierDetails.procedures">
+                        <td class="text-nowrap">{{ procedureLabelAny(p.typeProcedure) }}</td>
+                        <td class="text-nowrap">{{ p.referenceTribunal }}</td>
+                        <td class="text-nowrap">{{ p.statut }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div *ngIf="dossierDetails.procedures.length > 0" class="mt-3">
+                  <div *ngFor="let p of dossierDetails.procedures" class="border rounded p-2 mb-2">
+                    <div class="fw-bold">{{ procedureLabelAny(p.typeProcedure) }} — {{ p.referenceTribunal }}</div>
+                    <div class="text-muted small">{{ p.tribunal }}</div>
+                    <div class="mt-2" *ngIf="p.description">{{ p.description }}</div>
+                    <div class="mt-2" *ngIf="p.statut === 'JUGEE' && (p.typeDecision || p.dateJugement)">
+                      <div><strong>Type de Décision:</strong> {{ p.typeDecision || '—' }}</div>
+                      <div><strong>Date du Jugement:</strong> {{ p.dateJugement ? (p.dateJugement | date:'dd/MM/yyyy') : '—' }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+              <div class="card p-3 h-100">
+                <h6 class="mb-3">Missions</h6>
+                <div *ngIf="dossierDetails.missions.length === 0" class="text-muted">Aucune mission liée.</div>
+                <div *ngIf="dossierDetails.missions.length > 0">
+                  <div *ngFor="let m of dossierDetails.missions" class="border rounded p-2 mb-2">
+                    <div class="fw-bold">{{ m.titre }}</div>
+                    <div class="text-muted small">{{ m.statut }} — {{ m.prestataireNom || '—' }}</div>
+                    <div class="text-muted small" *ngIf="m.dateEcheance">Échéance: {{ m.dateEcheance | date:'dd/MM/yyyy' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+              <div class="card p-3 h-100">
+                <h6 class="mb-3">Prestataires</h6>
+                <div *ngIf="dossierDetails.prestataires.length === 0" class="text-muted">Aucun prestataire lié.</div>
+                <div *ngIf="dossierDetails.prestataires.length > 0">
+                  <div *ngFor="let pr of dossierDetails.prestataires" class="border rounded p-2 mb-2">
+                    <div class="fw-bold">{{ prestataireLabel(pr) }}</div>
+                    <div class="text-muted small">{{ pr.type }}</div>
+                    <div class="text-muted small" *ngIf="pr.email">{{ pr.email }}</div>
+                    <div class="text-muted small" *ngIf="pr.telephone">{{ pr.telephone }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="card p-3">
+                <h6 class="mb-3">Documents associés</h6>
+                <div class="text-muted">Aucun document associé.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Affaire -->
 <div *ngIf="showAffaireForm" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -67,7 +215,7 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label class="form-label">Dossier Contentieux</label>
-            <select class="form-select" [(ngModel)]="newAffaire.dossierId">
+            <select class="form-select" [(ngModel)]="newAffaire.dossierId" (ngModelChange)="onDossierChange($event)">
               <option *ngFor="let d of dossiers" [value]="d.id">{{ d.reference }} - {{ d.nomDebiteur }}</option>
             </select>
           </div>
@@ -76,8 +224,15 @@
             <input type="text" class="form-control" [(ngModel)]="newAffaire.tribunal" placeholder="Ex: Tribunal de 1ère Instance de Tunis">
           </div>
           <div class="col-md-6 mb-3">
-            <label class="form-label">Référence Tribunal (N° Affaire)</label>
-            <input type="text" class="form-control" [(ngModel)]="newAffaire.referenceTribunal">
+            <label class="form-label">N° Affaire</label>
+            <select class="form-select" [(ngModel)]="selectedNumeroAffaire" (ngModelChange)="onNumeroAffaireChange($event)" [disabled]="!newAffaire.dossierId || dossierAffairesLoading">
+              <option value="" disabled>
+                {{ dossierAffairesLoading ? 'Chargement...' : (newAffaire.dossierId ? 'Sélectionner une affaire' : 'Sélectionner un dossier d’abord') }}
+              </option>
+              <option *ngFor="let a of dossierAffaires" [value]="a.numeroAffaire || ''" [disabled]="!a.numeroAffaire">
+                {{ a.numeroAffaire || '—' }} — {{ a.typeAffaire }}
+              </option>
+            </select>
           </div>
           <div class="col-md-6 mb-3">
             <label class="form-label">Type de Procédure</label>

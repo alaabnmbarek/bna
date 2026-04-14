@@ -1,9 +1,8 @@
 package com.example.secureapp.prestataire;
 
-public enum MissionStatus {
-    ASSIGNEE,
+public enum MissionResultStatus {
     EN_COURS,
     TERMINEE,
-    ECHOUEE,
-    ANNULEE
+    ECHOUEE
 }
+

@@ -26,5 +26,10 @@ public interface DossierContentieuxRepository extends JpaRepository<DossierConte
             @Param("chargeLabel") String chargeLabel
     );
 
+    Optional<DossierContentieuxEntity> findByReference(String reference);
+
+    Optional<DossierContentieuxEntity> findTopByCompteActuelOrderByCreatedAtDesc(String compteActuel);
+    Optional<DossierContentieuxEntity> findTopByAncienCompteOrderByCreatedAtDesc(String ancienCompte);
+
     Optional<DossierContentieuxEntity> findTopByReferenceStartingWithOrderByReferenceDesc(String prefix);
 }

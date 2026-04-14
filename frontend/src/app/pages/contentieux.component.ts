@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../auth/auth.service';
 import { ProfileService } from '../auth/profile.service';
-import { AffaireContentieux, AffaireStatut, ChargeDossierOption, ContentieuxService, ContentieuxStatus, CreateAffaireRequest, DossierContentieux } from '../contentieux/contentieux.service';
+import { AffaireContentieux, AffaireStatut, ChargeDossierOption, ContentieuxService, ContentieuxStatus, CreateAffaireRequest, DossierContentieux, DossierDetailsResponse } from '../contentieux/contentieux.service';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { DossierRisqueService, RisqueCategory, RisqueItem } from '../risque/dossier-risque.service';
 
@@ -110,6 +110,8 @@ export class ContentieuxPageComponent implements OnInit {
   affairesLoading = false;
   showAffaireDialog = false;
   affaireSaving = false;
+  dossierDetails: DossierDetailsResponse | null = null;
+  dossierDetailsLoading = false;
   affaireForm: CreateAffaireRequest = {
     typeAffaire: '',
     description: '',
@@ -327,7 +329,9 @@ export class ContentieuxPageComponent implements OnInit {
 
   openDetails(dossier: DossierContentieux): void {
     this.selected = dossier;
-    this.openRisqueDialog();
+    this.actionDialogType = 'details';
+    this.showActionDialog = true;
+    this.loadDossierDetails();
   }
 
   openAssign(dossier: DossierContentieux): void {
@@ -445,6 +449,11 @@ export class ContentieuxPageComponent implements OnInit {
     if (statut === 'EN_COURS') return 'badge bg-warning-subtle text-warning';
     if (statut === 'TERMINEE') return 'badge bg-success-subtle text-success';
     return 'badge bg-info-subtle text-info';
+  }
+
+  prestataireLabel(pr: { nom: string; prenom?: string | null }): string {
+    const full = `${pr?.nom || ''} ${pr?.prenom || ''}`.trim();
+    return full || '—';
   }
 
   openRisqueForEditing(): void {
@@ -955,6 +964,26 @@ export class ContentieuxPageComponent implements OnInit {
     });
   }
 
+  loadDossierDetails(): void {
+    if (!this.selected) return;
+    this.dossierDetailsLoading = true;
+    this.dossierDetails = null;
+    this.affairesLoading = true;
+    this.contentieux.getDossierDetails(this.selected.id).subscribe({
+      next: (data) => {
+        this.dossierDetails = data;
+        this.affaires = data.affaires || [];
+        this.affairesLoading = false;
+        this.dossierDetailsLoading = false;
+      },
+      error: () => {
+        this.affairesLoading = false;
+        this.dossierDetailsLoading = false;
+        this.showBanner('Erreur lors du chargement des détails du dossier.', 'danger');
+      }
+    });
+  }
+
   closeActionDialog(): void {
     this.showActionDialog = false;
     this.actionDialogType = null;
@@ -963,6 +992,8 @@ export class ContentieuxPageComponent implements OnInit {
     this.affairesLoading = false;
     this.showAffaireDialog = false;
     this.affaireSaving = false;
+    this.dossierDetails = null;
+    this.dossierDetailsLoading = false;
   }
 
   filteredDossiers(): DossierContentieux[] {

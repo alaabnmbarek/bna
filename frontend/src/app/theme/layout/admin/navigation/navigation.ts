@@ -70,6 +70,15 @@ export const NavigationItems: NavigationItem[] = [
         role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
       },
       {
+        id: 'mission-management',
+        title: 'Gérer Missions',
+        type: 'item',
+        url: '/missions',
+        icon: 'feather icon-check-square',
+        breadcrumbs: false,
+        role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
+      },
+      {
         id: 'user-management',
         title: 'Gestion des Utilisateurs',
         type: 'item',

@@ -22,6 +22,12 @@ public class MissionController {
         return ResponseEntity.ok(missionService.listByPrestataire(prestataireId));
     }
 
+    @GetMapping("/api/missions")
+    @PreAuthorize("hasAuthority('MISSION_READ')")
+    public ResponseEntity<List<MissionDto>> listAll() {
+        return ResponseEntity.ok(missionService.listAll());
+    }
+
     @PostMapping("/api/prestataires/{prestataireId}/missions")
     @PreAuthorize("hasAuthority('MISSION_CREATE')")
     public ResponseEntity<MissionDto> createForPrestataire(
