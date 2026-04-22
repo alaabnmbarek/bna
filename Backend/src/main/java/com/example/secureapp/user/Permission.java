@@ -20,6 +20,7 @@ public enum Permission {
     CONTENTIOUS_ASSIGN,
     CONTENTIOUS_CHANGE_ACCOUNT,
     CONTENTIOUS_CLOSE,
+    CONTENTIOUS_REJECT,
     CONTENTIOUS_REOPEN,
     
     // System permissions

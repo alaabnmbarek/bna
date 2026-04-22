@@ -1,9 +1,13 @@
 package com.example.secureapp.prestataire;
 
 import com.example.secureapp.prestataire.dto.MissionResultDto;
+import com.example.secureapp.user.UserEntity;
+import com.example.secureapp.user.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.Authentication;
 
 import java.io.IOException;
 
@@ -11,20 +15,27 @@ import java.io.IOException;
 public class MissionResultService {
     private final MissionRepository missionRepository;
     private final MissionResultRepository missionResultRepository;
+    private final UserRepository userRepository;
+    private final PrestataireRepository prestataireRepository;
 
-    public MissionResultService(MissionRepository missionRepository, MissionResultRepository missionResultRepository) {
+    public MissionResultService(MissionRepository missionRepository, MissionResultRepository missionResultRepository, UserRepository userRepository, PrestataireRepository prestataireRepository) {
         this.missionRepository = missionRepository;
         this.missionResultRepository = missionResultRepository;
+        this.userRepository = userRepository;
+        this.prestataireRepository = prestataireRepository;
     }
 
     @Transactional(readOnly = true)
-    public MissionResultDto getByMission(Long missionId) {
+    public MissionResultDto getByMission(Long missionId, Authentication authentication) {
+        MissionEntity mission = missionRepository.findById(missionId).orElseThrow(() -> new RuntimeException("Mission non trouvée"));
+        ensureMissionAccess(mission, authentication);
         return missionResultRepository.findByMissionId(missionId).map(this::toDto).orElse(null);
     }
 
     @Transactional
-    public MissionResultDto upsert(Long missionId, MissionResultDto dto) {
+    public MissionResultDto upsert(Long missionId, MissionResultDto dto, Authentication authentication) {
         MissionEntity mission = missionRepository.findById(missionId).orElseThrow(() -> new RuntimeException("Mission non trouvée"));
+        ensureMissionAccess(mission, authentication);
         MissionResultEntity entity = missionResultRepository.findByMissionId(missionId).orElseGet(() -> {
             MissionResultEntity e = new MissionResultEntity();
             e.setMission(mission);
@@ -50,9 +61,10 @@ public class MissionResultService {
     }
 
     @Transactional
-    public MissionResultDto uploadProof(Long missionId, MultipartFile file) {
+    public MissionResultDto uploadProof(Long missionId, MultipartFile file, Authentication authentication) {
         if (file == null || file.isEmpty()) throw new RuntimeException("Fichier manquant");
         MissionEntity mission = missionRepository.findById(missionId).orElseThrow(() -> new RuntimeException("Mission non trouvée"));
+        ensureMissionAccess(mission, authentication);
         MissionResultEntity entity = missionResultRepository.findByMissionId(missionId).orElseGet(() -> {
             MissionResultEntity e = new MissionResultEntity();
             e.setMission(mission);
@@ -72,8 +84,38 @@ public class MissionResultService {
     }
 
     @Transactional(readOnly = true)
-    public MissionResultEntity getEntityByMission(Long missionId) {
+    public MissionResultEntity getEntityByMission(Long missionId, Authentication authentication) {
+        MissionEntity mission = missionRepository.findById(missionId).orElseThrow(() -> new RuntimeException("Mission non trouvée"));
+        ensureMissionAccess(mission, authentication);
         return missionResultRepository.findByMissionId(missionId).orElse(null);
+    }
+
+    private void ensureMissionAccess(MissionEntity mission, Authentication authentication) {
+        if (authentication == null) throw new RuntimeException("Utilisateur non authentifié");
+        if (isInternal(authentication)) return;
+        PrestataireEntity p = resolvePrestataire(authentication);
+        Long ownerId = mission.getPrestataire() != null ? mission.getPrestataire().getId() : null;
+        if (ownerId == null || !ownerId.equals(p.getId())) {
+            throw new AccessDeniedException("Accès refusé");
+        }
+    }
+
+    private boolean isInternal(Authentication authentication) {
+        return authentication.getAuthorities().stream().anyMatch(a -> {
+            String v = a.getAuthority();
+            return "ROLE_ADMIN".equals(v) || "ROLE_CHARGE_DOSSIER".equals(v) || "ROLE_RESPONSABLE_CONTENTIEUX".equals(v)
+                    || "ADMIN".equals(v) || "CHARGE_DOSSIER".equals(v) || "RESPONSABLE_CONTENTIEUX".equals(v);
+        });
+    }
+
+    private PrestataireEntity resolvePrestataire(Authentication authentication) {
+        String username = authentication.getName();
+        if (username == null || username.isBlank()) throw new RuntimeException("Utilisateur non authentifié");
+        UserEntity user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        String email = user.getEmail();
+        if (email == null || email.isBlank()) email = username;
+        return prestataireRepository.findFirstByEmailIgnoreCase(email)
+                .orElseThrow(() -> new RuntimeException("Prestataire lié au compte introuvable (vérifiez l'email du profil et du prestataire)"));
     }
 
     private MissionResultDto toDto(MissionResultEntity entity) {
@@ -92,4 +134,3 @@ public class MissionResultService {
         return dto;
     }
 }
-

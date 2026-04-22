@@ -5,6 +5,7 @@ public enum ContentieuxStatus {
     OUVERT,
     AFFECTE,
     CHANGEMENT_COMPTE,
+    REJETE,
     CLOTURE,
     REOUVERT
 }

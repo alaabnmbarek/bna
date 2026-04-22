@@ -298,15 +298,15 @@
   background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(8px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 16px;
+  padding: calc(var(--app-header-height) + 16px) 16px 16px;
   z-index: 1050;
 }
 
 .contentieux-modal {
   width: min(1200px, 100%);
-  max-height: calc(100vh - 32px);
+  max-height: calc(100vh - var(--app-header-height) - 32px);
   overflow: auto;
   background: var(--app-surface);
   border-radius: 18px;
@@ -316,7 +316,7 @@
 
 .contentieux-dialog {
   width: min(760px, 100%);
-  max-height: calc(100vh - 32px);
+  max-height: calc(100vh - var(--app-header-height) - 32px);
   overflow: auto;
   background: var(--app-surface);
   border-radius: 18px;

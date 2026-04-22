@@ -1,21 +1,36 @@
 package com.example.secureapp.prestataire;
 
+import com.example.secureapp.contentieux.DossierContentieuxEntity;
+import com.example.secureapp.contentieux.DossierContentieuxRepository;
 import com.example.secureapp.prestataire.dto.PrestataireDto;
+import com.example.secureapp.prestataire.honoraire.NoteHonoraireEntity;
+import com.example.secureapp.prestataire.honoraire.NoteHonoraireRepository;
+import com.example.secureapp.user.UserEntity;
+import com.example.secureapp.user.UserRepository;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
 
 import java.util.DoubleSummaryStatistics;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class PrestataireService {
     private final PrestataireRepository prestataireRepository;
     private final MissionRepository missionRepository;
+    private final UserRepository userRepository;
+    private final NoteHonoraireRepository noteHonoraireRepository;
+    private final DossierContentieuxRepository dossierContentieuxRepository;
 
-    public PrestataireService(PrestataireRepository prestataireRepository, MissionRepository missionRepository) {
+    public PrestataireService(PrestataireRepository prestataireRepository, MissionRepository missionRepository, UserRepository userRepository, NoteHonoraireRepository noteHonoraireRepository, DossierContentieuxRepository dossierContentieuxRepository) {
         this.prestataireRepository = prestataireRepository;
         this.missionRepository = missionRepository;
+        this.userRepository = userRepository;
+        this.noteHonoraireRepository = noteHonoraireRepository;
+        this.dossierContentieuxRepository = dossierContentieuxRepository;
     }
 
     @Transactional(readOnly = true)
@@ -43,6 +58,51 @@ public class PrestataireService {
     public PrestataireDto get(Long id) {
         PrestataireEntity entity = prestataireRepository.findById(id).orElseThrow(() -> new RuntimeException("Prestataire non trouvé"));
         return toDtoWithStats(entity);
+    }
+
+    @Transactional(readOnly = true)
+    public PrestataireDto getMe(Authentication authentication) {
+        PrestataireEntity entity = resolvePrestataire(authentication);
+        return toDtoWithStats(entity);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DossierContentieuxEntity> listMyDossiers(Authentication authentication) {
+        PrestataireEntity p = resolvePrestataire(authentication);
+        Long prestataireId = p.getId();
+
+        Map<Long, DossierContentieuxEntity> out = new LinkedHashMap<>();
+        List<NoteHonoraireEntity> notes = noteHonoraireRepository.findByPrestataireIdOrderByCreatedAtDesc(prestataireId);
+        for (NoteHonoraireEntity n : notes) {
+            if (n.getDossier() != null) {
+                out.putIfAbsent(n.getDossier().getId(), n.getDossier());
+            }
+        }
+
+        List<MissionEntity> missions = missionRepository.findByPrestataireIdOrderByCreatedAtDesc(prestataireId);
+        for (MissionEntity m : missions) {
+            String ref = m.getDossierReference();
+            if (ref == null || ref.isBlank()) continue;
+            dossierContentieuxRepository.findByReference(ref)
+                    .or(() -> dossierContentieuxRepository.findTopByCompteActuelOrderByCreatedAtDesc(ref))
+                    .or(() -> dossierContentieuxRepository.findTopByAncienCompteOrderByCreatedAtDesc(ref))
+                    .ifPresent(d -> out.putIfAbsent(d.getId(), d));
+        }
+
+        return out.values().stream().toList();
+    }
+
+    private PrestataireEntity resolvePrestataire(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            throw new RuntimeException("Utilisateur non authentifié");
+        }
+        String username = authentication.getName();
+        UserEntity user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        String email = user.getEmail();
+        if (email == null || email.isBlank()) email = username;
+        return prestataireRepository.findFirstByEmailIgnoreCase(email)
+                .orElseThrow(() -> new RuntimeException("Prestataire lié au compte introuvable (vérifiez l'email du profil et du prestataire)"));
     }
 
     @Transactional

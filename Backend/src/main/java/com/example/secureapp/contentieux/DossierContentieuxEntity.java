@@ -66,6 +66,14 @@ public class DossierContentieuxEntity {
     @Column(length = 255)
     private String motifCloture;
 
+    @Column(columnDefinition = "LONGTEXT")
+    private String motifRejet;
+
+    @Column(length = 150)
+    private String rejectedBy;
+
+    private LocalDateTime rejectedAt;
+
     @Column(length = 150)
     private String createdBy;
 
@@ -244,6 +252,30 @@ public class DossierContentieuxEntity {
 
     public void setMotifCloture(String motifCloture) {
         this.motifCloture = motifCloture;
+    }
+
+    public String getMotifRejet() {
+        return motifRejet;
+    }
+
+    public void setMotifRejet(String motifRejet) {
+        this.motifRejet = motifRejet;
+    }
+
+    public String getRejectedBy() {
+        return rejectedBy;
+    }
+
+    public void setRejectedBy(String rejectedBy) {
+        this.rejectedBy = rejectedBy;
+    }
+
+    public LocalDateTime getRejectedAt() {
+        return rejectedAt;
+    }
+
+    public void setRejectedAt(LocalDateTime rejectedAt) {
+        this.rejectedAt = rejectedAt;
     }
 
     public String getCreatedBy() {

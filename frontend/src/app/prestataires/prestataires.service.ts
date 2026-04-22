@@ -130,6 +130,10 @@ export class PrestatairesService {
     return this.http.get<Mission[]>(this.missionsUrl);
   }
 
+  listMyMissions(): Observable<Mission[]> {
+    return this.http.get<Mission[]>(`${this.missionsUrl}/my`);
+  }
+
   createMission(prestataireId: number, payload: Partial<Mission>): Observable<Mission> {
     return this.http.post<Mission>(`${this.prestatairesUrl}/${prestataireId}/missions`, payload);
   }
@@ -154,6 +158,14 @@ export class PrestatairesService {
 
   downloadMissionProof(missionId: number): Observable<Blob> {
     return this.http.get(`${this.missionsUrl}/${missionId}/result/proof`, { responseType: 'blob' });
+  }
+
+  getMyPrestataire(): Observable<Prestataire> {
+    return this.http.get<Prestataire>(`${this.prestatairesUrl}/me`);
+  }
+
+  listMyDossiers(): Observable<Array<{ id: number; reference: string; nomDebiteur: string; statut: string }>> {
+    return this.http.get<Array<{ id: number; reference: string; nomDebiteur: string; statut: string }>>(`${this.prestatairesUrl}/me/dossiers`);
   }
 
 

@@ -72,6 +72,9 @@
             <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='A_VALIDER'" [class.btn-outline-secondary]="activeStatus!=='A_VALIDER'" (click)="activeStatus='A_VALIDER'">
               En attente <span class="contentieux-pill">{{ countByStatus('A_VALIDER') }}</span>
             </button>
+            <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='REJETE'" [class.btn-outline-secondary]="activeStatus!=='REJETE'" (click)="activeStatus='REJETE'">
+              Rejeté <span class="contentieux-pill">{{ countByStatus('REJETE') }}</span>
+            </button>
             <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='OUVERT'" [class.btn-outline-secondary]="activeStatus!=='OUVERT'" (click)="activeStatus='OUVERT'">
               Ouvert <span class="contentieux-pill">{{ countByStatus('OUVERT') }}</span>
             </button>
@@ -133,10 +136,13 @@
                     <button *ngIf="d.statut === 'A_VALIDER' && canValidate()" class="btn btn-sm btn-primary contentieux-action-btn" type="button" (click)="validateOpening(d)">
                       <i class="feather icon-check-circle"></i><span class="contentieux-action-text">Valider</span>
                     </button>
+                    <button *ngIf="d.statut === 'A_VALIDER' && canValidate()" class="btn btn-sm btn-outline-danger contentieux-action-btn" type="button" (click)="openReject(d)">
+                      <i class="feather icon-x-octagon"></i><span class="contentieux-action-text">Rejeter</span>
+                    </button>
                     <button *ngIf="d.statut !== 'A_VALIDER' && canAssign()" class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="openAssign(d)">
                       <i class="feather icon-user-check"></i><span class="contentieux-action-text">Affecter</span>
                     </button>
-                    <button *ngIf="d.statut !== 'A_VALIDER'" class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="openChangeAccount(d)">
+                    <button *ngIf="d.statut !== 'A_VALIDER' && !isResponsableContentieux()" class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="openChangeAccount(d)">
                       <i class="feather icon-credit-card"></i><span class="contentieux-action-text">Compte</span>
                     </button>
                     <button *ngIf="d.statut !== 'CLOTURE' && d.statut !== 'A_VALIDER'" class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="openClose(d)">
@@ -389,6 +395,7 @@
         @if (actionDialogType === 'assign') { Affecter un chargé }
         @else if (actionDialogType === 'changeAccount') { Changer de compte }
         @else if (actionDialogType === 'close') { Clôturer le dossier }
+        @else if (actionDialogType === 'reject') { Rejeter le dossier }
         @else { Détails du dossier }
       </div>
       <button type="button" class="btn-close" (click)="closeActionDialog()"></button>
@@ -428,6 +435,17 @@
         <div class="contentieux-actions mt-3">
           <button class="btn btn-primary" type="button" (click)="confirmClose()">Confirmer</button>
         </div>
+      } @else if (actionDialogType === 'reject') {
+        <div class="mb-3">
+          <label class="form-label contentieux-label">Motif de rejet <span class="text-danger">*</span></label>
+          <textarea class="form-control contentieux-input" rows="4" [(ngModel)]="rejectMotif" name="rejectMotif" placeholder="Saisir une raison claire et traçable..."></textarea>
+        </div>
+        <div class="contentieux-actions mt-3 gap-2">
+          <button class="btn btn-light" type="button" (click)="closeActionDialog()">Annuler</button>
+          <button class="btn btn-danger" type="button" (click)="confirmReject()" [disabled]="rejectSaving || !rejectMotif.trim()">
+            Confirmer le rejet
+          </button>
+        </div>
       } @else if (actionDialogType === 'details') {
         <div class="contentieux-details">
           <div *ngIf="dossierDetailsLoading" class="affaire-loading">
@@ -464,6 +482,11 @@
               <div class="contentieux-detail-k">Compte</div>
               <div class="contentieux-detail-v contentieux-mono">{{ dossierDetails?.dossier?.compteActuel || selected?.compteActuel || '—' }}</div>
             </div>
+          </div>
+
+          <div class="alert alert-warning mt-3" *ngIf="((dossierDetails?.dossier?.statut || selected?.statut) === 'REJETE') && (dossierDetails?.dossier?.motifRejet || selected?.motifRejet)">
+            <div class="fw-bold mb-1"><i class="feather icon-alert-triangle me-2"></i>Motif de rejet</div>
+            <div>{{ dossierDetails?.dossier?.motifRejet || selected?.motifRejet }}</div>
           </div>
 
           <div class="affaire-section mt-3">
@@ -524,7 +547,7 @@
               <button type="button" class="btn btn-primary" (click)="saveDetailRisqueSelection()" [disabled]="!hasSelectedDetailRisques() || detailRisqueSaving">
                 <span *ngIf="detailRisqueSaving" class="spinner-border spinner-border-sm me-2" role="status"></span>
                 <i *ngIf="!detailRisqueSaving" class="feather icon-save me-2"></i>
-                Enregistrer dans le dossier
+                Enregistrer (optionnel)
               </button>
             </div>
           </div>

@@ -40,7 +40,6 @@ export const NavigationItems: NavigationItem[] = [
     title: 'Administration',
     type: 'group',
     icon: 'feather icon-settings',
-    role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'],
     children: [
       {
         id: 'risk-area',
@@ -131,7 +130,56 @@ export const NavigationItems: NavigationItem[] = [
         url: '/missions',
         icon: 'feather icon-check-square',
         breadcrumbs: false,
-        role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
+        role: [
+          'ROLE_ADMIN',
+          'ROLE_CHARGE_DOSSIER',
+          'ROLE_RESPONSABLE_CONTENTIEUX',
+          'ROLE_PRESTATAIRE',
+          'ROLE_AVOCAT',
+          'ROLE_HUISSIER',
+          'ROLE_EXPERT',
+          'AVOCAT',
+          'HUISSIER',
+          'EXPERT'
+        ]
+      },
+      {
+        id: 'gestion-factures',
+        title: 'Gestion des Factures',
+        type: 'item',
+        url: '/factures',
+        icon: 'feather icon-file-text',
+        breadcrumbs: false,
+        role: [
+          'ROLE_ADMIN',
+          'ROLE_CHARGE_DOSSIER',
+          'ROLE_RESPONSABLE_CONTENTIEUX',
+          'ROLE_PRESTATAIRE',
+          'ROLE_AVOCAT',
+          'ROLE_HUISSIER',
+          'ROLE_EXPERT',
+          'AVOCAT',
+          'HUISSIER',
+          'EXPERT'
+        ]
+      },
+      {
+        id: 'prestataire-me',
+        title: 'Mon Profil',
+        type: 'item',
+        url: '/prestataires/me',
+        icon: 'feather icon-user',
+        breadcrumbs: false,
+        role: [
+          'ROLE_PRESTATAIRE',
+          'ROLE_AVOCAT',
+          'ROLE_HUISSIER',
+          'ROLE_EXPERT',
+          'PRESTATAIRE',
+          'AVOCAT',
+          'HUISSIER',
+          'EXPERT'
+        ]
       },
       {
         id: 'user-management',

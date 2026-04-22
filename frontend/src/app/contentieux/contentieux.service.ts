@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export type ContentieuxStatus = 'A_VALIDER' | 'OUVERT' | 'AFFECTE' | 'CHANGEMENT_COMPTE' | 'CLOTURE' | 'REOUVERT';
+export type ContentieuxStatus = 'A_VALIDER' | 'OUVERT' | 'AFFECTE' | 'CHANGEMENT_COMPTE' | 'REJETE' | 'CLOTURE' | 'REOUVERT';
 
 export interface DossierContentieux {
   id: number;
@@ -24,6 +24,9 @@ export interface DossierContentieux {
   observationsFinancieres?: string | null;
   dateCloture?: string | null;
   motifCloture?: string | null;
+  motifRejet?: string | null;
+  rejectedBy?: string | null;
+  rejectedAt?: string | null;
   createdBy?: string | null;
   validatedBy?: string | null;
   validatedAt?: string | null;
@@ -84,6 +87,7 @@ export interface DossierDetailsResponse {
     compteActuel?: string | null;
     agence?: string | null;
     chargeDossier?: string | null;
+    motifRejet?: string | null;
     montantEngage?: number | null;
     montantRecupere?: number | null;
   };
@@ -163,6 +167,10 @@ export class ContentieuxService {
 
   reopen(id: number): Observable<DossierContentieux> {
     return this.http.patch<DossierContentieux>(`${this.url}/${id}/reopen`, {});
+  }
+
+  reject(id: number, motifRejet: string): Observable<DossierContentieux> {
+    return this.http.patch<DossierContentieux>(`${this.url}/${id}/reject`, { motifRejet });
   }
 
   remove(id: number): Observable<{ deleted: boolean }> {

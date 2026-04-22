@@ -1,0 +1,243 @@
+<div class="row">
+  <div class="col-sm-12">
+    <app-card [hidHeader]="true" [options]="false" cardClass="notes-card">
+      <!-- Header -->
+      <div class="notes-header">
+        <div>
+          <h5 class="notes-title">Notes d'Honoraires</h5>
+          <p class="notes-subtitle">Gestion et validation des honoraires prestataires.</p>
+        </div>
+        <div class="notes-actions">
+          <button class="btn btn-primary btn-sm" (click)="openModal()" *ngIf="isPrestataire || isResponsable">
+            <i class="feather icon-plus me-1"></i> Créer une Note
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="banner" class="alert notes-banner" [ngClass]="{
+        'alert-success': banner.kind === 'success',
+        'alert-danger': banner.kind === 'danger'
+      }">
+        {{ banner.message }}
+      </div>
+
+      <!-- Filters -->
+      <div class="notes-filters">
+        <div class="input-group search-group">
+          <span class="input-group-text"><i class="feather icon-search"></i></span>
+          <input type="text" class="form-control" placeholder="Rechercher..." [(ngModel)]="search" (ngModelChange)="applyFilters()">
+        </div>
+        
+        <select class="form-select filter-select" [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()">
+          <option value="ALL">Tous les statuts</option>
+          <option value="EN_COURS">En cours</option>
+          <option value="SOUMISE">Soumise</option>
+          <option value="VALIDEE">Validée</option>
+          <option value="REJETEE">Rejetée</option>
+        </select>
+
+        <select class="form-select filter-select" [(ngModel)]="filterType" (ngModelChange)="applyFilters()">
+          <option value="ALL">Tous les types</option>
+          <option value="DOSSIER">Dossier</option>
+          <option value="AFFAIRE">Affaire</option>
+          <option value="MISSION">Mission</option>
+        </select>
+      </div>
+
+      <!-- Table -->
+      <div class="table-responsive">
+        <table class="table table-hover notes-table mb-0">
+          <thead>
+            <tr>
+              <th>N° Note</th>
+              <th>Date</th>
+              <th>Prestataire</th>
+              <th>Lien</th>
+              <th class="text-end">Montant HT</th>
+              <th class="text-end">Montant TTC</th>
+              <th class="text-center">Statut</th>
+              <th class="text-center">Justificatif</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let n of filteredNotes">
+              <td class="fw-bold">{{ n.numero }}</td>
+              <td>{{ n.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td>{{ n.prestataireNom }}</td>
+              <td>
+                <span class="badge bg-light-secondary text-dark">Dossier</span>
+                <div class="small text-muted mt-1">{{ n.dossierReference }}</div>
+                <div class="small text-muted mt-1">
+                  <span class="badge bg-light-secondary text-dark">{{ n.typeLien }}</span>
+                  <span class="ms-2">{{ n.referenceLien }}</span>
+                </div>
+              </td>
+              <td class="text-end">{{ n.montantHonoraires | number:'1.2-2' }}</td>
+              <td class="text-end fw-bold text-primary">{{ n.total | number:'1.2-2' }}</td>
+              <td class="text-center">
+                <span class="app-status-badge"
+                      [ngClass]="{
+                        'app-status-badge--warning': n.statut === 'EN_COURS',
+                        'app-status-badge--info': n.statut === 'SOUMISE',
+                        'app-status-badge--success': n.statut === 'VALIDEE',
+                        'app-status-badge--danger': n.statut === 'REJETEE'
+                      }">
+                  <i class="feather"
+                     [ngClass]="{
+                       'icon-clock': n.statut === 'EN_COURS',
+                       'icon-send': n.statut === 'SOUMISE',
+                       'icon-check-circle': n.statut === 'VALIDEE',
+                       'icon-x-circle': n.statut === 'REJETEE'
+                     }"></i>
+                  {{ n.statut === 'EN_COURS' ? 'En cours' : n.statut === 'SOUMISE' ? 'Soumise' : n.statut === 'VALIDEE' ? 'Validée' : 'Rejetée' }}
+                </span>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-icon btn-light" *ngIf="n.fichierJustificatif" title="Voir fichier">
+                  <i class="feather icon-paperclip text-info"></i>
+                </button>
+                <span class="text-muted small" *ngIf="!n.fichierJustificatif">-</span>
+              </td>
+              <td class="text-center">
+                <div class="btn-group">
+                  <!-- Actions Prestataire -->
+                  <button class="btn btn-icon btn-sm btn-light-primary" 
+                          *ngIf="(n.statut === 'EN_COURS' || n.statut === 'REJETEE') && (isPrestataire || isResponsable)" 
+                          (click)="openModal(n)" title="Modifier">
+                    <i class="feather icon-edit"></i>
+                  </button>
+                  <button class="btn btn-icon btn-sm notes-icon-ghost notes-icon-ghost--submit" 
+                          *ngIf="(n.statut === 'EN_COURS' || n.statut === 'REJETEE') && (isPrestataire || isResponsable)" 
+                          (click)="submitNote(n.id!)" title="Soumettre au responsable">
+                    <svg class="send-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+
+                  <!-- Actions Responsable -->
+                  <button class="btn btn-icon btn-sm btn-light-success" 
+                          *ngIf="n.statut === 'SOUMISE' && isResponsable" 
+                          (click)="validateNote(n.id!)" title="Valider (Convertir en facture)">
+                    <i class="feather icon-check-circle"></i>
+                  </button>
+                  <button class="btn btn-icon btn-sm btn-light-danger" 
+                          *ngIf="n.statut === 'SOUMISE' && isResponsable" 
+                          (click)="rejectNote(n.id!)" title="Rejeter">
+                    <i class="feather icon-x-circle"></i>
+                  </button>
+                  
+                  <button class="btn btn-icon btn-sm btn-light-danger ms-1" 
+                          *ngIf="n.statut !== 'VALIDEE' && isResponsable" 
+                          (click)="deleteNote(n.id!)" title="Supprimer">
+                    <i class="feather icon-trash-2"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredNotes.length === 0 && !loading">
+              <td colspan="9" class="text-center py-4 text-muted">
+                Aucune note trouvée.
+              </td>
+            </tr>
+            <tr *ngIf="loading">
+              <td colspan="9" class="text-center py-4">
+                <div class="spinner-border text-primary spinner-border-sm" role="status">
+                  <span class="visually-hidden">Chargement...</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Modal Create / Edit -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content notes-modal">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title">{{ editMode ? 'Modifier la Note' : 'Nouvelle Note d\'Honoraire' }}</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="saveNote()" #noteForm="ngForm">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Dossier <span class="text-danger">*</span></label>
+              <select class="form-select" name="dossierId" [(ngModel)]="currentRequest.dossierId" (change)="onDossierChange()" required>
+                <option [ngValue]="0" disabled>Sélectionner un dossier...</option>
+                <option *ngFor="let d of dossiers" [ngValue]="d.id">{{ d.reference }} — {{ d.objet || '—' }}</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Prestataire</label>
+              <input type="text" class="form-control" [ngModel]="profile?.fullName || profile?.username || ''" readonly disabled>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Associer à <span class="text-danger">*</span></label>
+              <select class="form-select" name="typeLien" [(ngModel)]="currentRequest.typeLien" (change)="onTypeLienChange()" required [disabled]="!currentRequest.dossierId">
+                <option value="DOSSIER">Dossier</option>
+                <option value="AFFAIRE">Affaire judiciaire</option>
+                <option value="MISSION">Mission</option>
+              </select>
+            </div>
+
+            <div class="col-md-6" *ngIf="currentRequest.typeLien === 'AFFAIRE'">
+              <label class="form-label">Affaire judiciaire <span class="text-danger">*</span></label>
+              <select class="form-select" name="affaireId" [(ngModel)]="selectedAffaireId" (change)="onAffaireChange()" required [disabled]="!currentRequest.dossierId || affairesLoading">
+                <option [ngValue]="null" disabled>{{ affairesLoading ? 'Chargement...' : 'Sélectionner une affaire...' }}</option>
+                <option *ngFor="let a of affairesJudiciaires" [ngValue]="a.id">{{ a.referenceTribunal }} — {{ a.tribunal }}</option>
+              </select>
+            </div>
+
+            <div class="col-md-6" *ngIf="currentRequest.typeLien === 'MISSION'">
+              <label class="form-label">Mission <span class="text-danger">*</span></label>
+              <select class="form-select" name="missionId" [(ngModel)]="selectedMissionId" (change)="onMissionChange()" required [disabled]="!currentRequest.dossierId || dossierDetailsLoading">
+                <option [ngValue]="null" disabled>{{ dossierDetailsLoading ? 'Chargement...' : 'Sélectionner une mission...' }}</option>
+                <option *ngFor="let m of (dossierDetails?.missions || [])" [ngValue]="m.id">{{ m.titre }}</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Montant HT (Hors Taxes) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control text-end" name="montantHonoraires" [(ngModel)]="currentRequest.montantHonoraires" (input)="updatePreview()" required min="0" step="0.01">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">TVA (19%)</label>
+              <input type="text" class="form-control text-end" [ngModel]="previewTva | number:'1.3-3'" readonly disabled>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Montant TTC (Toutes Taxes Comprises)</label>
+              <input type="text" class="form-control text-end bg-light fw-bold" [ngModel]="previewTtc | number:'1.3-3'" readonly disabled>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Justificatif (PDF/Image)</label>
+              <input type="file" class="form-control" (change)="onFileSelected($event)" accept=".pdf,image/*">
+              <div class="form-text text-success mt-1" *ngIf="currentFileName">
+                <i class="feather icon-check-circle"></i> Fichier actuel: {{ currentFileName }}
+              </div>
+            </div>
+
+          </div>
+
+          <div class="modal-footer border-top-0 px-0 pb-0 mt-4">
+            <button type="button" class="btn btn-light" (click)="closeModal()">Annuler</button>
+            <button type="submit" class="btn btn-primary" [disabled]="!noteForm.form.valid || currentRequest.dossierId <= 0 || !currentRequest.referenceLien">
+              {{ editMode ? 'Enregistrer les modifications' : 'Créer la note' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showModal"></div>

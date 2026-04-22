@@ -1,6 +1,7 @@
 package com.example.secureapp.prestataire.honoraire;
 
 import com.example.secureapp.contentieux.DossierContentieuxEntity;
+import com.example.secureapp.facture.TypeLien;
 import com.example.secureapp.prestataire.PrestataireEntity;
 import jakarta.persistence.*;
 
@@ -14,6 +15,9 @@ public class NoteHonoraireEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
+    private String numero;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "prestataire_id", nullable = false)
     private PrestataireEntity prestataire;
@@ -21,6 +25,13 @@ public class NoteHonoraireEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "dossier_id", nullable = false)
     private DossierContentieuxEntity dossier;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TypeLien typeLien;
+
+    @Column(nullable = false)
+    private String referenceLien;
 
     @Column(precision = 12, scale = 3, nullable = false)
     private BigDecimal montantHonoraires;
@@ -34,75 +45,69 @@ public class NoteHonoraireEntity {
     @Column(precision = 12, scale = 3, nullable = false)
     private BigDecimal total;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NoteHonoraireStatus statut = NoteHonoraireStatus.EN_COURS;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String fichierJustificatif;
+
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        if (this.numero == null) {
+            this.numero = "NH-" + System.currentTimeMillis();
+        }
     }
 
-    public Long getId() {
-        return id;
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getNumero() { return numero; }
+    public void setNumero(String numero) { this.numero = numero; }
 
-    public PrestataireEntity getPrestataire() {
-        return prestataire;
-    }
+    public PrestataireEntity getPrestataire() { return prestataire; }
+    public void setPrestataire(PrestataireEntity prestataire) { this.prestataire = prestataire; }
 
-    public void setPrestataire(PrestataireEntity prestataire) {
-        this.prestataire = prestataire;
-    }
+    public DossierContentieuxEntity getDossier() { return dossier; }
+    public void setDossier(DossierContentieuxEntity dossier) { this.dossier = dossier; }
 
-    public DossierContentieuxEntity getDossier() {
-        return dossier;
-    }
+    public TypeLien getTypeLien() { return typeLien; }
+    public void setTypeLien(TypeLien typeLien) { this.typeLien = typeLien; }
 
-    public void setDossier(DossierContentieuxEntity dossier) {
-        this.dossier = dossier;
-    }
+    public String getReferenceLien() { return referenceLien; }
+    public void setReferenceLien(String referenceLien) { this.referenceLien = referenceLien; }
 
-    public BigDecimal getMontantHonoraires() {
-        return montantHonoraires;
-    }
+    public BigDecimal getMontantHonoraires() { return montantHonoraires; }
+    public void setMontantHonoraires(BigDecimal montantHonoraires) { this.montantHonoraires = montantHonoraires; }
 
-    public void setMontantHonoraires(BigDecimal montantHonoraires) {
-        this.montantHonoraires = montantHonoraires;
-    }
+    public BigDecimal getFraisAdministratifs() { return fraisAdministratifs; }
+    public void setFraisAdministratifs(BigDecimal fraisAdministratifs) { this.fraisAdministratifs = fraisAdministratifs; }
 
-    public BigDecimal getFraisAdministratifs() {
-        return fraisAdministratifs;
-    }
+    public BigDecimal getTva() { return tva; }
+    public void setTva(BigDecimal tva) { this.tva = tva; }
 
-    public void setFraisAdministratifs(BigDecimal fraisAdministratifs) {
-        this.fraisAdministratifs = fraisAdministratifs;
-    }
+    public BigDecimal getTotal() { return total; }
+    public void setTotal(BigDecimal total) { this.total = total; }
 
-    public BigDecimal getTva() {
-        return tva;
-    }
+    public NoteHonoraireStatus getStatut() { return statut; }
+    public void setStatut(NoteHonoraireStatus statut) { this.statut = statut; }
 
-    public void setTva(BigDecimal tva) {
-        this.tva = tva;
-    }
+    public String getFichierJustificatif() { return fichierJustificatif; }
+    public void setFichierJustificatif(String fichierJustificatif) { this.fichierJustificatif = fichierJustificatif; }
 
-    public BigDecimal getTotal() {
-        return total;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public void setTotal(BigDecimal total) {
-        this.total = total;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
-

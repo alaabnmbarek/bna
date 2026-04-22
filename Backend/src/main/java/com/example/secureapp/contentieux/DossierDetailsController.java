@@ -54,6 +54,7 @@ public class DossierDetailsController {
                 dossier.getCompteActuel(),
                 dossier.getAgence(),
                 dossier.getChargeDossier(),
+                dossier.getMotifRejet(),
                 dossier.getMontantEngage(),
                 dossier.getMontantRecupere()
         );

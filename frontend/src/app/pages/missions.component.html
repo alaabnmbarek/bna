@@ -9,11 +9,11 @@
     </div>
 
     <div class="missions-toolbar mb-3">
-      <button class="btn btn-primary" type="button" (click)="toggleAssignForm()">
+      <button *ngIf="canAssignMission" class="btn btn-primary" type="button" (click)="toggleAssignForm()">
         <i class="feather icon-plus me-2"></i>
         Affecter Mission
       </button>
-      <button class="btn btn-success" type="button" (click)="toggleResultForm()">
+      <button *ngIf="canSubmitMissionResult" class="btn btn-success" type="button" (click)="openResultModal()">
         <i class="feather icon-edit-3 me-2"></i>
         Résultat de mission
       </button>
@@ -24,7 +24,7 @@
     </div>
 
     <div class="missions-grid">
-      <div class="missions-assign">
+      <div *ngIf="canAssignMission" class="missions-assign">
         <div class="missions-card" [class.missions-card-collapsed]="!showAssignForm">
           <div class="missions-card-head">
             <div class="missions-card-title">
@@ -158,111 +158,6 @@
         </div>
       </div>
 
-      <div class="missions-result">
-        <div class="missions-card mb-3" [class.missions-card-collapsed]="!showResultForm">
-          <div class="missions-card-head">
-            <div class="missions-card-title">
-              <i class="feather icon-clipboard me-2"></i>
-              Résultat de mission
-            </div>
-            <div class="missions-head-actions">
-              <span class="missions-pill">
-                <i class="feather icon-hash me-1"></i>
-                ID Résultat: {{ formResult.idAuto }}
-              </span>
-              <button class="btn btn-sm btn-outline-secondary" type="button" (click)="toggleResultForm()">
-                {{ showResultForm ? 'Fermer' : 'Ouvrir' }}
-              </button>
-            </div>
-          </div>
-
-          <form *ngIf="showResultForm" class="row g-3 mt-1" (submit)="$event.preventDefault(); submitResult()">
-            <div class="col-12">
-              <label class="form-label">Mission *</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-activity"></i></span>
-                <select class="form-select" [(ngModel)]="formResult.missionId" (ngModelChange)="loadResultForMission()" name="result_missionId">
-                  <option [ngValue]="null" disabled>Sélectionner</option>
-                  <option *ngFor="let m of missions" [ngValue]="m.id">
-                    #{{ m.id }} — {{ missionTypeLabel(m.typeMission || null) }} — {{ m.dossierReference || '—' }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <div class="col-12 col-md-4">
-              <label class="form-label">Statut mission *</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-flag"></i></span>
-                <select class="form-select" [(ngModel)]="formResult.statut" name="result_statut">
-                  <option [ngValue]="''" disabled>Sélectionner</option>
-                  <option *ngFor="let s of resultStatuses" [ngValue]="s.value">{{ s.label }}</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="col-12 col-md-4">
-              <label class="form-label">Date début</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-play"></i></span>
-                <input class="form-control" type="date" [(ngModel)]="formResult.dateDebut" name="result_dateDebut">
-              </div>
-            </div>
-
-            <div class="col-12 col-md-4">
-              <label class="form-label">Date fin</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-stop-circle"></i></span>
-                <input class="form-control" type="date" [(ngModel)]="formResult.dateFin" name="result_dateFin">
-              </div>
-            </div>
-
-            <div class="col-12 col-md-6">
-              <label class="form-label">Montant récupérée</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-dollar-sign"></i></span>
-                <input class="form-control" [(ngModel)]="formResult.montantRecuperee" name="result_montantRecuperee" placeholder="Ex: 1200.00">
-              </div>
-            </div>
-
-            <div class="col-12 col-md-6">
-              <label class="form-label">Preuve (upload)</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-upload"></i></span>
-                <input class="form-control" type="file" (change)="onProofSelected($event)">
-                <button class="btn btn-outline-primary" type="button" (click)="uploadProof()" [disabled]="uploadingProof || !formResult.missionId">
-                  <span *ngIf="uploadingProof" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                  Upload
-                </button>
-              </div>
-            </div>
-
-            <div class="col-12">
-              <label class="form-label">Résultat</label>
-              <textarea class="form-control" [(ngModel)]="formResult.resultat" name="result_resultat" rows="3" placeholder="Résultat / observations..."></textarea>
-            </div>
-
-            <div class="col-12">
-              <div class="missions-form-actions">
-                <button class="btn btn-outline-secondary" type="button" (click)="cancelResultForm()" [disabled]="savingResult || uploadingProof">
-                  Annuler
-                </button>
-                <button class="btn btn-success" type="submit" [disabled]="savingResult">
-                  <span *ngIf="savingResult" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                  <i *ngIf="!savingResult" class="feather icon-save me-2"></i>
-                  Enregistrer
-                </button>
-              </div>
-            </div>
-          </form>
-
-          <div *ngIf="!showResultForm" class="missions-collapsed-hint">
-            Cliquez sur “Résultat de mission” pour ouvrir le formulaire.
-          </div>
-        </div>
-
-      </div>
-
       <div class="missions-list">
         <div class="missions-card missions-list-card">
           <div class="missions-card-head">
@@ -312,10 +207,156 @@
             </table>
           </div>
         </div>
+
+        <div *ngIf="canSubmitMissionResult" class="missions-card mt-3">
+          <div class="missions-card-head">
+            <div class="missions-card-title">
+              <i class="feather icon-clipboard me-2"></i>
+              Tableau des résultats de mission
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0 missions-table">
+              <thead>
+                <tr>
+                  <th>Mission</th>
+                  <th>Code</th>
+                  <th>Type</th>
+                  <th>Dossier</th>
+                  <th>Prestataire</th>
+                  <th>Tribunal</th>
+                  <th>Affaire</th>
+                  <th>Statut</th>
+                  <th class="text-nowrap">Saisi le</th>
+                  <th class="text-nowrap">Date début</th>
+                  <th class="text-nowrap">Date fin</th>
+                  <th class="text-nowrap">Montant récupéré</th>
+                  <th>Résultat</th>
+                  <th>Preuve</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of missionResultsTable">
+                  <td class="fw-bold text-nowrap">#{{ row.mission.id }}</td>
+                  <td class="text-nowrap">{{ missionCodeOrAuto(row.mission) }}</td>
+                  <td>{{ missionTypeLabelOrInfer(row.mission) }}</td>
+                  <td class="text-nowrap">{{ row.mission.dossierReference || '—' }}</td>
+                  <td class="text-nowrap">{{ prestataireNameById(row.mission.prestataireId) }}</td>
+                  <td class="text-nowrap">{{ row.mission.procedureTribunal || '—' }}</td>
+                  <td class="text-nowrap">{{ row.mission.affaireNumero || '—' }}</td>
+                  <td class="text-nowrap"><span class="badge bg-light-primary text-primary">{{ row.result.statut }}</span></td>
+                  <td class="text-nowrap">{{ row.result.createdAt ? (row.result.createdAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
+                  <td class="text-nowrap">{{ row.result.dateDebut ? (row.result.dateDebut | date:'dd/MM/yyyy') : '—' }}</td>
+                  <td class="text-nowrap">{{ row.result.dateFin ? (row.result.dateFin | date:'dd/MM/yyyy') : '—' }}</td>
+                  <td class="text-nowrap">{{ row.result.montantRecuperee != null ? row.result.montantRecuperee : '—' }}</td>
+                  <td class="text-truncate" style="max-width: 320px;">{{ row.result.resultat || '—' }}</td>
+                  <td class="text-nowrap">
+                    <button class="btn btn-sm btn-outline-primary" type="button" *ngIf="row.result.hasPreuve" (click)="selectedMission = row.mission; selectedMissionResult = row.result; downloadSelectedProof()">
+                      <i class="feather icon-download me-1"></i>
+                      Télécharger
+                    </button>
+                    <span *ngIf="!row.result.hasPreuve" class="text-muted">—</span>
+                  </td>
+                </tr>
+                <tr *ngIf="missionResultsTable.length === 0">
+                  <td colspan="14" class="text-center text-muted py-4">Aucun résultat enregistré.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </app-card>
+
+<div *ngIf="showResultModal" class="modal fade show app-modal" (click)="closeResultModal()">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Résultat de mission</h5>
+        <button type="button" class="btn-close" (click)="closeResultModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form class="row g-3" (submit)="$event.preventDefault(); submitResult()">
+          <div class="col-12">
+            <label class="form-label">Mission *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="feather icon-activity"></i></span>
+              <select class="form-select" [(ngModel)]="formResult.missionId" (ngModelChange)="loadResultForMission()" name="result_missionId_modal">
+                <option [ngValue]="null" disabled>Sélectionner</option>
+                <option *ngFor="let m of missions" [ngValue]="m.id">
+                  #{{ m.id }} — {{ missionTypeLabel(m.typeMission || null) }} — {{ m.dossierReference || '—' }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Statut mission *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="feather icon-flag"></i></span>
+              <select class="form-select" [(ngModel)]="formResult.statut" name="result_statut_modal">
+                <option [ngValue]="''" disabled>Sélectionner</option>
+                <option *ngFor="let s of resultStatuses" [ngValue]="s.value">{{ s.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Date début</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="feather icon-play"></i></span>
+              <input class="form-control" type="date" [(ngModel)]="formResult.dateDebut" name="result_dateDebut_modal">
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Date fin</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="feather icon-stop-circle"></i></span>
+              <input class="form-control" type="date" [(ngModel)]="formResult.dateFin" name="result_dateFin_modal">
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Montant récupérée</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="feather icon-dollar-sign"></i></span>
+              <input class="form-control" [(ngModel)]="formResult.montantRecuperee" name="result_montantRecuperee_modal" placeholder="Ex: 1200.00">
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Preuve (upload)</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="feather icon-upload"></i></span>
+              <input class="form-control" type="file" (change)="onProofSelected($event)">
+              <button class="btn btn-outline-primary" type="button" (click)="uploadProof()" [disabled]="uploadingProof || !formResult.missionId">
+                <span *ngIf="uploadingProof" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                Upload
+              </button>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Résultat</label>
+            <textarea class="form-control" [(ngModel)]="formResult.resultat" name="result_resultat_modal" rows="3" placeholder="Résultat / observations..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" type="button" (click)="cancelResultForm()" [disabled]="savingResult || uploadingProof">Annuler</button>
+        <button class="btn btn-success" type="button" (click)="submitResult()" [disabled]="savingResult">
+          <span *ngIf="savingResult" class="spinner-border spinner-border-sm me-2" role="status"></span>
+          <i *ngIf="!savingResult" class="feather icon-save me-2"></i>
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div *ngIf="showMissionModal" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);" (click)="closeMissionModal()">
   <div class="modal-dialog modal-xl modal-dialog-scrollable" (click)="$event.stopPropagation()">

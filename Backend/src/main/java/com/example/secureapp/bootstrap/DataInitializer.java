@@ -10,6 +10,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -61,6 +65,7 @@ public class DataInitializer {
                     Permission.CONTENTIOUS_ASSIGN,
                     Permission.CONTENTIOUS_CHANGE_ACCOUNT,
                     Permission.CONTENTIOUS_CLOSE,
+                    Permission.CONTENTIOUS_REJECT,
                     Permission.CONTENTIOUS_REOPEN,
                     Permission.PRESTATAIRE_READ,
                     Permission.PRESTATAIRE_CREATE,
@@ -76,7 +81,10 @@ public class DataInitializer {
             avocatRole.setPermissions(new HashSet<>(Arrays.asList(
                     Permission.PROFILE_READ,
                     Permission.PROFILE_UPDATE,
-                    Permission.CONTENTIOUS_READ
+                    Permission.CONTENTIOUS_READ,
+                    Permission.PRESTATAIRE_READ,
+                    Permission.MISSION_READ,
+                    Permission.MISSION_UPDATE
             )));
             avocatRole = roleRepo.save(avocatRole);
 
@@ -85,9 +93,24 @@ public class DataInitializer {
             huissierRole.setPermissions(new HashSet<>(Arrays.asList(
                     Permission.PROFILE_READ,
                     Permission.PROFILE_UPDATE,
-                    Permission.CONTENTIOUS_READ
+                    Permission.CONTENTIOUS_READ,
+                    Permission.PRESTATAIRE_READ,
+                    Permission.MISSION_READ,
+                    Permission.MISSION_UPDATE
             )));
             huissierRole = roleRepo.save(huissierRole);
+
+            // 6. EXPERT - External collaborator
+            RoleEntity expertRole = roleRepo.findByName("EXPERT").orElseGet(() -> new RoleEntity("EXPERT"));
+            expertRole.setPermissions(new HashSet<>(Arrays.asList(
+                    Permission.PROFILE_READ,
+                    Permission.PROFILE_UPDATE,
+                    Permission.CONTENTIOUS_READ,
+                    Permission.PRESTATAIRE_READ,
+                    Permission.MISSION_READ,
+                    Permission.MISSION_UPDATE
+            )));
+            expertRole = roleRepo.save(expertRole);
 
             if (repo.findByUsername("admin").isPresent()) {
                 UserEntity existingAdmin = repo.findByUsername("admin").get();
@@ -122,5 +145,59 @@ public class DataInitializer {
                 log.info("bootstrap.user created username=user role=CHARGE_DOSSIER");
             }
         };
+    }
+
+    @Bean
+    @Order(20)
+    ApplicationRunner ensureContentieuxSchema(DataSource dataSource) {
+        return args -> {
+            ensureStatutColumnIsVarchar(dataSource);
+            ensureColumn(dataSource, "dossiers_contentieux", "motif_rejet", "LONGTEXT");
+            ensureColumn(dataSource, "dossiers_contentieux", "rejected_by", "VARCHAR(150)");
+            ensureColumn(dataSource, "dossiers_contentieux", "rejected_at", "DATETIME(6)");
+            ensureColumn(dataSource, "factures", "prestataire_id", "BIGINT");
+        };
+    }
+
+    private void ensureStatutColumnIsVarchar(DataSource dataSource) {
+        String table = "dossiers_contentieux";
+        String column = "statut";
+        try (Connection c = dataSource.getConnection();
+             Statement st = c.createStatement()) {
+            String dataType = null;
+            try (ResultSet rs = st.executeQuery(
+                    "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='" + table + "' AND COLUMN_NAME='" + column + "'"
+            )) {
+                if (rs.next()) {
+                    dataType = rs.getString(1);
+                }
+            }
+            if (dataType != null && "enum".equalsIgnoreCase(dataType)) {
+                st.executeUpdate("ALTER TABLE " + table + " MODIFY COLUMN " + column + " VARCHAR(40) NOT NULL");
+                log.info("bootstrap.schema modified_column table={} column={} type=VARCHAR(40)", table, column);
+            }
+        } catch (Exception ex) {
+            log.warn("bootstrap.schema ensure_statut_type_failed error={}", ex.getMessage());
+        }
+    }
+
+    private void ensureColumn(DataSource dataSource, String table, String column, String ddlType) {
+        try (Connection c = dataSource.getConnection();
+             Statement st = c.createStatement()) {
+            boolean exists = false;
+            try (ResultSet rs = st.executeQuery(
+                    "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='" + table + "' AND COLUMN_NAME='" + column + "'"
+            )) {
+                if (rs.next()) {
+                    exists = rs.getInt(1) > 0;
+                }
+            }
+            if (!exists) {
+                st.executeUpdate("ALTER TABLE " + table + " ADD COLUMN " + column + " " + ddlType);
+                log.info("bootstrap.schema added_column table={} column={}", table, column);
+            }
+        } catch (Exception ex) {
+            log.warn("bootstrap.schema ensure_column_failed table={} column={} error={}", table, column, ex.getMessage());
+        }
     }
 }

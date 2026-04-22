@@ -40,7 +40,7 @@
       <div class="dash-hero-kpis">
         <div class="dash-kpi-card dash-kpi-primary">
           <div class="dash-kpi-top">
-            <div class="dash-kpi-k">Total dossiers</div>
+            <div class="dash-kpi-k"><i class="feather icon-folder text-primary me-1"></i> Total dossiers</div>
             <div class="dash-kpi-chip">+ {{ countBy('A_VALIDER') }} à valider</div>
           </div>
           <div class="dash-kpi-v">{{ countAll() }}</div>
@@ -56,7 +56,7 @@
 
         <div class="dash-kpi-card dash-kpi-success">
           <div class="dash-kpi-top">
-            <div class="dash-kpi-k">En cours</div>
+            <div class="dash-kpi-k"><i class="feather icon-activity text-success me-1"></i> En cours</div>
             <div class="dash-kpi-chip">Taux {{ recouvrementRate() | number:'1.0-1' }}%</div>
           </div>
           <div class="dash-kpi-v">{{ countOpen() }}</div>
@@ -72,7 +72,7 @@
 
         <div class="dash-kpi-card dash-kpi-sky">
           <div class="dash-kpi-top">
-            <div class="dash-kpi-k">Montant engagé</div>
+            <div class="dash-kpi-k"><i class="feather icon-credit-card text-info me-1"></i> Montant engagé</div>
             <div class="dash-kpi-chip">Total</div>
           </div>
           <div class="dash-kpi-v">{{ sumEngage() | number:'1.0-0' }}</div>
@@ -88,7 +88,7 @@
 
         <div class="dash-kpi-card dash-kpi-bna">
           <div class="dash-kpi-top">
-            <div class="dash-kpi-k">Montant récupéré</div>
+            <div class="dash-kpi-k"><i class="feather icon-dollar-sign text-warning me-1"></i> Montant récupéré</div>
             <div class="dash-kpi-chip">6 mois</div>
           </div>
           <div class="dash-kpi-v">{{ sumRecupere() | number:'1.0-0' }}</div>
@@ -122,10 +122,10 @@
         </div>
 
         <div class="dash-widget dash-urgences">
-          <div class="dash-widget-head">
-            <div class="dash-widget-title">Urgences (48h)</div>
-            <span class="dash-widget-pill">{{ urgences.length }}</span>
-          </div>
+            <div class="dash-widget-head">
+              <div class="dash-widget-title"><i class="feather icon-alert-triangle text-danger me-1"></i> Urgences (48h)</div>
+              <span class="dash-widget-pill">{{ urgences.length }}</span>
+            </div>
           <div class="dash-urgences-list">
             <div class="dash-urg-item" *ngFor="let u of urgences">
               <div class="dash-urg-left">
@@ -145,85 +145,7 @@
         <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
           <div class="dash-panel">
             <div class="dash-panel-head">
-              <div class="dash-panel-title">Dossiers par Zone (Carte)</div>
-              <div class="dash-panel-sub">Densité des dossiers par région.</div>
-            </div>
-
-            <div class="tn-widget">
-              <div class="tn-map-wrap">
-                <svg class="tn-map" viewBox="0 0 240 520" role="img" aria-label="Carte Tunisie - densité">
-                  <defs>
-                    <linearGradient id="tnBase" x1="0" x2="1" y1="0" y2="1">
-                      <stop offset="0" stop-color="rgba(22,163,74,0.10)"></stop>
-                      <stop offset="0.55" stop-color="rgba(99,102,241,0.10)"></stop>
-                      <stop offset="1" stop-color="rgba(255,255,255,0.0)"></stop>
-                    </linearGradient>
-                    <filter id="tnGlow" x="-40%" y="-40%" width="180%" height="180%">
-                      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="rgba(15,23,42,0.12)"></feDropShadow>
-                      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="rgba(255,255,255,0.35)"></feDropShadow>
-                    </filter>
-                    <filter id="tnTopo" x="-20%" y="-20%" width="140%" height="140%">
-                      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" seed="2" result="noise"></feTurbulence>
-                      <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
-                    </filter>
-                    <clipPath id="tnClip">
-                      <path d="M145 24 L165 38 L184 78 L174 124 L198 160 L186 214 L160 278 L132 380 L144 478 L118 446 L92 356 L104 250 L78 196 L66 120 L92 64 L116 38 Z"></path>
-                    </clipPath>
-                  </defs>
-
-                  <rect x="0" y="0" width="240" height="520" fill="url(#tnBase)"></rect>
-
-                  <g clip-path="url(#tnClip)" filter="url(#tnGlow)">
-                    <rect x="-40" y="-40" width="320" height="600" fill="rgba(255,255,255,0.55)" filter="url(#tnTopo)"></rect>
-
-                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Bizerte'))" d="M118 44 L150 44 L160 76 L146 112 L118 120 L96 92 Z" (mouseenter)="showZoneTip($event,'Bizerte')" (mouseleave)="hideZoneTip()"></path>
-                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Tunis'))" d="M150 70 L176 82 L172 118 L148 136 L132 122 L146 96 Z" (mouseenter)="showZoneTip($event,'Tunis')" (mouseleave)="hideZoneTip()"></path>
-                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Sousse'))" d="M132 140 L168 140 L166 194 L138 216 L116 192 Z" (mouseenter)="showZoneTip($event,'Sousse')" (mouseleave)="hideZoneTip()"></path>
-                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Sfax'))" d="M122 218 L156 232 L156 306 L132 342 L112 314 Z" (mouseenter)="showZoneTip($event,'Sfax')" (mouseleave)="hideZoneTip()"></path>
-                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Gafsa'))" d="M84 220 L116 204 L112 314 L96 342 L78 300 Z" (mouseenter)="showZoneTip($event,'Gafsa')" (mouseleave)="hideZoneTip()"></path>
-                    <path class="tn-region" [attr.fill]="zoneColor(getZoneTotal('Gabès'))" d="M132 348 L156 314 L164 372 L150 446 L122 478 L112 438 Z" (mouseenter)="showZoneTip($event,'Gabès')" (mouseleave)="hideZoneTip()"></path>
-                  </g>
-
-                  <path class="tn-outline" d="M145 24 L165 38 L184 78 L174 124 L198 160 L186 214 L160 278 L132 380 L144 478 L118 446 L92 356 L104 250 L78 196 L66 120 L92 64 L116 38 Z"></path>
-                </svg>
-
-                <div class="tn-tip" *ngIf="zoneTip.visible" [style.left.px]="zoneTip.x" [style.top.px]="zoneTip.y">
-                  <div class="tn-tip-title">{{ zoneTip.name }}</div>
-                  <div class="tn-tip-grid">
-                    <div class="tn-tip-k">Dossiers</div>
-                    <div class="tn-tip-v">{{ zoneTip.total }}</div>
-                    <div class="tn-tip-k">Engagé</div>
-                    <div class="tn-tip-v">{{ zoneTip.engage | number:'1.0-0' }}</div>
-                    <div class="tn-tip-k">Récupéré</div>
-                    <div class="tn-tip-v">{{ zoneTip.recupere | number:'1.0-0' }}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="tn-top">
-                <div class="tn-top-head">
-                  <div class="tn-top-title">Top 5 Regions</div>
-                </div>
-                <div class="tn-top-row" *ngFor="let z of topZones; let i = index">
-                  <div class="tn-top-rank">{{ i + 1 }}</div>
-                  <div class="tn-top-name">{{ z.name }}</div>
-                  <div class="tn-top-val">{{ z.total }}</div>
-                  <div class="tn-top-bar">
-                    <div class="tn-top-fill" [style.width.%]="z.pct"></div>
-                  </div>
-                </div>
-                <div class="dash-empty" *ngIf="!loading && topZones.length === 0">Aucune donnée.</div>
-              </div>
-            </div>
-          </div>
-        </app-card>
-      </div>
-
-      <div class="col-12 col-xl-6">
-        <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
-          <div class="dash-panel">
-            <div class="dash-panel-head">
-              <div class="dash-panel-title">Répartition par statut</div>
+              <div class="dash-panel-title"><i class="feather icon-pie-chart me-2 text-primary"></i> Répartition par statut</div>
             </div>
             <div class="dash-donut">
               <apx-chart
@@ -245,7 +167,7 @@
         <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
           <div class="dash-panel">
             <div class="dash-panel-head">
-              <div class="dash-panel-title">Évolution (6 mois)</div>
+              <div class="dash-panel-title"><i class="feather icon-trending-up me-2 text-success"></i> Évolution (6 mois)</div>
               <div class="dash-panel-sub">Montants récupérés (tendance).</div>
             </div>
             <apx-chart
@@ -266,7 +188,7 @@
         <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
           <div class="dash-panel">
             <div class="dash-panel-head">
-              <div class="dash-panel-title">Pipeline du contentieux</div>
+              <div class="dash-panel-title"><i class="feather icon-git-commit me-2 text-info"></i> Pipeline du contentieux</div>
               <div class="dash-panel-sub">Amiable ➔ Judiciaire ➔ Exécution</div>
             </div>
             <div class="dash-pipeline">

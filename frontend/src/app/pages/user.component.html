@@ -17,6 +17,127 @@
             </div>
           </div>
 
+          <div class="col-12" *ngIf="isPrestataireRole()">
+            <app-card cardTitle="Mon Espace Prestataire" [options]="false">
+              <div *ngIf="dashboardLoading" class="text-center p-4">
+                <div class="spinner-border text-primary" role="status"></div>
+              </div>
+
+              <div *ngIf="!dashboardLoading" class="prest-dashboard">
+                <div class="prest-kpis">
+                  <a class="prest-kpi" [routerLink]="['/missions']">
+                    <div class="prest-kpi-icon"><i class="feather icon-check-square"></i></div>
+                    <div class="prest-kpi-meta">
+                      <div class="prest-kpi-value">{{ missions.length }}</div>
+                      <div class="prest-kpi-label">Missions</div>
+                      <div class="prest-kpi-sub">
+                        <span>Assignées: {{ countMissionsByStatus('ASSIGNEE') }}</span>
+                        <span>En cours: {{ countMissionsByStatus('EN_COURS') }}</span>
+                        <span>Terminées: {{ countMissionsByStatus('TERMINEE') }}</span>
+                      </div>
+                    </div>
+                  </a>
+
+                  <a class="prest-kpi" [routerLink]="['/notes-honoraires']">
+                    <div class="prest-kpi-icon"><i class="feather icon-file-text"></i></div>
+                    <div class="prest-kpi-meta">
+                      <div class="prest-kpi-value">{{ notesCount }}</div>
+                      <div class="prest-kpi-label">Notes d’honoraires</div>
+                      <div class="prest-kpi-sub">Mes notes (créées/soumises/validées)</div>
+                    </div>
+                  </a>
+
+                  <a class="prest-kpi" [routerLink]="['/factures']">
+                    <div class="prest-kpi-icon"><i class="feather icon-credit-card"></i></div>
+                    <div class="prest-kpi-meta">
+                      <div class="prest-kpi-value">{{ facturesCount }}</div>
+                      <div class="prest-kpi-label">Factures</div>
+                      <div class="prest-kpi-sub">Mes factures liées à mes notes</div>
+                    </div>
+                  </a>
+
+                  <div class="prest-kpi prest-kpi--static">
+                    <div class="prest-kpi-icon"><i class="feather icon-folder"></i></div>
+                    <div class="prest-kpi-meta">
+                      <div class="prest-kpi-value">{{ dossiersAffectes.length }}</div>
+                      <div class="prest-kpi-label">Dossiers affectés</div>
+                      <div class="prest-kpi-sub">Dossiers liés à mes missions</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="prest-panels">
+                  <div class="prest-panel">
+                    <div class="prest-panel-head">
+                      <div class="prest-panel-title">Profil prestataire</div>
+                      <a class="btn btn-outline-primary btn-sm" [routerLink]="['/prestataires','me']">Voir</a>
+                    </div>
+                    <div class="prest-panel-body" *ngIf="prestataire; else noPrestataire">
+                      <div class="prest-profile-grid">
+                        <div>
+                          <div class="text-muted small">Nom</div>
+                          <div class="fw-bold">{{ prestataire.prenom ? (prestataire.prenom + ' ' + prestataire.nom) : prestataire.nom }}</div>
+                        </div>
+                        <div>
+                          <div class="text-muted small">Type</div>
+                          <div class="fw-bold">{{ prestataire.type }}</div>
+                        </div>
+                        <div>
+                          <div class="text-muted small">Email</div>
+                          <div class="fw-bold">{{ prestataire.email || '—' }}</div>
+                        </div>
+                        <div>
+                          <div class="text-muted small">Téléphone</div>
+                          <div class="fw-bold">{{ prestataire.telephone || '—' }}</div>
+                        </div>
+                        <div>
+                          <div class="text-muted small">Cabinet</div>
+                          <div class="fw-bold">{{ prestataire.cabinet || '—' }}</div>
+                        </div>
+                        <div>
+                          <div class="text-muted small">Adresse</div>
+                          <div class="fw-bold">{{ prestataire.adresse || '—' }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <ng-template #noPrestataire>
+                      <div class="prest-panel-body text-muted">
+                        Profil prestataire introuvable (vérifiez l’email du compte et du prestataire).
+                      </div>
+                    </ng-template>
+                  </div>
+
+                  <div class="prest-panel">
+                    <div class="prest-panel-head">
+                      <div class="prest-panel-title">Dossiers affectés</div>
+                    </div>
+                    <div class="prest-panel-body">
+                      <div *ngIf="dossiersAffectes.length === 0" class="text-muted">Aucun dossier affecté.</div>
+                      <div *ngIf="dossiersAffectes.length > 0" class="table-responsive">
+                        <table class="table table-sm mb-0">
+                          <thead>
+                            <tr>
+                              <th>Référence</th>
+                              <th>Débiteur</th>
+                              <th>Statut</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr *ngFor="let d of dossiersAffectes | slice:0:8">
+                              <td class="fw-bold">{{ d.reference }}</td>
+                              <td>{{ d.nomDebiteur }}</td>
+                              <td>{{ d.statut }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </app-card>
+          </div>
+
           <div class="col-12">
             <app-card [options]="false">
               <div class="profile-hero">

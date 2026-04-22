@@ -60,9 +60,15 @@
 .dash-kpi-card {
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.88);
-  box-shadow: var(--app-shadow-sm);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
   padding: 14px 14px 8px;
-  border: 0;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dash-kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
 }
 
 .dash-kpi-top {
@@ -390,8 +396,15 @@
 
 .dash-card {
   border-radius: 18px;
-  border: 1px solid var(--app-border);
-  box-shadow: var(--app-shadow-sm);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  background: rgba(255, 255, 255, 0.95);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dash-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 .dash-panel {

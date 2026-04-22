@@ -8,7 +8,7 @@ import { AffaireContentieux, AffaireStatut, ChargeDossierOption, ContentieuxServ
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { DossierRisqueService, RisqueCategory, RisqueItem } from '../risque/dossier-risque.service';
 
-type ActionDialogType = 'assign' | 'changeAccount' | 'close' | 'details';
+type ActionDialogType = 'assign' | 'changeAccount' | 'close' | 'reject' | 'details';
 
 type EngagementPayload = {
   numeroCompte: string;
@@ -44,7 +44,7 @@ type GarantiePayload = Record<string, any>;
   styleUrl: './contentieux.component.scss'
 })
 export class ContentieuxPageComponent implements OnInit {
-  statuses: ContentieuxStatus[] = ['A_VALIDER', 'OUVERT', 'AFFECTE', 'CHANGEMENT_COMPTE', 'CLOTURE', 'REOUVERT'];
+  statuses: ContentieuxStatus[] = ['A_VALIDER', 'REJETE', 'OUVERT', 'AFFECTE', 'CHANGEMENT_COMPTE', 'CLOTURE', 'REOUVERT'];
   activeStatus: ContentieuxStatus | 'Tous' = 'Tous';
   search = '';
   loading = false;
@@ -96,6 +96,10 @@ export class ContentieuxPageComponent implements OnInit {
 
   canReopen(): boolean {
     return this.auth.hasRole('ROLE_RESPONSABLE_CONTENTIEUX') || this.auth.hasRole('ROLE_ADMIN');
+  }
+
+  isResponsableContentieux(): boolean {
+    return this.auth.hasRole('ROLE_RESPONSABLE_CONTENTIEUX');
   }
 
   dossiers: DossierContentieux[] = [];
@@ -201,6 +205,8 @@ export class ContentieuxPageComponent implements OnInit {
   newCompte = '';
   closeDate = '';
   closeMotif = '';
+  rejectMotif = '';
+  rejectSaving = false;
 
   form = {
     reference: '',
@@ -883,7 +889,39 @@ export class ContentieuxPageComponent implements OnInit {
   }
 
   toggleDetailRisque(key: keyof ContentieuxPageComponent['detailRisqueSelection']): void {
-    this.detailRisqueSelection[key] = !this.detailRisqueSelection[key];
+    if (!this.selected) return;
+    if (this.detailRisqueSaving) return;
+
+    const next = !this.detailRisqueSelection[key];
+    const dossierId = this.selected.id;
+
+    if (!next) {
+      const existing = this.getDetailRisqueCount(key);
+      if (existing > 0) {
+        this.showBanner('Suppression non disponible ici. Utilisez "Gérer en détail".', 'info');
+        this.detailRisqueSelection[key] = true;
+        return;
+      }
+      this.detailRisqueSelection[key] = false;
+      return;
+    }
+
+    this.detailRisqueSelection[key] = true;
+    if (this.getDetailRisqueCount(key) > 0) return;
+
+    this.detailRisqueSaving = true;
+    firstValueFrom(this.createDetailRisque(dossierId, key))
+      .then(() => {
+        this.detailRisqueSaving = false;
+        this.showBanner('Ajout enregistré dans le dossier.', 'success');
+        this.loadDetailRisqueSummary(dossierId);
+        if (this.editingId === dossierId) this.loadEditRisques(dossierId);
+      })
+      .catch(() => {
+        this.detailRisqueSaving = false;
+        this.detailRisqueSelection[key] = false;
+        this.showBanner('Erreur: impossible d’enregistrer ce choix dans le dossier.', 'danger');
+      });
   }
 
   hasSelectedDetailRisques(): boolean {
@@ -941,6 +979,30 @@ export class ContentieuxPageComponent implements OnInit {
       montantRestant: '',
       numRisque: this.selected?.reference || 'A_COMPLETER'
     };
+  }
+
+  private createDetailRisque(dossierId: number, key: keyof ContentieuxPageComponent['detailRisqueSelection']) {
+    if (key === 'engagements') {
+      return this.risque.create<EngagementPayload>(dossierId, 'ENGAGEMENT', this.defaultEngagementPayload());
+    }
+    if (key === 'patrimoines') {
+      return this.risque.create<PatrimoinePayload>(dossierId, 'PATRIMOINE', this.defaultPatrimoinePayload());
+    }
+    if (key === 'hypotheques') {
+      return this.risque.create<GarantiePayload>(dossierId, 'GARANTIE_HYPOTHEQUE', this.defaultGarantiePayload('GARANTIE_HYPOTHEQUE'));
+    }
+    if (key === 'nantissements') {
+      return this.risque.create<GarantiePayload>(dossierId, 'GARANTIE_NANTISSEMENT', this.defaultGarantiePayload('GARANTIE_NANTISSEMENT'));
+    }
+    return this.risque.create<GarantiePayload>(dossierId, 'GARANTIE_CAUTION', this.defaultGarantiePayload('GARANTIE_CAUTION'));
+  }
+
+  private getDetailRisqueCount(key: keyof ContentieuxPageComponent['detailRisqueSelection']): number {
+    if (key === 'engagements') return this.detailRisqueCounts.engagements;
+    if (key === 'patrimoines') return this.detailRisqueCounts.patrimoines;
+    if (key === 'hypotheques') return this.detailRisqueCounts.hypotheques;
+    if (key === 'nantissements') return this.detailRisqueCounts.nantissements;
+    return this.detailRisqueCounts.cautions;
   }
 
   private defaultPatrimoinePayload(): PatrimoinePayload {
@@ -1110,6 +1172,38 @@ export class ContentieuxPageComponent implements OnInit {
       });
   }
 
+  openReject(dossier: DossierContentieux): void {
+    if (!this.canValidate()) return;
+    this.selected = dossier;
+    this.rejectMotif = '';
+    this.rejectSaving = false;
+    this.actionDialogType = 'reject';
+    this.showActionDialog = true;
+  }
+
+  confirmReject(): void {
+    if (!this.selected) return;
+    const motif = this.rejectMotif.trim();
+    if (!motif) {
+      this.showBanner('Motif de rejet obligatoire.', 'danger');
+      return;
+    }
+    if (this.rejectSaving) return;
+    this.rejectSaving = true;
+    this.contentieux.reject(this.selected.id, motif).subscribe({
+      next: (updated) => {
+        this.rejectSaving = false;
+        this.dossiers = this.dossiers.map((d) => (d.id === updated.id ? updated : d));
+        this.showBanner('Dossier rejeté avec succès.', 'success');
+        this.closeActionDialog();
+      },
+      error: () => {
+        this.rejectSaving = false;
+        this.showBanner('Erreur lors du rejet.', 'danger');
+      }
+    });
+  }
+
   reopen(dossier: DossierContentieux): void {
     this.contentieux.reopen(dossier.id).subscribe({
       next: (updated) => {
@@ -1191,6 +1285,8 @@ export class ContentieuxPageComponent implements OnInit {
       nantissements: 0,
       cautions: 0
     };
+    this.rejectMotif = '';
+    this.rejectSaving = false;
   }
 
   filteredDossiers(): DossierContentieux[] {
@@ -1215,6 +1311,7 @@ export class ContentieuxPageComponent implements OnInit {
 
   badgeClass(statut: ContentieuxStatus): string {
     if (statut === 'A_VALIDER') return 'badge bg-warning-subtle text-warning';
+    if (statut === 'REJETE') return 'badge bg-danger-subtle text-danger';
     if (statut === 'OUVERT') return 'badge bg-success-subtle text-success';
     if (statut === 'AFFECTE') return 'badge bg-primary-subtle text-primary';
     if (statut === 'CHANGEMENT_COMPTE') return 'badge bg-info-subtle text-info';
@@ -1253,6 +1350,7 @@ export class ContentieuxPageComponent implements OnInit {
 
   statusLabel(statut: ContentieuxStatus): string {
     if (statut === 'A_VALIDER') return 'En attente validation';
+    if (statut === 'REJETE') return 'Rejeté';
     if (statut === 'OUVERT') return 'Ouvert';
     if (statut === 'AFFECTE') return 'Affecté';
     if (statut === 'CHANGEMENT_COMPTE') return 'Changement de compte';

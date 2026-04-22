@@ -39,7 +39,6 @@ export class DashboardPageComponent implements OnInit {
   prestatairePerf: Array<{ name: string; recupere: number; dossiers: number }> = [];
   topZones: Array<{ name: string; total: number; pct: number }> = [];
   zoneAgg = new Map<string, { total: number; engage: number; recupere: number }>();
-  zoneTip = { visible: false, x: 0, y: 0, name: '', total: 0, engage: 0, recupere: 0 };
 
   constructor(
     private contentieux: ContentieuxService,
@@ -288,22 +287,6 @@ export class DashboardPageComponent implements OnInit {
     if (r <= 0.33) return '#0b3d2e';
     if (r <= 0.66) return '#f59e0b';
     return '#ef4444';
-  }
-
-  showZoneTip(e: MouseEvent, name: string): void {
-    const data = this.zoneAgg.get(name) || { total: 0, engage: 0, recupere: 0 };
-    const target = e.currentTarget as SVGGraphicsElement | null;
-    if (!target) return;
-    const svg = target.ownerSVGElement;
-    if (!svg) return;
-    const r = svg.getBoundingClientRect();
-    const x = Math.max(10, Math.min(e.clientX - r.left + 14, r.width - 220));
-    const y = Math.max(10, Math.min(e.clientY - r.top + 14, r.height - 130));
-    this.zoneTip = { visible: true, x, y, name, total: data.total, engage: data.engage, recupere: data.recupere };
-  }
-
-  hideZoneTip(): void {
-    this.zoneTip.visible = false;
   }
 
   pipelineTotal(): number {

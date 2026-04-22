@@ -1,0 +1,293 @@
+<div class="row">
+  <div class="col-sm-12">
+    <app-card [hidHeader]="true" [options]="false" cardClass="factures-card">
+      <!-- Header -->
+      <div class="factures-header">
+        <div>
+          <h5 class="factures-title">Gestion des Factures</h5>
+          <p class="factures-subtitle">Suivi des paiements, justificatifs et statuts.</p>
+          <div class="factures-tabs">
+            <button type="button" class="factures-tab" [class.active]="activeTab === 'FACTURES'" (click)="setTab('FACTURES')">
+              <i class="feather icon-file-text me-1"></i> Factures
+            </button>
+            <button type="button" class="factures-tab" [class.active]="activeTab === 'NOTES_HONORAIRES'" (click)="setTab('NOTES_HONORAIRES')">
+              <i class="feather icon-clipboard me-1"></i> Notes d'Honoraires
+            </button>
+          </div>
+        </div>
+        <div class="factures-actions">
+          <button class="btn btn-outline-secondary btn-sm" (click)="exportData('pdf')" *ngIf="activeTab === 'FACTURES'">
+            <i class="feather icon-file-text me-1"></i> PDF
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" (click)="exportData('excel')" *ngIf="activeTab === 'FACTURES'">
+            <i class="feather icon-download me-1"></i> Excel
+          </button>
+          <button class="btn btn-outline-primary btn-sm" type="button" (click)="openImportModal()" *ngIf="activeTab === 'FACTURES'">
+            <i class="feather icon-upload-cloud me-1"></i> Importer
+          </button>
+          <button class="btn btn-primary btn-sm" (click)="openModal()" *ngIf="activeTab === 'FACTURES'">
+            <i class="feather icon-plus me-1"></i> Nouvelle Facture
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="banner" class="alert factures-banner" [ngClass]="{
+        'alert-success': banner.kind === 'success',
+        'alert-danger': banner.kind === 'danger'
+      }">
+        {{ banner.message }}
+      </div>
+
+      <div *ngIf="activeTab === 'FACTURES'">
+        <div class="factures-filters">
+          <div class="input-group search-group">
+            <span class="input-group-text"><i class="feather icon-search"></i></span>
+            <input type="text" class="form-control" placeholder="Rechercher N° Facture ou Réf..." [(ngModel)]="search" (ngModelChange)="applyFilters()">
+          </div>
+          
+          <select class="form-select filter-select" [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()">
+            <option value="ALL">Tous les statuts</option>
+            <option value="EN_COURS">En cours</option>
+            <option value="VALIDEE">Validée</option>
+            <option value="PAYEE">Payée</option>
+          </select>
+
+          <select class="form-select filter-select" [(ngModel)]="filterType" (ngModelChange)="applyFilters()">
+            <option value="ALL">Tous les types</option>
+            <option value="DOSSIER">Dossier</option>
+            <option value="AFFAIRE">Affaire</option>
+            <option value="MISSION">Mission</option>
+          </select>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover factures-table mb-0">
+            <thead>
+              <tr>
+                <th>N° Facture</th>
+                <th>Date</th>
+                <th>Lien</th>
+                <th class="text-end">Montant HT</th>
+                <th class="text-end">TTC</th>
+                <th class="text-end">Reste à Payer</th>
+                <th class="text-center">Statut</th>
+                <th class="text-center">Justificatif</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let f of filteredFactures">
+                <td class="fw-bold">{{ f.numero }}</td>
+                <td>{{ f.dateFacture | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <span class="badge bg-light-secondary text-dark">{{ f.typeLien }}</span>
+                  <div class="small text-muted mt-1">{{ f.referenceLien }}</div>
+                </td>
+                <td class="text-end">{{ f.montantHt | number:'1.2-2' }}</td>
+                <td class="text-end fw-bold">{{ f.montantTtc | number:'1.2-2' }}</td>
+                <td class="text-end">
+                  <span [class.text-danger]="f.resteAPayer > 0" [class.text-success]="f.resteAPayer <= 0">
+                    {{ f.resteAPayer | number:'1.2-2' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                <span class="app-status-badge"
+                      [ngClass]="{
+                        'app-status-badge--warning': f.statut === 'EN_COURS',
+                        'app-status-badge--info': f.statut === 'VALIDEE',
+                        'app-status-badge--success': f.statut === 'PAYEE'
+                      }">
+                  <i class="feather"
+                     [ngClass]="{
+                       'icon-clock': f.statut === 'EN_COURS',
+                       'icon-check-circle': f.statut === 'VALIDEE',
+                       'icon-dollar-sign': f.statut === 'PAYEE'
+                     }"></i>
+                  {{ f.statut === 'EN_COURS' ? 'En cours' : f.statut === 'VALIDEE' ? 'Validée' : 'Payée' }}
+                </span>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-icon btn-light" *ngIf="f.fichierJustificatif" title="Voir fichier">
+                    <i class="feather icon-paperclip text-info"></i>
+                  </button>
+                  <span class="text-muted small" *ngIf="!f.fichierJustificatif">-</span>
+                </td>
+                <td class="text-center">
+                  <div class="btn-group">
+                    <button class="btn btn-icon btn-sm btn-light-primary" (click)="openModal(f)" title="Modifier">
+                      <i class="feather icon-edit"></i>
+                    </button>
+                    <button class="btn btn-icon btn-sm btn-light-danger" (click)="deleteFacture(f.id!)" title="Supprimer" *ngIf="auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
+                      <i class="feather icon-trash-2"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="filteredFactures.length === 0 && !loading">
+                <td colspan="9" class="text-center py-4 text-muted">
+                  Aucune facture trouvée.
+                </td>
+              </tr>
+              <tr *ngIf="loading">
+                <td colspan="9" class="text-center py-4">
+                  <div class="spinner-border text-primary spinner-border-sm" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'NOTES_HONORAIRES'" class="factures-notes-wrap">
+        <app-notes-honoraires></app-notes-honoraires>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Modal Create / Edit -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content factures-modal">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title">{{ editMode ? 'Modifier la Facture' : 'Générer une Facture' }}</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="saveFacture()" #factureForm="ngForm">
+          <div class="row g-3">
+            
+            <div class="col-12" *ngIf="!editMode">
+              <label class="form-label">N° Note d'Honoraire <span class="text-danger">*</span></label>
+              <select class="form-select" name="noteId" [(ngModel)]="selectedNoteId" (change)="onNoteSelected()" required>
+                <option [ngValue]="null" disabled>{{ notesLoading ? 'Chargement...' : 'Sélectionner une note...' }}</option>
+                <option *ngIf="!notesLoading && notesOptions.length === 0" [ngValue]="null" disabled>Aucune note trouvée</option>
+                <option *ngFor="let n of notesOptions" [ngValue]="n.id">
+                  {{ n.numero }} — {{ n.prestataireNom }} ({{ n.statut === 'EN_COURS' ? 'En cours' : n.statut === 'SOUMISE' ? 'Soumise' : n.statut === 'VALIDEE' ? 'Validée' : 'Rejetée' }})
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Numéro Facture <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="numero" [(ngModel)]="currentFacture.numero" required readonly disabled>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label">Date Facture <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" name="dateFacture" [(ngModel)]="currentFacture.dateFacture" required>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Montant HT <span class="text-danger">*</span></label>
+              <input type="number" class="form-control text-end" name="montantHt" [(ngModel)]="currentFacture.montantHt" required min="0" step="0.01" readonly disabled>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">TVA (%) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control text-end" name="tva" [(ngModel)]="currentFacture.tva" required min="0" step="0.1" readonly disabled>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Montant TTC</label>
+              <input type="number" class="form-control text-end bg-light fw-bold" name="montantTtc" [ngModel]="currentFacture.montantTtc" readonly disabled>
+            </div>
+
+          </div>
+
+          <div class="modal-footer border-top-0 px-0 pb-0 mt-4">
+            <button type="button" class="btn btn-light" (click)="closeModal()">Annuler</button>
+            <button type="submit" class="btn btn-primary" [disabled]="!factureForm.form.valid || (!editMode && !selectedNoteId)">
+              {{ editMode ? 'Enregistrer les modifications' : 'Créer la facture' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showModal"></div>
+
+<!-- Modal Import Facture -->
+<div class="modal fade" [class.show]="showImportModal" [style.display]="showImportModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content factures-modal">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title">Importer une Facture</h5>
+        <button type="button" class="btn-close" (click)="closeImportModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Document (PDF / Image)</label>
+            <input type="file" class="form-control" (change)="onImportFileSelected($event)" accept=".pdf,image/*">
+            <div class="form-text" *ngIf="importFile">Fichier : {{ importFile.name }}</div>
+          </div>
+
+          <div class="col-12" *ngIf="importLoading">
+            <div class="d-flex align-items-center gap-2">
+              <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+              <div class="fw-bold">Upload et extraction en cours…</div>
+            </div>
+          </div>
+
+          <div class="col-12" *ngIf="importResult">
+            <div class="card p-3 border-0 shadow-sm">
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="fw-bold">Aperçu & Données détectées</div>
+                <div class="text-muted small">Prestataire : {{ profile?.fullName || profile?.username || '-' }}</div>
+              </div>
+              <div class="row g-3 mt-1">
+                <div class="col-md-4">
+                  <div class="text-muted small">N° Facture</div>
+                  <div class="fw-bold">{{ importResult.facture?.numero }}</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small">Date</div>
+                  <div class="fw-bold">{{ importResult.facture?.dateFacture | date:'dd/MM/yyyy' }}</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small">TVA (%)</div>
+                  <div class="fw-bold">{{ importResult.facture?.tva | number:'1.2-2' }}</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small">Montant HT</div>
+                  <div class="fw-bold">{{ importResult.facture?.montantHt | number:'1.2-2' }}</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small">Montant TTC</div>
+                  <div class="fw-bold text-primary">{{ importResult.facture?.montantTtc | number:'1.2-2' }}</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small">Statut</div>
+                  <div class="fw-bold">{{ importResult.facture?.statut }}</div>
+                </div>
+                <div class="col-12" *ngIf="importResult.extracted?.warnings?.length">
+                  <div class="alert alert-warning mb-0">
+                    <div class="fw-bold mb-1">Remarques</div>
+                    <div *ngFor="let w of importResult.extracted?.warnings">{{ w }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3" *ngIf="importPreviewUrl">
+                <ng-container *ngIf="importFile?.type?.includes('pdf'); else imgPreview">
+                  <iframe [src]="importPreviewUrl" class="w-100" style="height: 320px; border-radius: 12px; border: 1px solid rgba(15,23,42,0.06);"></iframe>
+                </ng-container>
+                <ng-template #imgPreview>
+                  <img [src]="importPreviewUrl" class="w-100" style="max-height: 320px; object-fit: contain; border-radius: 12px; border: 1px solid rgba(15,23,42,0.06);" />
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-top-0 px-0 pb-0 mt-4">
+          <button type="button" class="btn btn-light" (click)="closeImportModal()">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showImportModal"></div>

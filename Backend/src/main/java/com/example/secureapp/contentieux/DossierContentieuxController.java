@@ -83,6 +83,12 @@ public class DossierContentieuxController {
         return ResponseEntity.ok(service.close(id, request, authentication));
     }
 
+    @PatchMapping("/{id}/reject")
+    @PreAuthorize("hasAuthority('CONTENTIOUS_REJECT')")
+    public ResponseEntity<ContentieuxDtos.DossierResponse> reject(@PathVariable("id") Long id, @RequestBody ContentieuxDtos.RejectRequest request, Authentication authentication) {
+        return ResponseEntity.ok(service.reject(id, request, authentication));
+    }
+
     @PatchMapping("/{id}/reopen")
     @PreAuthorize("hasAuthority('CONTENTIOUS_REOPEN')")
     public ResponseEntity<ContentieuxDtos.DossierResponse> reopen(@PathVariable("id") Long id, Authentication authentication) {

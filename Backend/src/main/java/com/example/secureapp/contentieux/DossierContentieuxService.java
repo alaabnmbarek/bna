@@ -7,6 +7,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -114,7 +115,7 @@ public class DossierContentieuxService {
     public ContentieuxDtos.DossierResponse assign(Long id, ContentieuxDtos.AssignRequest request, Authentication authentication) {
         DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
         if (dossier.getStatut() == ContentieuxStatus.A_VALIDER) {
-            throw new RuntimeException("Validation requise");
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Validation requise");
         }
         applyChargeAssignmentFromRequest(dossier, request.chargeDossierId(), request.chargeDossier(), authentication);
         if ((dossier.getStatut() == ContentieuxStatus.OUVERT || dossier.getStatut() == ContentieuxStatus.REOUVERT)
@@ -128,11 +129,11 @@ public class DossierContentieuxService {
     public ContentieuxDtos.DossierResponse changeAccount(Long id, ContentieuxDtos.ChangeAccountRequest request, Authentication authentication) {
         DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
         if (dossier.getStatut() == ContentieuxStatus.A_VALIDER) {
-            throw new RuntimeException("Validation requise");
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Validation requise");
         }
         String value = request.nouveauCompte();
         if (value == null || value.isBlank()) {
-            throw new RuntimeException("Nouveau compte obligatoire");
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Nouveau compte obligatoire");
         }
         dossier.setAncienCompte(dossier.getCompteActuel());
         dossier.setCompteActuel(value);
@@ -144,11 +145,28 @@ public class DossierContentieuxService {
     public ContentieuxDtos.DossierResponse close(Long id, ContentieuxDtos.CloseRequest request, Authentication authentication) {
         DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
         if (dossier.getStatut() == ContentieuxStatus.A_VALIDER) {
-            throw new RuntimeException("Validation requise");
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Validation requise");
         }
         dossier.setStatut(ContentieuxStatus.CLOTURE);
         dossier.setDateCloture(request.dateCloture() != null ? request.dateCloture() : LocalDate.now());
         dossier.setMotifCloture(request.motifCloture());
+        return toResponse(repository.save(dossier));
+    }
+
+    @Transactional
+    public ContentieuxDtos.DossierResponse reject(Long id, ContentieuxDtos.RejectRequest request, Authentication authentication) {
+        DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
+        String motif = request != null ? request.motifRejet() : null;
+        if (motif == null || motif.isBlank()) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Motif de rejet obligatoire");
+        }
+        if (dossier.getStatut() != ContentieuxStatus.A_VALIDER) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Rejet possible uniquement pour les dossiers en attente de validation");
+        }
+        dossier.setStatut(ContentieuxStatus.REJETE);
+        dossier.setMotifRejet(motif.trim());
+        dossier.setRejectedBy(authentication.getName());
+        dossier.setRejectedAt(LocalDateTime.now());
         return toResponse(repository.save(dossier));
     }
 
@@ -200,6 +218,9 @@ public class DossierContentieuxService {
                 d.getObservationsFinancieres(),
                 d.getDateCloture(),
                 d.getMotifCloture(),
+                d.getMotifRejet(),
+                d.getRejectedBy(),
+                d.getRejectedAt(),
                 d.getCreatedBy(),
                 d.getValidatedBy(),
                 d.getValidatedAt(),
@@ -236,6 +257,9 @@ public class DossierContentieuxService {
                 d.getObservationsFinancieres(),
                 d.getDateCloture(),
                 d.getMotifCloture(),
+                d.getMotifRejet(),
+                d.getRejectedBy(),
+                d.getRejectedAt(),
                 d.getCreatedBy(),
                 d.getValidatedBy(),
                 d.getValidatedAt(),
@@ -286,9 +310,9 @@ public class DossierContentieuxService {
     }
 
     private DossierContentieuxEntity requireAccessibleDossier(Long id, Authentication authentication) {
-        DossierContentieuxEntity dossier = repository.findById(id).orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
+        DossierContentieuxEntity dossier = repository.findById(id).orElseThrow(() -> new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Dossier non trouvé"));
         if (dossier.isDeleted()) {
-            throw new RuntimeException("Dossier non trouvé");
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Dossier non trouvé");
         }
         if (isChargeDossier(authentication)) {
             UserEntity user = requireCurrentUser(authentication);

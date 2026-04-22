@@ -27,6 +27,7 @@ public class ContentieuxDtos {
     public record AssignRequest(String chargeDossier, Long chargeDossierId) {}
     public record ChangeAccountRequest(String nouveauCompte) {}
     public record CloseRequest(LocalDate dateCloture, String motifCloture) {}
+    public record RejectRequest(String motifRejet) {}
 
     public record DossierResponse(
             Long id,
@@ -48,6 +49,9 @@ public class ContentieuxDtos {
             String observationsFinancieres,
             LocalDate dateCloture,
             String motifCloture,
+            String motifRejet,
+            String rejectedBy,
+            LocalDateTime rejectedAt,
             String createdBy,
             String validatedBy,
             LocalDateTime validatedAt,

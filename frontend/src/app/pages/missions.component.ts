@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
 import { ContentieuxService, DossierContentieux } from '../contentieux/contentieux.service';
 import { SuiviJudiciaireService, AffaireJudiciaire } from '../suivi-judiciaire/suivi-judiciaire.service';
@@ -20,12 +22,13 @@ export class MissionsPageComponent implements OnInit {
   savingResult = false;
   uploadingProof = false;
   showAssignForm = false;
-  showResultForm = false;
+  showResultModal = false;
   showMissionModal = false;
   missionModalLoading = false;
   selectedMission: Mission | null = null;
   selectedMissionResult: MissionResult | null = null;
   selectedProcedureFallback: AffaireJudiciaire | null = null;
+  resultsByMissionId: Record<number, MissionResult | null> = {};
 
   dossiers: DossierContentieux[] = [];
   procedures: AffaireJudiciaire[] = [];
@@ -95,6 +98,31 @@ export class MissionsPageComponent implements OnInit {
     public auth: AuthService
   ) {}
 
+  get canAssignMission(): boolean {
+    const r = this.auth.role();
+    return ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ADMIN', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX'].includes(r || '');
+  }
+
+  get canSubmitMissionResult(): boolean {
+    const r = this.auth.role();
+    return [
+      'ROLE_ADMIN',
+      'ROLE_CHARGE_DOSSIER',
+      'ROLE_RESPONSABLE_CONTENTIEUX',
+      'ROLE_PRESTATAIRE',
+      'ROLE_AVOCAT',
+      'ROLE_HUISSIER',
+      'ROLE_EXPERT',
+      'ADMIN',
+      'CHARGE_DOSSIER',
+      'RESPONSABLE_CONTENTIEUX',
+      'PRESTATAIRE',
+      'AVOCAT',
+      'HUISSIER',
+      'EXPERT'
+    ].includes(r || '');
+  }
+
   ngOnInit(): void {
     this.loadAll();
   }
@@ -103,18 +131,19 @@ export class MissionsPageComponent implements OnInit {
     this.showAssignForm = !this.showAssignForm;
     if (!this.showAssignForm) {
       this.formMission = this.blankMissionForm();
-    } else {
-      this.showResultForm = false;
     }
   }
 
-  toggleResultForm(): void {
-    this.showResultForm = !this.showResultForm;
-    if (!this.showResultForm) {
-      this.formResult = this.blankResultForm();
-    } else {
-      this.showAssignForm = false;
-    }
+  openResultModal(): void {
+    this.showResultModal = true;
+    this.formResult = this.blankResultForm();
+  }
+
+  closeResultModal(): void {
+    this.showResultModal = false;
+    this.savingResult = false;
+    this.uploadingProof = false;
+    this.formResult = this.blankResultForm();
   }
 
   cancelAssignForm(): void {
@@ -124,10 +153,7 @@ export class MissionsPageComponent implements OnInit {
   }
 
   cancelResultForm(): void {
-    this.showResultForm = false;
-    this.savingResult = false;
-    this.uploadingProof = false;
-    this.formResult = this.blankResultForm();
+    this.closeResultModal();
   }
 
   private blankMissionForm() {
@@ -181,9 +207,11 @@ export class MissionsPageComponent implements OnInit {
       error: () => (this.prestataires = [])
     });
 
-    this.prestatairesService.listAllMissions().subscribe({
+    const missions$ = this.canAssignMission ? this.prestatairesService.listAllMissions() : this.prestatairesService.listMyMissions();
+    missions$.subscribe({
       next: (rows) => {
         this.missions = rows || [];
+        this.prefetchResults(this.missions);
         this.loading = false;
       },
       error: () => {
@@ -192,6 +220,36 @@ export class MissionsPageComponent implements OnInit {
         this.showBanner('Erreur lors du chargement des missions.', 'danger');
       }
     });
+  }
+
+  private prefetchResults(missions: Mission[]): void {
+    this.resultsByMissionId = {};
+    if (!this.canSubmitMissionResult) return;
+    if (!missions || missions.length === 0) return;
+    const requests = missions.map((m) =>
+      this.prestatairesService.getMissionResult(m.id).pipe(
+        catchError(() => of(null)),
+        map((r) => ({ missionId: m.id, result: r }))
+      )
+    );
+    forkJoin(requests).subscribe({
+      next: (rows) => {
+        for (const row of rows) {
+          this.resultsByMissionId[row.missionId] = row.result;
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  get missionResultsTable(): Array<{ mission: Mission; result: MissionResult }> {
+    const out: Array<{ mission: Mission; result: MissionResult }> = [];
+    for (const m of this.missions) {
+      const r = this.resultsByMissionId[m.id];
+      if (r) out.push({ mission: m, result: r });
+    }
+    out.sort((a, b) => (b.result.createdAt || '').localeCompare(a.result.createdAt || ''));
+    return out;
   }
 
   get displayedMissions(): Mission[] {
@@ -349,6 +407,7 @@ export class MissionsPageComponent implements OnInit {
     if (!this.formResult.missionId) return;
     this.prestatairesService.getMissionResult(this.formResult.missionId).subscribe({
       next: (r) => {
+        this.resultsByMissionId[this.formResult.missionId as number] = r;
         if (!r) return;
         this.formResult.statut = r.statut;
         this.formResult.dateDebut = r.dateDebut || '';
@@ -449,16 +508,15 @@ export class MissionsPageComponent implements OnInit {
 
     this.savingResult = true;
     this.prestatairesService.upsertMissionResult(this.formResult.missionId, payload).subscribe({
-      next: () => {
-        this.savingResult = false;
+      next: (saved) => {
         const mission = this.missions.find((m) => m.id === this.formResult.missionId);
         if (mission) {
           if (this.formResult.statut === 'EN_COURS') mission.statut = 'EN_COURS';
           if (this.formResult.statut === 'TERMINEE') mission.statut = 'TERMINEE';
           if (this.formResult.statut === 'ECHOUEE') mission.statut = 'ECHOUEE';
         }
-        this.showResultForm = false;
-        this.formResult = this.blankResultForm();
+        this.resultsByMissionId[this.formResult.missionId as number] = saved;
+        this.closeResultModal();
         this.showBanner('Résultat mission enregistré.', 'success');
       },
       error: (err) => {
@@ -486,8 +544,9 @@ export class MissionsPageComponent implements OnInit {
     }
     this.uploadingProof = true;
     this.prestatairesService.uploadMissionProof(this.formResult.missionId, this.formResult.preuveFile).subscribe({
-      next: () => {
+      next: (saved) => {
         this.uploadingProof = false;
+        this.resultsByMissionId[this.formResult.missionId as number] = saved;
         this.showBanner('Preuve uploadée avec succès.', 'success');
       },
       error: (err) => {

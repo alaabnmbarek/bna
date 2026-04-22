@@ -19,6 +19,7 @@ export class PrestataireDetailPageComponent implements OnInit, OnDestroy {
   missions: Mission[] = [];
   loading = false;
   prestataireId!: number;
+  isMe = false;
   profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
   showAssignForm = false;
   missionSearch = '';
@@ -56,14 +57,20 @@ export class PrestataireDetailPageComponent implements OnInit, OnDestroy {
       this.profileService.getProfile().subscribe();
     }
 
-    this.prestataireId = Number(this.route.snapshot.paramMap.get('id'));
-    if (!this.prestataireId) {
-      this.router.navigate(['/prestataires']);
-      return;
+    const rawId = this.route.snapshot.paramMap.get('id');
+    if (rawId === 'me') {
+      this.isMe = true;
+      this.loadMe();
+    } else {
+      this.prestataireId = Number(rawId);
+      if (!this.prestataireId) {
+        this.router.navigate(['/prestataires']);
+        return;
+      }
+      this.load();
     }
-    this.load();
     this.refreshTimer = setInterval(() => {
-      if (!this.loading && this.prestataireId) this.loadMissions();
+      if (!this.loading && (this.isMe || this.prestataireId)) this.loadMissions();
     }, 15000);
   }
 
@@ -86,8 +93,25 @@ export class PrestataireDetailPageComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadMe(): void {
+    this.loading = true;
+    this.service.getMyPrestataire().subscribe({
+      next: (p) => {
+        this.prestataire = p;
+        this.prestataireId = p.id;
+        this.loadMissions();
+      },
+      error: (err) => {
+        console.error(err);
+        this.loading = false;
+        this.router.navigate(['/user']);
+      }
+    });
+  }
+
   loadMissions(): void {
-    this.service.listMissions(this.prestataireId).subscribe({
+    const missions$ = this.isMe ? this.service.listMyMissions() : this.service.listMissions(this.prestataireId);
+    missions$.subscribe({
       next: (m) => {
         this.missions = m;
         this.update = {};
@@ -196,6 +220,6 @@ export class PrestataireDetailPageComponent implements OnInit, OnDestroy {
   }
 
   back(): void {
-    this.router.navigate(['/prestataires']);
+    this.router.navigate([this.isMe ? '/user' : '/prestataires']);
   }
 }

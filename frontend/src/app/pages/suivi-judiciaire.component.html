@@ -60,7 +60,7 @@
 </div>
 
 <!-- Modal Dossier Details -->
-<div *ngIf="showDossierDetails" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);" (click)="closeDossierDetails()">
+<div *ngIf="showDossierDetails" class="modal fade show app-modal" (click)="closeDossierDetails()">
   <div class="modal-dialog modal-xl modal-dialog-scrollable" (click)="$event.stopPropagation()">
     <div class="modal-content">
       <div class="modal-header">
@@ -204,7 +204,7 @@
 </div>
 
 <!-- Modal Affaire -->
-<div *ngIf="showAffaireForm" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+<div *ngIf="showAffaireForm" class="modal fade show app-modal">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
@@ -265,7 +265,7 @@
 </div>
 
 <!-- Popup Assignation -->
-<div *ngIf="showAssignationPopup" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+<div *ngIf="showAssignationPopup" class="modal fade show app-modal">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
@@ -353,7 +353,7 @@
 </div>
 
 <!-- Modal Audiences -->
-<div *ngIf="showAudienceForm" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+<div *ngIf="showAudienceForm" class="modal fade show app-modal">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
@@ -435,7 +435,7 @@
 </div>
 
 <!-- Modal Jugement -->
-<div *ngIf="showJugementForm" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+<div *ngIf="showJugementForm" class="modal fade show app-modal">
   <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">

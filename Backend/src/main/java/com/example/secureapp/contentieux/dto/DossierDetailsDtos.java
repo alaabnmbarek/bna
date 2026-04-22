@@ -22,6 +22,7 @@ public class DossierDetailsDtos {
             String compteActuel,
             String agence,
             String chargeDossier,
+            String motifRejet,
             BigDecimal montantEngage,
             BigDecimal montantRecupere
     ) {}

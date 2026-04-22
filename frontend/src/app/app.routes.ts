@@ -24,6 +24,8 @@ import { GuestComponent } from './theme/layout/guest/guest.component';
 
 import { ChangePasswordComponent } from './pages/profile/change-password.component';
 import { RoleLandingPageComponent } from './pages/admin.component';
+import { FacturesComponent } from './pages/factures/factures.component';
+import { NotesHonorairesComponent } from './pages/notes-honoraires/notes-honoraires.component';
 
 export const routes: Routes = [
   {
@@ -54,9 +56,11 @@ export const routes: Routes = [
       { path: 'users', component: UsersPageComponent, data: { roles: ['ROLE_ADMIN'] } },
       { path: 'roles', component: RolesPageComponent, data: { roles: ['ROLE_ADMIN'] } },
       { path: 'prestataires', component: PrestatairesPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
-      { path: 'prestataires/:id', component: PrestataireDetailPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
+      { path: 'prestataires/:id', component: PrestataireDetailPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_PRESTATAIRE', 'ROLE_AVOCAT', 'ROLE_HUISSIER', 'ROLE_EXPERT', 'PRESTATAIRE', 'AVOCAT', 'HUISSIER', 'EXPERT'] } },
       { path: 'suivi-judiciaire', component: SuiviJudiciaireComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
-      { path: 'missions', component: MissionsPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
+      { path: 'missions', component: MissionsPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_PRESTATAIRE', 'ROLE_AVOCAT', 'ROLE_HUISSIER', 'ROLE_EXPERT', 'PRESTATAIRE', 'AVOCAT', 'HUISSIER', 'EXPERT'] } },
+      { path: 'factures', component: FacturesComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_PRESTATAIRE', 'ROLE_AVOCAT', 'ROLE_HUISSIER', 'ROLE_EXPERT', 'PRESTATAIRE', 'AVOCAT', 'HUISSIER', 'EXPERT'] } },
+      { path: 'notes-honoraires', component: NotesHonorairesComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_PRESTATAIRE', 'ROLE_AVOCAT', 'ROLE_HUISSIER', 'ROLE_EXPERT', 'PRESTATAIRE', 'AVOCAT', 'HUISSIER', 'EXPERT'] } },
       { path: '', component: RoleLandingPageComponent }
     ]
   },
