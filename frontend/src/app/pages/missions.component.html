@@ -1,283 +1,236 @@
-<app-card cardTitle="Gérer Missions" [options]="false">
-  <div class="missions-wrap">
-    <div *ngIf="banner" class="alert" [ngClass]="{
-      'alert-success': banner.kind === 'success',
-      'alert-info': banner.kind === 'info',
-      'alert-danger': banner.kind === 'danger'
-    }">
-      {{ banner.message }}
+<div class="missions-container">
+  <div class="missions-header-modern">
+    <div class="header-content">
+      <div class="title-section">
+        <h1 class="main-title">Gestion des Missions</h1>
+        <p class="subtitle">Suivi et affectation des missions juridiques et bancaires</p>
+      </div>
+      <div class="header-actions-modern">
+        <button *ngIf="canAssignMission" class="btn-fintech btn-gradient-primary" type="button" (click)="toggleAssignForm()">
+          <i class="feather icon-plus-circle me-2"></i>
+          <span>Affecter Mission</span>
+        </button>
+        <button *ngIf="canSubmitMissionResult" class="btn-fintech btn-gradient-success" type="button" (click)="openResultModal()">
+          <i class="feather icon-check-circle me-2"></i>
+          <span>Résultat de mission</span>
+        </button>
+        <button class="btn-fintech btn-glass" type="button" (click)="loadAll()" [disabled]="loading">
+          <i class="feather icon-refresh-cw me-2" [class.anim-rotate]="loading"></i>
+          <span>Actualiser</span>
+        </button>
+      </div>
     </div>
+  </div>
 
-    <div class="missions-toolbar mb-3">
-      <button *ngIf="canAssignMission" class="btn btn-primary" type="button" (click)="toggleAssignForm()">
-        <i class="feather icon-plus me-2"></i>
-        Affecter Mission
-      </button>
-      <button *ngIf="canSubmitMissionResult" class="btn btn-success" type="button" (click)="openResultModal()">
-        <i class="feather icon-edit-3 me-2"></i>
-        Résultat de mission
-      </button>
-      <button class="btn btn-outline-secondary" type="button" (click)="loadAll()" [disabled]="loading">
-        <i class="feather icon-refresh-cw me-2"></i>
-        Actualiser
-      </button>
-    </div>
+  <div class="missions-content-modern">
+    <!-- Formulaire d'affectation (Style Card Fintech) -->
+    <div *ngIf="canAssignMission && showAssignForm" class="modern-card form-card mb-4 anim-fade-in">
+      <div class="card-header-modern">
+        <div class="header-title">
+          <div class="icon-box-modern bg-soft-primary">
+            <i class="feather icon-edit-3"></i>
+          </div>
+          <div>
+            <h3>Affecter une nouvelle mission</h3>
+            <span class="id-badge">ID AUTO: #{{ formMission.idAuto }}</span>
+          </div>
+        </div>
+        <button class="btn-close-modern" (click)="toggleAssignForm()">
+          <i class="feather icon-x"></i>
+        </button>
+      </div>
 
-    <div class="missions-grid">
-      <div *ngIf="canAssignMission" class="missions-assign">
-        <div class="missions-card" [class.missions-card-collapsed]="!showAssignForm">
-          <div class="missions-card-head">
-            <div class="missions-card-title">
-              <i class="feather icon-briefcase me-2"></i>
-              Affecter une mission
-            </div>
-            <div class="missions-head-actions">
-              <span class="missions-pill">
-                <i class="feather icon-hash me-1"></i>
-                ID: {{ formMission.idAuto }}
-              </span>
-              <button class="btn btn-sm btn-outline-secondary" type="button" (click)="toggleAssignForm()">
-                {{ showAssignForm ? 'Fermer' : 'Ouvrir' }}
-              </button>
+      <form class="modern-form" (submit)="$event.preventDefault(); submitMission()">
+        <div class="form-grid-2">
+          <div class="form-group-modern">
+            <label>Type de mission</label>
+            <div class="input-wrapper">
+              <i class="feather icon-layers"></i>
+              <select [(ngModel)]="formMission.typeMission" name="typeMission">
+                <option *ngFor="let t of missionTypes" [ngValue]="t.value">{{ t.label }}</option>
+              </select>
             </div>
           </div>
 
-          <form *ngIf="showAssignForm" class="missions-assign-form" (submit)="$event.preventDefault(); submitMission()">
-            <div class="missions-assign-form-body row g-3 mt-1">
-              <div class="col-12">
-              <label class="form-label">Type mission *</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-list"></i></span>
-                <select class="form-select" [(ngModel)]="formMission.typeMission" name="assign_typeMission">
-                  <option *ngFor="let t of missionTypes" [ngValue]="t.value">{{ t.label }}</option>
-                </select>
-              </div>
-              </div>
-
-              <div class="col-12 col-md-6">
-              <label class="form-label">Code mission</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-hash"></i></span>
-                <input class="form-control" [(ngModel)]="formMission.codeMission" name="assign_codeMission" placeholder="Ex: MIS-2026-01">
-              </div>
-              </div>
-
-              <div class="col-12 col-md-6">
-              <label class="form-label">Durée estimée (jours)</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-clock"></i></span>
-                <input class="form-control" [(ngModel)]="formMission.dureeEstimee" name="assign_dureeEstimee" type="number" min="0" placeholder="Ex: 15">
-              </div>
-              </div>
-
-              <div class="col-12">
-              <label class="form-label">Description</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-align-left"></i></span>
-                <textarea class="form-control" [(ngModel)]="formMission.description" name="assign_description" rows="3" placeholder="Détails de la mission..."></textarea>
-              </div>
-              </div>
-
-              <div class="col-12">
-              <label class="form-label">Prestataire assigné (type) *</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-user"></i></span>
-                <select class="form-select" [(ngModel)]="formMission.prestataireType" (ngModelChange)="onPrestataireTypeChange()" name="assign_prestataireType">
-                  <option [ngValue]="''" disabled>Sélectionner</option>
-                  <option [ngValue]="'AVOCAT'">Avocat</option>
-                  <option [ngValue]="'HUISSIER'">Huissier</option>
-                  <option [ngValue]="'EXPERT'">Expert</option>
-                </select>
-              </div>
-              </div>
-
-              <div class="col-12">
-              <label class="form-label">Nom prestataire *</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-users"></i></span>
-                <select class="form-select" [(ngModel)]="formMission.prestataireId" name="assign_prestataireId" [disabled]="!formMission.prestataireType">
-                  <option [ngValue]="null" disabled>Sélectionner</option>
-                  <option *ngFor="let p of filteredPrestataires" [ngValue]="p.id">
-                    {{ p.nom }} {{ p.prenom || '' }}
-                  </option>
-                </select>
-              </div>
-              </div>
-
-              <div class="col-12 col-md-6">
-              <label class="form-label">Date création</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-calendar"></i></span>
-                <input class="form-control" [value]="formMission.dateCreation" disabled>
-              </div>
-              </div>
-
-              <div class="col-12 col-md-6">
-              <label class="form-label">Affaire liée (auto)</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-link"></i></span>
-                <input class="form-control" [value]="formMission.affaireNumero || '—'" disabled>
-              </div>
-              </div>
-
-              <div class="col-12">
-              <label class="form-label">Procédure *</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="feather icon-book"></i></span>
-                <select class="form-select" [(ngModel)]="formMission.procedureId" (ngModelChange)="onProcedureChange()" name="assign_procedureId">
-                  <option [ngValue]="null" disabled>Sélectionner</option>
-                  <option *ngFor="let pr of procedures" [ngValue]="pr.id">
-                    {{ pr.dossierReference }} — {{ pr.referenceTribunal }} — {{ pr.tribunal }}
-                  </option>
-                </select>
-              </div>
-              </div>
+          <div class="form-group-modern">
+            <label>Code de mission</label>
+            <div class="input-wrapper">
+              <i class="feather icon-hash"></i>
+              <input [(ngModel)]="formMission.codeMission" name="codeMission" placeholder="Ex: MIS-2026-01">
             </div>
+          </div>
 
-            <div class="missions-assign-form-footer">
-              <div class="missions-form-actions">
-                <button class="btn btn-outline-secondary" type="button" (click)="cancelAssignForm()" [disabled]="savingMission">
-                  Annuler
-                </button>
-                <button class="btn btn-primary" type="submit" [disabled]="savingMission">
-                  <span *ngIf="savingMission" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                  <i *ngIf="!savingMission" class="feather icon-check me-2"></i>
-                  Affecter
-                </button>
-              </div>
-
-              <div class="mt-3" *ngIf="missionCreateError">
-                <div class="alert alert-danger mb-0">
-                  {{ missionCreateError }}
-                </div>
-              </div>
+          <div class="form-group-modern">
+            <label>Prestataire (Type)</label>
+            <div class="input-wrapper">
+              <i class="feather icon-user"></i>
+              <select [(ngModel)]="formMission.prestataireType" (ngModelChange)="onPrestataireTypeChange()" name="prestataireType">
+                <option [ngValue]="''" disabled>Sélectionner le type</option>
+                <option [ngValue]="'AVOCAT'">Avocat</option>
+                <option [ngValue]="'HUISSIER'">Huissier</option>
+                <option [ngValue]="'EXPERT'">Expert</option>
+              </select>
             </div>
-          </form>
+          </div>
 
-          <div *ngIf="!showAssignForm" class="missions-collapsed-hint">
-            Cliquez sur “Affecter Mission” pour ouvrir le formulaire.
+          <div class="form-group-modern">
+            <label>Nom du prestataire</label>
+            <div class="input-wrapper">
+              <i class="feather icon-users"></i>
+              <select [(ngModel)]="formMission.prestataireId" name="prestataireId" [disabled]="!formMission.prestataireType">
+                <option [ngValue]="null" disabled>Sélectionner un prestataire</option>
+                <option *ngFor="let p of filteredPrestataires" [ngValue]="p.id">
+                  {{ p.nom }} {{ p.prenom || '' }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group-modern">
+            <label>Durée estimée (jours)</label>
+            <div class="input-wrapper">
+              <i class="feather icon-clock"></i>
+              <input [(ngModel)]="formMission.dureeEstimee" name="dureeEstimee" type="number" min="0" placeholder="Ex: 15">
+            </div>
+          </div>
+
+          <div class="form-group-modern">
+            <label>Procédure liée</label>
+            <div class="input-wrapper">
+              <i class="feather icon-book"></i>
+              <select [(ngModel)]="formMission.procedureId" (ngModelChange)="onProcedureChange()" name="procedureId">
+                <option [ngValue]="null" disabled>Sélectionner la procédure</option>
+                <option *ngFor="let pr of procedures" [ngValue]="pr.id">
+                  {{ pr.dossierReference }} — {{ pr.referenceTribunal }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group-modern full-width">
+            <label>Description de la mission</label>
+            <div class="input-wrapper align-top">
+              <i class="feather icon-align-left"></i>
+              <textarea [(ngModel)]="formMission.description" name="description" rows="3" placeholder="Détails de la mission..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-footer-modern">
+          <button class="btn-fintech btn-glass" type="button" (click)="cancelAssignForm()" [disabled]="savingMission">Annuler</button>
+          <button class="btn-fintech btn-gradient-primary" type="submit" [disabled]="savingMission">
+            <span *ngIf="savingMission" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!savingMission" class="feather icon-send me-2"></i>
+            Confirmer l'affectation
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Liste des missions (Data Table Premium) -->
+    <div class="modern-card list-card">
+      <div class="card-header-modern">
+        <div class="header-title">
+          <div class="icon-box-modern bg-soft-info">
+            <i class="feather icon-list"></i>
+          </div>
+          <h3>Suivi des Missions</h3>
+        </div>
+        <div class="header-tools">
+          <div class="modern-search">
+            <i class="feather icon-search"></i>
+            <input [(ngModel)]="missionSearch" placeholder="Rechercher une mission...">
           </div>
         </div>
       </div>
 
-      <div class="missions-list">
-        <div class="missions-card missions-list-card">
-          <div class="missions-card-head">
-            <div class="missions-card-title">
-              <i class="feather icon-list me-2"></i>
-              Liste des missions
-            </div>
-          </div>
-
-          <div class="missions-list-tools">
-            <div class="input-group">
-              <span class="input-group-text"><i class="feather icon-search"></i></span>
-              <input class="form-control" [(ngModel)]="missionSearch" placeholder="Rechercher (code, type, statut, dossier, prestataire)...">
-            </div>
-          </div>
-
-          <div *ngIf="loading" class="missions-loading">
-            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-            Chargement...
-          </div>
-
-          <div *ngIf="!loading" class="table-responsive">
-            <table class="table table-sm align-middle mb-0 missions-table">
-              <thead>
-                <tr>
-                  <th class="sortable" (click)="toggleMissionSort('code')">Code {{ sortIndicator('code') }}</th>
-                  <th class="sortable" (click)="toggleMissionSort('type')">Type {{ sortIndicator('type') }}</th>
-                  <th class="text-nowrap">Dossier</th>
-                  <th class="text-nowrap">Tribunal</th>
-                  <th class="text-nowrap">Affaire</th>
-                  <th class="sortable" (click)="toggleMissionSort('statut')">Statut {{ sortIndicator('statut') }}</th>
-                  <th class="sortable text-nowrap" (click)="toggleMissionSort('dateDebut')">Date début {{ sortIndicator('dateDebut') }}</th>
-                  <th class="sortable text-nowrap" (click)="toggleMissionSort('dateFin')">Date fin {{ sortIndicator('dateFin') }}</th>
-                  <th class="sortable" (click)="toggleMissionSort('prestataire')">Prestataire {{ sortIndicator('prestataire') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let m of displayedMissions" class="missions-row" (click)="openMissionModal(m)">
-                  <td class="text-nowrap fw-bold">{{ missionCodeOrAuto(m) }}</td>
-                  <td>{{ missionTypeLabelOrInfer(m) }}</td>
-                  <td class="text-nowrap">{{ m.dossierReference || '—' }}</td>
-                  <td class="text-nowrap">{{ m.procedureTribunal || '—' }}</td>
-                  <td class="text-nowrap">{{ m.affaireNumero || '—' }}</td>
-                  <td><span [class]="statusBadgeClass(m)">{{ statusLabel(m) }}</span></td>
-                  <td class="text-nowrap">{{ m.dateDebut ? (m.dateDebut | date:'dd/MM/yyyy') : (m.createdAt ? (m.createdAt | date:'dd/MM/yyyy') : '—') }}</td>
-                  <td class="text-nowrap">{{ (m.dateFin || m.dateEcheance) ? ((m.dateFin || m.dateEcheance) | date:'dd/MM/yyyy') : '—' }}</td>
-                  <td class="text-nowrap">{{ prestataireNameById(m.prestataireId) }}</td>
-                </tr>
-                <tr *ngIf="displayedMissions.length === 0">
-                  <td colspan="9" class="text-center text-muted py-4">Aucune mission.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+      <div class="modern-table-container">
+        <div *ngIf="loading" class="table-loading-overlay">
+          <div class="spinner-fintech"></div>
+          <span>Chargement des données...</span>
         </div>
 
-        <div *ngIf="canSubmitMissionResult" class="missions-card mt-3">
-          <div class="missions-card-head">
-            <div class="missions-card-title">
-              <i class="feather icon-clipboard me-2"></i>
-              Tableau des résultats de mission
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th (click)="toggleMissionSort('code')">Code <i class="feather" [class]="getSortIcon('code')"></i></th>
+              <th (click)="toggleMissionSort('type')">Type <i class="feather" [class]="getSortIcon('type')"></i></th>
+              <th>Dossier</th>
+              <th>Tribunal</th>
+              <th (click)="toggleMissionSort('statut')">Statut <i class="feather" [class]="getSortIcon('statut')"></i></th>
+              <th (click)="toggleMissionSort('dateDebut')">Début <i class="feather" [class]="getSortIcon('dateDebut')"></i></th>
+              <th (click)="toggleMissionSort('prestataire')">Prestataire <i class="feather" [class]="getSortIcon('prestataire')"></i></th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of displayedMissions" class="modern-row">
+              <td><span class="code-pill">{{ missionCodeOrAuto(m) }}</span></td>
+              <td><span class="type-text">{{ missionTypeLabelOrInfer(m) }}</span></td>
+              <td><span class="dossier-ref">{{ m.dossierReference || '—' }}</span></td>
+              <td><span class="tribunal-text">{{ m.procedureTribunal || '—' }}</span></td>
+              <td><span [class]="'modern-badge ' + statusBadgeClassFintech(m)">{{ statusLabel(m) }}</span></td>
+              <td><span class="date-text">{{ m.dateDebut ? (m.dateDebut | date:'dd/MM/yyyy') : (m.createdAt | date:'dd/MM/yyyy') }}</span></td>
+              <td>
+                <div class="prestataire-info">
+                  <div class="avatar-sm">{{ getInitials(prestataireNameById(m.prestataireId)) }}</div>
+                  <span>{{ prestataireNameById(m.prestataireId) }}</span>
+                </div>
+              </td>
+              <td>
+                <button class="btn-action-modern" (click)="openMissionModal(m)" title="Détails">
+                  <i class="feather icon-eye"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="displayedMissions.length === 0 && !loading">
+              <td colspan="8" class="empty-state">
+                <i class="feather icon-inbox"></i>
+                <p>Aucune mission ne correspond à vos critères.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Résultats de missions (Premium Grid) -->
+    <div *ngIf="missionResultsTable.length > 0" class="modern-card results-card mt-4">
+      <div class="card-header-modern">
+        <div class="header-title">
+          <div class="icon-box-modern bg-soft-success">
+            <i class="feather icon-award"></i>
+          </div>
+          <h3>Derniers résultats enregistrés</h3>
+        </div>
+      </div>
+      
+      <div class="results-grid-modern">
+        <div *ngFor="let row of missionResultsTable | slice:0:3" class="result-item-modern">
+          <div class="result-head">
+            <span class="result-code">#{{ row.mission.id }}</span>
+            <span class="result-status">{{ row.result.statut }}</span>
+          </div>
+          <div class="result-body">
+            <div class="result-main">
+              <h4>{{ missionTypeLabelOrInfer(row.mission) }}</h4>
+              <p class="result-desc text-truncate">{{ row.result.resultat }}</p>
+            </div>
+            <div class="result-meta">
+              <span><i class="feather icon-calendar"></i> {{ row.result.createdAt | date:'dd/MM/yyyy' }}</span>
+              <span *ngIf="row.result.montantRecuperee"><i class="feather icon-dollar-sign"></i> {{ row.result.montantRecuperee }}</span>
             </div>
           </div>
-
-          <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0 missions-table">
-              <thead>
-                <tr>
-                  <th>Mission</th>
-                  <th>Code</th>
-                  <th>Type</th>
-                  <th>Dossier</th>
-                  <th>Prestataire</th>
-                  <th>Tribunal</th>
-                  <th>Affaire</th>
-                  <th>Statut</th>
-                  <th class="text-nowrap">Saisi le</th>
-                  <th class="text-nowrap">Date début</th>
-                  <th class="text-nowrap">Date fin</th>
-                  <th class="text-nowrap">Montant récupéré</th>
-                  <th>Résultat</th>
-                  <th>Preuve</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let row of missionResultsTable">
-                  <td class="fw-bold text-nowrap">#{{ row.mission.id }}</td>
-                  <td class="text-nowrap">{{ missionCodeOrAuto(row.mission) }}</td>
-                  <td>{{ missionTypeLabelOrInfer(row.mission) }}</td>
-                  <td class="text-nowrap">{{ row.mission.dossierReference || '—' }}</td>
-                  <td class="text-nowrap">{{ prestataireNameById(row.mission.prestataireId) }}</td>
-                  <td class="text-nowrap">{{ row.mission.procedureTribunal || '—' }}</td>
-                  <td class="text-nowrap">{{ row.mission.affaireNumero || '—' }}</td>
-                  <td class="text-nowrap"><span class="badge bg-light-primary text-primary">{{ row.result.statut }}</span></td>
-                  <td class="text-nowrap">{{ row.result.createdAt ? (row.result.createdAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
-                  <td class="text-nowrap">{{ row.result.dateDebut ? (row.result.dateDebut | date:'dd/MM/yyyy') : '—' }}</td>
-                  <td class="text-nowrap">{{ row.result.dateFin ? (row.result.dateFin | date:'dd/MM/yyyy') : '—' }}</td>
-                  <td class="text-nowrap">{{ row.result.montantRecuperee != null ? row.result.montantRecuperee : '—' }}</td>
-                  <td class="text-truncate" style="max-width: 320px;">{{ row.result.resultat || '—' }}</td>
-                  <td class="text-nowrap">
-                    <button class="btn btn-sm btn-outline-primary" type="button" *ngIf="row.result.hasPreuve" (click)="selectedMission = row.mission; selectedMissionResult = row.result; downloadSelectedProof()">
-                      <i class="feather icon-download me-1"></i>
-                      Télécharger
-                    </button>
-                    <span *ngIf="!row.result.hasPreuve" class="text-muted">—</span>
-                  </td>
-                </tr>
-                <tr *ngIf="missionResultsTable.length === 0">
-                  <td colspan="14" class="text-center text-muted py-4">Aucun résultat enregistré.</td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="result-footer">
+            <button *ngIf="row.result.hasPreuve" class="btn-link-modern" (click)="selectedMission = row.mission; selectedMissionResult = row.result; downloadSelectedProof()">
+              <i class="feather icon-download"></i> Voir la preuve
+            </button>
           </div>
         </div>
       </div>
     </div>
   </div>
-</app-card>
+</div>
 
 <div *ngIf="showResultModal" class="modal fade show app-modal" (click)="closeResultModal()">
   <div class="modal-dialog modal-lg modal-dialog-scrollable" (click)="$event.stopPropagation()">

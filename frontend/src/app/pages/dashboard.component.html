@@ -184,54 +184,7 @@
         </app-card>
       </div>
 
-      <div class="col-12 col-xl-6">
-        <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
-          <div class="dash-panel">
-            <div class="dash-panel-head">
-              <div class="dash-panel-title"><i class="feather icon-git-commit me-2 text-info"></i> Pipeline du contentieux</div>
-              <div class="dash-panel-sub">Amiable ➔ Judiciaire ➔ Exécution</div>
-            </div>
-            <div class="dash-pipeline">
-              <div class="dash-pipe-row">
-                <div class="dash-pipe-label">Amiable</div>
-                <div class="dash-pipe-track">
-                  <div class="dash-pipe-fill fill-amiable" [style.width.%]="pipelinePct(pipeline.amiable)"></div>
-                </div>
-                <div class="dash-pipe-val">{{ pipeline.amiable }}</div>
-              </div>
-              <div class="dash-pipe-row">
-                <div class="dash-pipe-label">Judiciaire</div>
-                <div class="dash-pipe-track">
-                  <div class="dash-pipe-fill fill-jud" [style.width.%]="pipelinePct(pipeline.judiciaire)"></div>
-                </div>
-                <div class="dash-pipe-val">{{ pipeline.judiciaire }}</div>
-              </div>
-              <div class="dash-pipe-row">
-                <div class="dash-pipe-label">Exécution</div>
-                <div class="dash-pipe-track">
-                  <div class="dash-pipe-fill fill-exec" [style.width.%]="pipelinePct(pipeline.execution)"></div>
-                </div>
-                <div class="dash-pipe-val">{{ pipeline.execution }}</div>
-              </div>
-            </div>
 
-            <div class="dash-panel-head mt-3">
-              <div class="dash-panel-title">Performance prestataires</div>
-              <div class="dash-panel-sub">Top par montant récupéré.</div>
-            </div>
-            <div class="dash-perf">
-              <div class="dash-perf-row" *ngFor="let p of prestatairePerf">
-                <div class="dash-perf-name">{{ p.name }}</div>
-                <div class="dash-perf-track">
-                  <div class="dash-perf-fill" [style.width.%]="perfPct(p.recupere)"></div>
-                </div>
-                <div class="dash-perf-val">{{ formatMoney(p.recupere) }}</div>
-              </div>
-              <div class="dash-empty" *ngIf="!loading && prestatairePerf.length === 0">Aucune donnée prestataire.</div>
-            </div>
-          </div>
-        </app-card>
-      </div>
 
       <div class="col-12">
         <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">

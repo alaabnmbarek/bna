@@ -582,6 +582,27 @@ export class MissionsPageComponent implements OnInit {
     return t < new Date().setHours(0, 0, 0, 0);
   }
 
+  getInitials(name: string): string {
+    if (!name) return '??';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+
+  getSortIcon(key: string): string {
+    if (this.missionSortKey !== key) return 'icon-minus text-muted small';
+    return this.missionSortDir === 'asc' ? 'icon-chevron-up' : 'icon-chevron-down';
+  }
+
+  statusBadgeClassFintech(m: Mission): string {
+    const s = (m.statut || '').toUpperCase();
+    if (s === 'TERMINÉE' || s === 'CLÔTURÉE' || s === 'COMPLÉTÉE' || s === 'DONE' || s === 'TERMINER') return 'badge-soft-success';
+    if (s === 'EN_COURS' || s === 'IN_PROGRESS' || s === 'AFFECTÉE' || s === 'ASSIGNÉE') return 'badge-soft-primary';
+    if (s === 'EN_ATTENTE' || s === 'PENDING') return 'badge-soft-warning';
+    if (s === 'ANNULÉE' || s === 'CANCELLED' || s === 'REJETÉE') return 'badge-soft-danger';
+    return 'badge-soft-secondary';
+  }
+
   statusLabel(m: Mission): string {
     if (this.isOverdue(m) && (m.statut === 'ASSIGNEE' || m.statut === 'EN_COURS')) return 'EN_RETARD';
     return m.statut;

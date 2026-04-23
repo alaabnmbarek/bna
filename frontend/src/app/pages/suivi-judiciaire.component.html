@@ -10,43 +10,56 @@
       </div>
 
       <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0 bna-table">
           <thead>
             <tr>
-              <th>Dossier</th>
-              <th>Tribunal</th>
-              <th>Référence Tribunal</th>
-              <th>Type Procédure</th>
-              <th>Avocat</th>
-              <th>Statut</th>
-              <th>Action</th>
+              <th style="width: 20%;">Dossier</th>
+              <th style="width: 15%;">Tribunal</th>
+              <th style="width: 12%;">Réf. Tribunal</th>
+              <th style="width: 15%;">Type Procédure</th>
+              <th style="width: 12%;">Avocat</th>
+              <th style="width: 10%;">Statut</th>
+              <th style="width: 16%;" class="text-center">Action</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let affaire of affaires">
-              <td>
-                <a href="javascript:" (click)="openDossierDetails(affaire.dossierId)">
-                  {{ affaire.dossierReference }} - {{ affaire.nomDebiteur }}
+              <td class="align-middle">
+                <a href="javascript:" (click)="openDossierDetails(affaire.dossierId)" class="fw-bold text-primary">
+                  {{ affaire.dossierReference }}
                 </a>
+                <div class="small text-muted">{{ affaire.nomDebiteur }}</div>
               </td>
-              <td>{{ affaire.tribunal }}</td>
-              <td>{{ affaire.referenceTribunal }}</td>
-              <td><span class="badge bg-light-primary text-primary">{{ procedureLabel(affaire.typeProcedure) }}</span></td>
-              <td>{{ affaire.avocatNom || '-' }}</td>
-              <td>
-                <span class="badge" [ngClass]="{
-                  'bg-warning': affaire.statut === 'EN_COURS',
+              <td class="align-middle"><div class="text-truncate" style="max-width: 150px;" [title]="affaire.tribunal">{{ affaire.tribunal }}</div></td>
+              <td class="align-middle"><span class="badge bg-light-secondary text-dark">{{ affaire.referenceTribunal }}</span></td>
+              <td class="align-middle">
+                <span class="badge bg-light-info text-info border-info-subtle">
+                  {{ procedureLabel(affaire.typeProcedure) }}
+                </span>
+              </td>
+              <td class="align-middle">{{ affaire.avocatNom || '-' }}</td>
+              <td class="align-middle">
+                <span class="badge rounded-pill" [ngClass]="{
+                  'bg-warning text-dark': affaire.statut === 'EN_COURS',
                   'bg-success': affaire.statut === 'JUGEE',
                   'bg-secondary': affaire.statut === 'CLOTUREE'
                 }">{{ affaire.statut }}</span>
               </td>
-              <td>
-                <button class="btn btn-sm btn-info" (click)="viewAudiences(affaire)" title="Audiences">
-                  <i class="feather icon-calendar"></i>
-                </button>
-                <button *ngIf="canRecordJugement && affaire.statut === 'EN_COURS'" class="btn btn-sm btn-success ml-1" (click)="openJugementForm(affaire)" title="Enregistrer Jugement">
-                  <i class="feather icon-check-circle"></i>
-                </button>
+              <td class="align-middle text-center">
+                <div class="d-flex justify-content-center gap-1">
+                  <button class="btn btn-sm btn-icon btn-outline-info" (click)="viewAudiences(affaire)" title="Audiences">
+                    <i class="feather icon-calendar"></i>
+                  </button>
+                  <button *ngIf="canRecordJugement && affaire.statut === 'EN_COURS'" class="btn btn-sm btn-icon btn-outline-success" (click)="openJugementForm(affaire)" title="Enregistrer Jugement">
+                    <i class="feather icon-check-circle"></i>
+                  </button>
+                  <button *ngIf="canCreateProcedure" class="btn btn-sm btn-icon btn-outline-primary" (click)="openEditAffaire(affaire)" title="Modifier">
+                    <i class="feather icon-edit"></i>
+                  </button>
+                  <button *ngIf="canCreateProcedure" class="btn btn-sm btn-icon btn-outline-danger" (click)="deleteAffaire(affaire)" title="Supprimer">
+                    <i class="feather icon-trash-2"></i>
+                  </button>
+                </div>
               </td>
             </tr>
             <tr *ngIf="affaires.length === 0">

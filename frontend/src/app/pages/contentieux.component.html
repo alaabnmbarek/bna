@@ -81,9 +81,6 @@
             <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='AFFECTE'" [class.btn-outline-secondary]="activeStatus!=='AFFECTE'" (click)="activeStatus='AFFECTE'">
               Affecté <span class="contentieux-pill">{{ countByStatus('AFFECTE') }}</span>
             </button>
-            <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='CHANGEMENT_COMPTE'" [class.btn-outline-secondary]="activeStatus!=='CHANGEMENT_COMPTE'" (click)="activeStatus='CHANGEMENT_COMPTE'">
-              Compte <span class="contentieux-pill">{{ countByStatus('CHANGEMENT_COMPTE') }}</span>
-            </button>
             <button type="button" class="btn btn-sm" [class.btn-primary]="activeStatus==='CLOTURE'" [class.btn-outline-secondary]="activeStatus!=='CLOTURE'" (click)="activeStatus='CLOTURE'">
               Clôturé <span class="contentieux-pill">{{ countByStatus('CLOTURE') }}</span>
             </button>
@@ -141,9 +138,6 @@
                     </button>
                     <button *ngIf="d.statut !== 'A_VALIDER' && canAssign()" class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="openAssign(d)">
                       <i class="feather icon-user-check"></i><span class="contentieux-action-text">Affecter</span>
-                    </button>
-                    <button *ngIf="d.statut !== 'A_VALIDER' && !isResponsableContentieux()" class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="openChangeAccount(d)">
-                      <i class="feather icon-credit-card"></i><span class="contentieux-action-text">Compte</span>
                     </button>
                     <button *ngIf="d.statut !== 'CLOTURE' && d.statut !== 'A_VALIDER'" class="btn btn-sm btn-outline-secondary contentieux-action-btn" type="button" (click)="openClose(d)">
                       <i class="feather icon-lock"></i><span class="contentieux-action-text">Clôturer</span>

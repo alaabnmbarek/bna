@@ -36,6 +36,19 @@ public class SuiviJudiciaireController {
         return ResponseEntity.ok(suiviJudiciaireService.createAffaire(dto, authentication));
     }
 
+    @PutMapping("/affaires/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    public ResponseEntity<AffaireJudiciaireDto> updateAffaire(@PathVariable("id") Long id, @RequestBody AffaireJudiciaireDto dto, Authentication authentication) {
+        return ResponseEntity.ok(suiviJudiciaireService.updateAffaire(id, dto, authentication));
+    }
+
+    @DeleteMapping("/affaires/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    public ResponseEntity<Void> deleteAffaire(@PathVariable("id") Long id, Authentication authentication) {
+        suiviJudiciaireService.deleteAffaire(id, authentication);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/audiences")
     @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
     public ResponseEntity<AudienceDto> scheduleAudience(@RequestBody AudienceDto dto, Authentication authentication) {

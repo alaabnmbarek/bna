@@ -310,8 +310,10 @@
 }
 
 .contentieux-overlay {
-  position: fixed;
-  inset: 0;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
   background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(8px);
   display: flex;
@@ -319,34 +321,12 @@
   justify-content: center;
   padding: calc(var(--app-header-height) + 16px) 16px 16px;
   overflow: auto;
-  z-index: 4000;
+  z-index: 12000;
 }
 
 .contentieux-overlay--center {
   align-items: center;
   padding: 16px;
-}
-
-@media (min-width: 992px) {
-  .contentieux-overlay {
-    left: calc(-1 * var(--app-sidebar-width));
-    width: calc(100% + var(--app-sidebar-width));
-  }
-
-  .pcoded-navbar.navbar-collapsed ~ .pcoded-main-container .contentieux-overlay {
-    left: calc(-1 * var(--app-sidebar-collapsed-width));
-    width: calc(100% + var(--app-sidebar-collapsed-width));
-  }
-
-  .contentieux-overlay > .contentieux-modal,
-  .contentieux-overlay > .contentieux-dialog {
-    transform: translateX(calc(var(--app-sidebar-width) / 2));
-  }
-
-  .pcoded-navbar.navbar-collapsed ~ .pcoded-main-container .contentieux-overlay > .contentieux-modal,
-  .pcoded-navbar.navbar-collapsed ~ .pcoded-main-container .contentieux-overlay > .contentieux-dialog {
-    transform: translateX(calc(var(--app-sidebar-collapsed-width) / 2));
-  }
 }
 
 .contentieux-modal {

@@ -30,6 +30,7 @@ export const NavigationItems: NavigationItem[] = [
         type: 'item',
         url: '/admin',
         icon: 'feather icon-layout',
+        classes: 'nav-blue',
         breadcrumbs: false,
         role: ['ROLE_ADMIN']
       }
@@ -46,6 +47,7 @@ export const NavigationItems: NavigationItem[] = [
         title: 'Risque',
         type: 'collapse',
         icon: 'feather icon-alert-triangle',
+        classes: 'nav-gray',
         breadcrumbs: false,
         role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'],
         children: [
@@ -55,6 +57,7 @@ export const NavigationItems: NavigationItem[] = [
             type: 'item',
             url: '/risque/engagement',
             icon: 'feather icon-trending-up',
+            classes: 'nav-blue',
             breadcrumbs: false,
             role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
           },
@@ -64,6 +67,7 @@ export const NavigationItems: NavigationItem[] = [
             type: 'item',
             url: '/risque/patrimoines',
             icon: 'feather icon-home',
+            classes: 'nav-orange',
             breadcrumbs: false,
             role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
           },
@@ -73,6 +77,7 @@ export const NavigationItems: NavigationItem[] = [
             type: 'item',
             url: '/risque/garanties/nantissement',
             icon: 'feather icon-link',
+            classes: 'nav-indigo',
             breadcrumbs: false,
             role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
           },
@@ -82,6 +87,7 @@ export const NavigationItems: NavigationItem[] = [
             type: 'item',
             url: '/risque/garanties/hypotheque',
             icon: 'feather icon-map-pin',
+            classes: 'nav-purple',
             breadcrumbs: false,
             role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
           },
@@ -91,6 +97,7 @@ export const NavigationItems: NavigationItem[] = [
             type: 'item',
             url: '/risque/garanties/cautions',
             icon: 'feather icon-shield',
+            classes: 'nav-teal',
             breadcrumbs: false,
             role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
           }
@@ -102,6 +109,7 @@ export const NavigationItems: NavigationItem[] = [
         type: 'item',
         url: '/contentieux',
         icon: 'feather icon-folder',
+        classes: 'nav-orange',
         breadcrumbs: false,
         role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
       },
@@ -110,7 +118,8 @@ export const NavigationItems: NavigationItem[] = [
         title: 'Gestion des Prestataires',
         type: 'item',
         url: '/prestataires',
-        icon: 'feather icon-briefcase',
+        icon: 'feather icon-award',
+        classes: 'nav-teal',
         breadcrumbs: false,
         role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
       },
@@ -120,6 +129,7 @@ export const NavigationItems: NavigationItem[] = [
         type: 'item',
         url: '/suivi-judiciaire',
         icon: 'feather icon-book',
+        classes: 'nav-indigo',
         breadcrumbs: false,
         role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_AVOCAT', 'AVOCAT']
       },
@@ -128,7 +138,8 @@ export const NavigationItems: NavigationItem[] = [
         title: 'Gérer Missions',
         type: 'item',
         url: '/missions',
-        icon: 'feather icon-check-square',
+        icon: 'feather icon-target',
+        classes: 'nav-pink',
         breadcrumbs: false,
         role: [
           'ROLE_ADMIN',
@@ -149,6 +160,7 @@ export const NavigationItems: NavigationItem[] = [
         type: 'item',
         url: '/factures',
         icon: 'feather icon-file-text',
+        classes: 'nav-deep-purple',
         breadcrumbs: false,
         role: [
           'ROLE_ADMIN',
@@ -169,6 +181,7 @@ export const NavigationItems: NavigationItem[] = [
         type: 'item',
         url: '/prestataires/me',
         icon: 'feather icon-user',
+        classes: 'nav-cyan',
         breadcrumbs: false,
         role: [
           'ROLE_PRESTATAIRE',
@@ -187,6 +200,7 @@ export const NavigationItems: NavigationItem[] = [
         type: 'item',
         url: '/users',
         icon: 'feather icon-users',
+        classes: 'nav-teal',
         breadcrumbs: false,
         role: ['ROLE_ADMIN']
       },
@@ -196,6 +210,7 @@ export const NavigationItems: NavigationItem[] = [
         type: 'item',
         url: '/roles',
         icon: 'feather icon-shield',
+        classes: 'nav-gray',
         breadcrumbs: false,
         role: ['ROLE_ADMIN']
       }

@@ -589,14 +589,14 @@
     display: block;
     z-index: 1028;
     position: absolute;
-    box-shadow: 0 2px 10px -1px rgba(69,90,100,0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease-in-out;
     width: $Menu-width;
     height: calc(100% - #{$header-height});
     margin-top: $header-height;
     top: 0;
-    background: $menu-dark-background;
-    color: $menu-dark-text-color;
+    background: linear-gradient(180deg, #006847 0%, #004d35 100%);
+    color: #fff;
 
     ul {
         padding-left: 0;
@@ -613,13 +613,32 @@
         align-items: center;
         display: inline-flex;
         float: left;
-        background: $menu-dark-background;
+        background: #006847;
         height: $header-height;
         text-align: center;
         width: $Menu-width;
         margin-right: 0;
-        padding: 10px 25px;
+        padding: 10px 20px;
         transition: all 0.3s ease-in-out;
+
+        .b-brand {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 18px;
+            width: 100%;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+            .b-title {
+                color: #006847;
+                font-weight: 700;
+                margin-left: 10px;
+                font-size: 16px;
+                letter-spacing: 0.5px;
+            }
+        }
         .logo-dark {
             display: none;
         }
@@ -737,19 +756,50 @@
                 > .pcoded-micon {
                     font-size: 16px;
                     padding: 0;
-                    margin-right: 5px;
-                    border-radius: 4px;
-                    width: 30px;
+                    margin-right: 12px;
+                    border-radius: 8px;
+                    width: 32px;
                     display: inline-flex;
                     align-items: center;
-                    height: 30px;
+                    height: 32px;
                     text-align: center;
                     justify-content: center;
+                    background: rgba(255, 255, 255, 0.1);
+                    transition: all 0.2s ease-in-out;
+
+                    i {
+                        color: #fff;
+                        font-size: 14px;
+                    }
 
                     + .pcoded-mtext {
                         position: relative;
                         top: 0;
+                        font-weight: 500;
                     }
+                }
+            }
+
+            &.nav-blue > a > .pcoded-micon { background: #3b82f6 !important; }
+            &.nav-gray > a > .pcoded-micon { background: #64748b !important; }
+            &.nav-orange > a > .pcoded-micon { background: #f59e0b !important; }
+            &.nav-teal > a > .pcoded-micon { background: #10b981 !important; }
+            &.nav-indigo > a > .pcoded-micon { background: #6366f1 !important; }
+            &.nav-purple > a > .pcoded-micon { background: #8b5cf6 !important; }
+            &.nav-deep-purple > a > .pcoded-micon { background: #4f46e5 !important; }
+            &.nav-cyan > a > .pcoded-micon { background: #06b6d4 !important; }
+            &.nav-pink > a > .pcoded-micon { background: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #ef4444 100%) !important; }
+
+            &.active, &:hover {
+                > a {
+                    background: rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(5px);
+                    border-radius: 12px;
+                    color: #fff !important;
+                }
+                > a > .pcoded-micon {
+                    transform: scale(1.1);
+                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
                 }
             }
 
@@ -863,13 +913,13 @@
             }
 
             &.pcoded-menu-caption {
-                font-size: 13px;
-                font-weight: 600;
-                color: $primary-color;
-                padding: 18px 15px 5px;
-                text-transform: capitalize;
+                font-size: 11px;
+                font-weight: 700;
+                color: rgba(255, 255, 255, 0.6);
+                padding: 25px 20px 10px;
+                text-transform: uppercase;
                 position: relative;
-                margin-top: 10px;
+                letter-spacing: 1px;
 
                 &:first-child {
                     border-top: none;
@@ -878,6 +928,17 @@
 
                 > label {
                     margin-bottom: 0;
+                }
+
+                &:after {
+                    content: "";
+                    position: absolute;
+                    bottom: 5px;
+                    left: 20px;
+                    width: 20px;
+                    height: 2px;
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 2px;
                 }
             }
 

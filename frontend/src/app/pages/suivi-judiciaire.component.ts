@@ -272,11 +272,25 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.suiviService.createAffaire(this.newAffaire).subscribe(() => {
-      this.showAffaireForm = false;
-      this.showAssignationPopup = false;
-      this.loadAffaires();
-    });
+    if (this.newAffaire.id) {
+      this.suiviService.updateAffaire(this.newAffaire.id, this.newAffaire).subscribe({
+        next: () => {
+          this.showAffaireForm = false;
+          this.showAssignationPopup = false;
+          this.loadAffaires();
+        },
+        error: (err) => console.error(err)
+      });
+    } else {
+      this.suiviService.createAffaire(this.newAffaire).subscribe({
+        next: () => {
+          this.showAffaireForm = false;
+          this.showAssignationPopup = false;
+          this.loadAffaires();
+        },
+        error: (err) => console.error(err)
+      });
+    }
   }
 
   procedureLabel(value?: ProcedureType): string {
@@ -367,6 +381,25 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     this.newJugement = this.blankJugement();
     this.newJugement.affaireId = affaire.id!;
     this.showJugementForm = true;
+  }
+
+  openEditAffaire(affaire: AffaireJudiciaire): void {
+    this.newAffaire = { ...affaire };
+    this.showAffaireForm = true;
+    this.setBodyScrollLocked(true);
+  }
+
+  deleteAffaire(affaire: AffaireJudiciaire): void {
+    if (confirm('Voulez-vous vraiment supprimer cette affaire ?')) {
+      this.suiviService.deleteAffaire(affaire.id!).subscribe({
+        next: () => {
+          this.loadAffaires();
+        },
+        error: (err) => {
+          console.error('Erreur lors de la suppression', err);
+        }
+      });
+    }
   }
 
   saveJugement(): void {

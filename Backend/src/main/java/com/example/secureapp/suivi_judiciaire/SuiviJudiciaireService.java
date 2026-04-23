@@ -198,6 +198,45 @@ public class SuiviJudiciaireService {
     }
 
     @Transactional
+    public AffaireJudiciaireDto updateAffaire(Long id, AffaireJudiciaireDto dto, Authentication authentication) {
+        AffaireJudiciaireEntity entity = requireAccessibleAffaire(id, authentication);
+        
+        entity.setReferenceTribunal(dto.referenceTribunal());
+        entity.setTribunal(dto.tribunal());
+        entity.setDateOuverture(dto.dateOuverture());
+        entity.setObservations(dto.observations());
+        entity.setDateTransmission(dto.dateTransmission());
+        
+        if (dto.avocatId() != null) {
+            PrestataireEntity avocat = prestataireRepository.findById(dto.avocatId())
+                    .orElseThrow(() -> new RuntimeException("Avocat non trouvé"));
+            entity.setAvocat(avocat);
+        }
+        
+        if (dto.huissierId() != null) {
+            PrestataireEntity huissier = prestataireRepository.findById(dto.huissierId())
+                    .orElseThrow(() -> new RuntimeException("Huissier non trouvé"));
+            entity.setHuissier(huissier);
+        } else {
+            entity.setHuissier(null);
+        }
+
+        if (entity.getTypeProcedure() == ProcedureType.ASSIGNATION) {
+            entity.setAssignationTarget(dto.assignationTarget());
+            entity.setGarantiePatrimoine(dto.garantiePatrimoine());
+            entity.setMontant(dto.montant());
+        }
+
+        return mapToAffaireDto(affaireRepository.save(entity));
+    }
+
+    @Transactional
+    public void deleteAffaire(Long id, Authentication authentication) {
+        requireAccessibleAffaire(id, authentication);
+        affaireRepository.deleteById(id);
+    }
+
+    @Transactional
     public JugementDto recordJugement(JugementDto dto, Authentication authentication) {
         AffaireJudiciaireEntity affaire = requireAccessibleAffaire(dto.affaireId(), authentication);
 

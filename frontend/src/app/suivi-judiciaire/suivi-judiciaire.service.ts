@@ -70,6 +70,14 @@ export class SuiviJudiciaireService {
     return this.http.post<AffaireJudiciaire>(`${this.url}/affaires`, payload);
   }
 
+  updateAffaire(id: number, payload: AffaireJudiciaire): Observable<AffaireJudiciaire> {
+    return this.http.put<AffaireJudiciaire>(`${this.url}/affaires/${id}`, payload);
+  }
+
+  deleteAffaire(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.url}/affaires/${id}`);
+  }
+
   scheduleAudience(payload: Audience): Observable<Audience> {
     return this.http.post<Audience>(`${this.url}/audiences`, payload);
   }

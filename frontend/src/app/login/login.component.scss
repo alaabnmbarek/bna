@@ -29,15 +29,12 @@
 }
 
 .login-logo {
-  width: 60px;
-  margin-bottom: 10px;
-}
-
-.login-brand-text {
-  font-weight: 900;
-  color: #006847;
-  letter-spacing: 0.5px;
-  font-size: 24px;
+  width: 200px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 20px;
+  border-radius: 15px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
 }
 
 .login-title {
