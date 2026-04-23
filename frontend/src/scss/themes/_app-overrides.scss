@@ -221,22 +221,48 @@ h6 {
   color: rgba(185, 28, 28, 1) !important;
 }
 
-.modal.show .modal-dialog {
+.modal.show .modal-dialog .modal-content {
   animation: appModalIn var(--app-dur-3) var(--app-ease) both;
 }
 
 .modal.app-modal {
-  display: block;
+  display: flex;
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 2000;
+  z-index: 4000;
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
+  overflow: auto;
+  padding: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+body.app-lock-scroll {
+  overflow: hidden !important;
+}
+
+.pcoded-navbar ~ .pcoded-main-container .modal.app-modal {
+  left: calc(-1 * var(--app-sidebar-width));
+  width: calc(100% + var(--app-sidebar-width));
+}
+
+.pcoded-navbar.navbar-collapsed ~ .pcoded-main-container .modal.app-modal {
+  left: calc(-1 * var(--app-sidebar-collapsed-width));
+  width: calc(100% + var(--app-sidebar-collapsed-width));
 }
 
 .modal.app-modal .modal-dialog {
-  margin: 28px auto;
+  margin: 0 auto;
+}
+
+.pcoded-navbar ~ .pcoded-main-container .modal.app-modal .modal-dialog {
+  transform: translateX(calc(var(--app-sidebar-width) / 2));
+}
+
+.pcoded-navbar.navbar-collapsed ~ .pcoded-main-container .modal.app-modal .modal-dialog {
+  transform: translateX(calc(var(--app-sidebar-collapsed-width) / 2));
 }
 
 .modal.app-modal .modal-content {
@@ -350,13 +376,13 @@ h6 {
 }
 
 @keyframes appPageIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes appCardIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes appModalIn {

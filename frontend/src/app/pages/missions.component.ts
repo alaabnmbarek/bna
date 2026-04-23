@@ -389,7 +389,10 @@ export class MissionsPageComponent implements OnInit {
         this.showAssignForm = false;
         this.showBanner('Mission affectée avec succès.', 'success');
         this.prestatairesService.listAllMissions().subscribe({
-          next: (rows) => (this.missions = rows || []),
+          next: (rows) => {
+            this.missions = rows || [];
+            this.prefetchResults(this.missions);
+          },
           error: () => {}
         });
       },

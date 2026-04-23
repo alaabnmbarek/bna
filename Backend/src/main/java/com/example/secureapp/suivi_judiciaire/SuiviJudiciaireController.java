@@ -19,13 +19,13 @@ public class SuiviJudiciaireController {
     private final SuiviJudiciaireService suiviJudiciaireService;
 
     @GetMapping("/affaires")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX', 'AVOCAT')")
     public ResponseEntity<List<AffaireJudiciaireDto>> getAllAffaires(Authentication authentication) {
         return ResponseEntity.ok(suiviJudiciaireService.getAllAffaires(authentication));
     }
 
     @GetMapping("/dossier/{dossierId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX', 'AVOCAT')")
     public ResponseEntity<List<AffaireJudiciaireDto>> getAffairesByDossier(@PathVariable("dossierId") Long dossierId, Authentication authentication) {
         return ResponseEntity.ok(suiviJudiciaireService.getAffairesByDossier(dossierId, authentication));
     }
@@ -49,7 +49,7 @@ public class SuiviJudiciaireController {
     }
 
     @GetMapping("/audiences/affaire/{affaireId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX', 'AVOCAT')")
     public ResponseEntity<List<AudienceDto>> getAudiencesByAffaire(@PathVariable("affaireId") Long affaireId, Authentication authentication) {
         return ResponseEntity.ok(suiviJudiciaireService.getAudiencesByAffaire(affaireId, authentication));
     }
@@ -64,7 +64,7 @@ public class SuiviJudiciaireController {
     }
 
     @PostMapping("/jugements")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX', 'AVOCAT')")
     public ResponseEntity<JugementDto> recordJugement(@RequestBody JugementDto dto, Authentication authentication) {
         return ResponseEntity.ok(suiviJudiciaireService.recordJugement(dto, authentication));
     }

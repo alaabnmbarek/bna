@@ -121,7 +121,7 @@ export const NavigationItems: NavigationItem[] = [
         url: '/suivi-judiciaire',
         icon: 'feather icon-book',
         breadcrumbs: false,
-        role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX']
+        role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_AVOCAT', 'AVOCAT']
       },
       {
         id: 'mission-management',

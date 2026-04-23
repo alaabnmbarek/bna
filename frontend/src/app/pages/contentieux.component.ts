@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
@@ -43,7 +43,7 @@ type GarantiePayload = Record<string, any>;
   templateUrl: './contentieux.component.html',
   styleUrl: './contentieux.component.scss'
 })
-export class ContentieuxPageComponent implements OnInit {
+export class ContentieuxPageComponent implements OnInit, OnDestroy {
   statuses: ContentieuxStatus[] = ['A_VALIDER', 'REJETE', 'OUVERT', 'AFFECTE', 'CHANGEMENT_COMPTE', 'CLOTURE', 'REOUVERT'];
   activeStatus: ContentieuxStatus | 'Tous' = 'Tous';
   search = '';
@@ -80,6 +80,10 @@ export class ContentieuxPageComponent implements OnInit {
 
     this.load();
     this.loadChargeOptions();
+  }
+
+  ngOnDestroy(): void {
+    this.setBodyScrollLocked(false);
   }
 
   canValidate(): boolean {
@@ -288,6 +292,7 @@ export class ContentieuxPageComponent implements OnInit {
       motifCloture: ''
     };
     this.showForm = true;
+    this.setBodyScrollLocked(true);
   }
 
   openEdit(dossier: DossierContentieux): void {
@@ -311,11 +316,13 @@ export class ContentieuxPageComponent implements OnInit {
       motifCloture: dossier.motifCloture || ''
     };
     this.showForm = true;
+    this.setBodyScrollLocked(true);
   }
 
   closeForm(): void {
     this.showForm = false;
     this.resetEditRisques();
+    this.setBodyScrollLocked(false);
   }
 
   submit(): void {
@@ -335,6 +342,7 @@ export class ContentieuxPageComponent implements OnInit {
         next: (updated) => {
           this.dossiers = this.dossiers.map((d) => (d.id === updated.id ? updated : d));
           this.showForm = false;
+          this.setBodyScrollLocked(false);
           this.showBanner('Dossier mis à jour avec succès.', 'success');
         },
         error: () => this.showBanner('Erreur lors de la mise à jour.', 'danger')
@@ -346,6 +354,7 @@ export class ContentieuxPageComponent implements OnInit {
       next: (created) => {
         this.dossiers = [created, ...this.dossiers];
         this.showForm = false;
+        this.setBodyScrollLocked(false);
         if (created.statut === 'A_VALIDER') {
           this.showBanner('Demande envoyée au Responsable Contentieux.', 'info');
         } else {
@@ -354,6 +363,14 @@ export class ContentieuxPageComponent implements OnInit {
       },
       error: () => this.showBanner('Erreur lors de la création.', 'danger')
     });
+  }
+
+  private setBodyScrollLocked(locked: boolean): void {
+    const cls = 'app-lock-scroll';
+    const body = document?.body;
+    if (!body) return;
+    if (locked) body.classList.add(cls);
+    else body.classList.remove(cls);
   }
 
   openDetails(dossier: DossierContentieux): void {
@@ -475,9 +492,44 @@ export class ContentieuxPageComponent implements OnInit {
   }
 
   affaireStatusBadge(statut: AffaireStatut): string {
-    if (statut === 'EN_COURS') return 'badge bg-warning-subtle text-warning';
-    if (statut === 'TERMINEE') return 'badge bg-success-subtle text-success';
-    return 'badge bg-info-subtle text-info';
+    if (statut === 'TERMINEE') return 'app-status-badge app-status-badge--success';
+    if (statut === 'EN_COURS') return 'app-status-badge app-status-badge--warning';
+    return 'app-status-badge app-status-badge--info';
+  }
+
+  dossierStatusBadge(statut: ContentieuxStatus | null | undefined): string {
+    if (!statut) return 'app-status-badge app-status-badge--neutral';
+    if (statut === 'REJETE') return 'app-status-badge app-status-badge--danger';
+    if (statut === 'A_VALIDER') return 'app-status-badge app-status-badge--warning';
+    if (statut === 'OUVERT' || statut === 'AFFECTE' || statut === 'REOUVERT') return 'app-status-badge app-status-badge--success';
+    if (statut === 'CLOTURE') return 'app-status-badge app-status-badge--neutral';
+    return 'app-status-badge app-status-badge--info';
+  }
+
+  procedureStatusBadge(statut: string | null | undefined): string {
+    const s = (statut || '').toUpperCase();
+    if (s === 'JUGEE') return 'app-status-badge app-status-badge--success';
+    if (s === 'EN_COURS') return 'app-status-badge app-status-badge--warning';
+    if (s === 'CLOTUREE') return 'app-status-badge app-status-badge--neutral';
+    if (s === 'SUSPENDUE') return 'app-status-badge app-status-badge--danger';
+    return 'app-status-badge app-status-badge--info';
+  }
+
+  missionStatusBadge(statut: string | null | undefined): string {
+    const s = (statut || '').toUpperCase();
+    if (s === 'TERMINEE') return 'app-status-badge app-status-badge--success';
+    if (s === 'EN_COURS' || s === 'ASSIGNEE') return 'app-status-badge app-status-badge--warning';
+    if (s === 'ECHOUEE') return 'app-status-badge app-status-badge--danger';
+    if (s === 'ANNULEE') return 'app-status-badge app-status-badge--neutral';
+    return 'app-status-badge app-status-badge--info';
+  }
+
+  prestataireTypeBadge(type: string | null | undefined): string {
+    const t = (type || '').toUpperCase();
+    if (t === 'AVOCAT') return 'app-status-badge app-status-badge--info';
+    if (t === 'HUISSIER') return 'app-status-badge app-status-badge--info';
+    if (t === 'EXPERT') return 'app-status-badge app-status-badge--info';
+    return 'app-status-badge app-status-badge--neutral';
   }
 
   prestataireLabel(pr: { nom: string; prenom?: string | null }): string {

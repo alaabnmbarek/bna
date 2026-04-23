@@ -106,6 +106,29 @@
   gap: 10px;
 }
 
+.missions-assign-form {
+  display: flex;
+  flex-direction: column;
+  height: clamp(420px, calc(100vh - 240px), 740px);
+  overflow: hidden;
+}
+
+.missions-assign-form-body {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.missions-assign-form-footer {
+  flex: 0 0 auto;
+  padding-top: 12px;
+  margin-top: 10px;
+  border-top: 1px solid rgba(15, 23, 42, 0.10);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.00), rgba(255, 255, 255, 0.92) 22%, rgba(255, 255, 255, 0.98));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
 .missions-row {
   cursor: pointer;
   transition: background 160ms ease, transform 160ms ease;

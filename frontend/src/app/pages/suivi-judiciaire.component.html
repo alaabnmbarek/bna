@@ -3,7 +3,7 @@
     <app-card cardTitle="Suivi Judiciaire" [options]="false">
       <div class="row align-items-center mb-3">
         <div class="col-sm-6">
-          <button class="btn btn-primary" (click)="openAffaireForm()">
+          <button *ngIf="canCreateProcedure" class="btn btn-primary" (click)="openAffaireForm()">
             <i class="feather icon-plus"></i> Déclencher Procédure
           </button>
         </div>
@@ -44,7 +44,7 @@
                 <button class="btn btn-sm btn-info" (click)="viewAudiences(affaire)" title="Audiences">
                   <i class="feather icon-calendar"></i>
                 </button>
-                <button *ngIf="affaire.statut === 'EN_COURS'" class="btn btn-sm btn-success ml-1" (click)="openJugementForm(affaire)" title="Enregistrer Jugement">
+                <button *ngIf="canRecordJugement && affaire.statut === 'EN_COURS'" class="btn btn-sm btn-success ml-1" (click)="openJugementForm(affaire)" title="Enregistrer Jugement">
                   <i class="feather icon-check-circle"></i>
                 </button>
               </td>

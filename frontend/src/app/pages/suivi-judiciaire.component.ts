@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { SuiviJudiciaireService, AffaireJudiciaire, Audience, Jugement, ProcedureType, AudienceStatus, DecisionType, AssignationTarget } from '../suivi-judiciaire/suivi-judiciaire.service';
@@ -14,7 +14,7 @@ import { AuthService } from '../auth/auth.service';
   templateUrl: './suivi-judiciaire.component.html',
   styleUrl: './suivi-judiciaire.component.scss'
 })
-export class SuiviJudiciaireComponent implements OnInit {
+export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   affaires: AffaireJudiciaire[] = [];
   audiences: Audience[] = [];
   dossiers: DossierContentieux[] = [];
@@ -56,10 +56,33 @@ export class SuiviJudiciaireComponent implements OnInit {
     public auth: AuthService
   ) {}
 
+  get canCreateProcedure(): boolean {
+    const r = this.auth.role();
+    return ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ADMIN', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX'].includes(r || '');
+  }
+
+  get canRecordJugement(): boolean {
+    const r = this.auth.role();
+    return [
+      'ROLE_ADMIN',
+      'ROLE_CHARGE_DOSSIER',
+      'ROLE_RESPONSABLE_CONTENTIEUX',
+      'ROLE_AVOCAT',
+      'ADMIN',
+      'CHARGE_DOSSIER',
+      'RESPONSABLE_CONTENTIEUX',
+      'AVOCAT'
+    ].includes(r || '');
+  }
+
   ngOnInit(): void {
     this.loadAffaires();
     this.loadDossiers();
     this.loadPrestataires();
+  }
+
+  ngOnDestroy(): void {
+    this.setBodyScrollLocked(false);
   }
 
   loadAffaires(): void {
@@ -133,6 +156,7 @@ export class SuiviJudiciaireComponent implements OnInit {
     const id = Number(dossierId);
     if (!id || !Number.isFinite(id)) return;
     this.showDossierDetails = true;
+    this.setBodyScrollLocked(true);
     this.dossierDetailsLoading = true;
     this.dossierDetails = null;
     this.contentieuxService.getDossierDetails(id).subscribe({
@@ -150,6 +174,15 @@ export class SuiviJudiciaireComponent implements OnInit {
     this.showDossierDetails = false;
     this.dossierDetailsLoading = false;
     this.dossierDetails = null;
+    this.setBodyScrollLocked(false);
+  }
+
+  private setBodyScrollLocked(locked: boolean): void {
+    const cls = 'app-lock-scroll';
+    const body = document?.body;
+    if (!body) return;
+    if (locked) body.classList.add(cls);
+    else body.classList.remove(cls);
   }
 
   onDossierChange(dossierId: number): void {

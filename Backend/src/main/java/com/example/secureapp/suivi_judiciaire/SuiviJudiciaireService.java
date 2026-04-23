@@ -35,6 +35,11 @@ public class SuiviJudiciaireService {
             affaires = affaireRepository.findAll().stream()
                     .filter(a -> a.getDossierContentieux().getChargeDossierId() != null && a.getDossierContentieux().getChargeDossierId().equals(uid))
                     .collect(Collectors.toList());
+        } else if (isAvocat(authentication)) {
+            Long pid = resolvePrestataireId(authentication);
+            affaires = affaireRepository.findAll().stream()
+                    .filter(a -> a.getAvocat() != null && a.getAvocat().getId() != null && a.getAvocat().getId().equals(pid))
+                    .collect(Collectors.toList());
         } else {
             affaires = affaireRepository.findAll();
         }
@@ -54,10 +59,17 @@ public class SuiviJudiciaireService {
                 throw new AccessDeniedException("Accès refusé");
             }
         }
-
-        return affaireRepository.findByDossierContentieuxId(dossierId).stream()
-                .map(this::mapToAffaireDto)
-                .collect(Collectors.toList());
+        List<AffaireJudiciaireEntity> affaires = affaireRepository.findByDossierContentieuxId(dossierId);
+        if (isAvocat(authentication)) {
+            Long pid = resolvePrestataireId(authentication);
+            affaires = affaires.stream()
+                    .filter(a -> a.getAvocat() != null && a.getAvocat().getId() != null && a.getAvocat().getId().equals(pid))
+                    .collect(Collectors.toList());
+            if (affaires.isEmpty()) {
+                throw new AccessDeniedException("Accès refusé");
+            }
+        }
+        return affaires.stream().map(this::mapToAffaireDto).collect(Collectors.toList());
     }
 
     @Transactional
@@ -215,6 +227,13 @@ public class SuiviJudiciaireService {
                 throw new AccessDeniedException("Accès refusé");
             }
         }
+        if (isAvocat(authentication)) {
+            Long pid = resolvePrestataireId(authentication);
+            Long avocatId = affaire.getAvocat() != null ? affaire.getAvocat().getId() : null;
+            if (avocatId == null || !avocatId.equals(pid)) {
+                throw new AccessDeniedException("Accès refusé");
+            }
+        }
         return affaire;
     }
 
@@ -223,10 +242,28 @@ public class SuiviJudiciaireService {
         return authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_CHARGE_DOSSIER"));
     }
 
+    private boolean isAvocat(Authentication authentication) {
+        if (authentication == null || authentication.getAuthorities() == null) return false;
+        return authentication.getAuthorities().stream().anyMatch(a -> {
+            String v = a.getAuthority();
+            return "ROLE_AVOCAT".equals(v) || "AVOCAT".equals(v);
+        });
+    }
+
     private Long requireCurrentUserId(Authentication authentication) {
         String username = authentication != null ? authentication.getName() : null;
         if (username == null || username.isBlank()) throw new RuntimeException("Utilisateur non trouvé");
         return userRepository.findByUsername(username).map(com.example.secureapp.user.UserEntity::getId).orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+    }
+
+    private Long resolvePrestataireId(Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : null;
+        if (username == null || username.isBlank()) throw new RuntimeException("Utilisateur non trouvé");
+        String email = userRepository.findByUsername(username).map(u -> u.getEmail() != null && !u.getEmail().isBlank() ? u.getEmail() : username)
+                .orElse(username);
+        return prestataireRepository.findFirstByEmailIgnoreCase(email)
+                .map(PrestataireEntity::getId)
+                .orElseThrow(() -> new RuntimeException("Prestataire lié au compte introuvable (vérifiez l'email du profil et du prestataire)"));
     }
 
     private AffaireJudiciaireDto mapToAffaireDto(AffaireJudiciaireEntity entity) {

@@ -42,8 +42,9 @@
             </div>
           </div>
 
-          <form *ngIf="showAssignForm" class="row g-3 mt-1" (submit)="$event.preventDefault(); submitMission()">
-            <div class="col-12">
+          <form *ngIf="showAssignForm" class="missions-assign-form" (submit)="$event.preventDefault(); submitMission()">
+            <div class="missions-assign-form-body row g-3 mt-1">
+              <div class="col-12">
               <label class="form-label">Type mission *</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-list"></i></span>
@@ -51,33 +52,33 @@
                   <option *ngFor="let t of missionTypes" [ngValue]="t.value">{{ t.label }}</option>
                 </select>
               </div>
-            </div>
+              </div>
 
-            <div class="col-12 col-md-6">
+              <div class="col-12 col-md-6">
               <label class="form-label">Code mission</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-hash"></i></span>
                 <input class="form-control" [(ngModel)]="formMission.codeMission" name="assign_codeMission" placeholder="Ex: MIS-2026-01">
               </div>
-            </div>
+              </div>
 
-            <div class="col-12 col-md-6">
+              <div class="col-12 col-md-6">
               <label class="form-label">Durée estimée (jours)</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-clock"></i></span>
                 <input class="form-control" [(ngModel)]="formMission.dureeEstimee" name="assign_dureeEstimee" type="number" min="0" placeholder="Ex: 15">
               </div>
-            </div>
+              </div>
 
-            <div class="col-12">
+              <div class="col-12">
               <label class="form-label">Description</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-align-left"></i></span>
                 <textarea class="form-control" [(ngModel)]="formMission.description" name="assign_description" rows="3" placeholder="Détails de la mission..."></textarea>
               </div>
-            </div>
+              </div>
 
-            <div class="col-12">
+              <div class="col-12">
               <label class="form-label">Prestataire assigné (type) *</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-user"></i></span>
@@ -88,9 +89,9 @@
                   <option [ngValue]="'EXPERT'">Expert</option>
                 </select>
               </div>
-            </div>
+              </div>
 
-            <div class="col-12">
+              <div class="col-12">
               <label class="form-label">Nom prestataire *</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-users"></i></span>
@@ -101,25 +102,25 @@
                   </option>
                 </select>
               </div>
-            </div>
+              </div>
 
-            <div class="col-12 col-md-6">
+              <div class="col-12 col-md-6">
               <label class="form-label">Date création</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-calendar"></i></span>
                 <input class="form-control" [value]="formMission.dateCreation" disabled>
               </div>
-            </div>
+              </div>
 
-            <div class="col-12 col-md-6">
+              <div class="col-12 col-md-6">
               <label class="form-label">Affaire liée (auto)</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-link"></i></span>
                 <input class="form-control" [value]="formMission.affaireNumero || '—'" disabled>
               </div>
-            </div>
+              </div>
 
-            <div class="col-12">
+              <div class="col-12">
               <label class="form-label">Procédure *</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="feather icon-book"></i></span>
@@ -130,9 +131,10 @@
                   </option>
                 </select>
               </div>
+              </div>
             </div>
 
-            <div class="col-12">
+            <div class="missions-assign-form-footer">
               <div class="missions-form-actions">
                 <button class="btn btn-outline-secondary" type="button" (click)="cancelAssignForm()" [disabled]="savingMission">
                   Annuler
@@ -143,11 +145,11 @@
                   Affecter
                 </button>
               </div>
-            </div>
 
-            <div class="col-12" *ngIf="missionCreateError">
-              <div class="alert alert-danger mb-0">
-                {{ missionCreateError }}
+              <div class="mt-3" *ngIf="missionCreateError">
+                <div class="alert alert-danger mb-0">
+                  {{ missionCreateError }}
+                </div>
               </div>
             </div>
           </form>
@@ -185,6 +187,9 @@
                 <tr>
                   <th class="sortable" (click)="toggleMissionSort('code')">Code {{ sortIndicator('code') }}</th>
                   <th class="sortable" (click)="toggleMissionSort('type')">Type {{ sortIndicator('type') }}</th>
+                  <th class="text-nowrap">Dossier</th>
+                  <th class="text-nowrap">Tribunal</th>
+                  <th class="text-nowrap">Affaire</th>
                   <th class="sortable" (click)="toggleMissionSort('statut')">Statut {{ sortIndicator('statut') }}</th>
                   <th class="sortable text-nowrap" (click)="toggleMissionSort('dateDebut')">Date début {{ sortIndicator('dateDebut') }}</th>
                   <th class="sortable text-nowrap" (click)="toggleMissionSort('dateFin')">Date fin {{ sortIndicator('dateFin') }}</th>
@@ -195,13 +200,16 @@
                 <tr *ngFor="let m of displayedMissions" class="missions-row" (click)="openMissionModal(m)">
                   <td class="text-nowrap fw-bold">{{ missionCodeOrAuto(m) }}</td>
                   <td>{{ missionTypeLabelOrInfer(m) }}</td>
+                  <td class="text-nowrap">{{ m.dossierReference || '—' }}</td>
+                  <td class="text-nowrap">{{ m.procedureTribunal || '—' }}</td>
+                  <td class="text-nowrap">{{ m.affaireNumero || '—' }}</td>
                   <td><span [class]="statusBadgeClass(m)">{{ statusLabel(m) }}</span></td>
                   <td class="text-nowrap">{{ m.dateDebut ? (m.dateDebut | date:'dd/MM/yyyy') : (m.createdAt ? (m.createdAt | date:'dd/MM/yyyy') : '—') }}</td>
                   <td class="text-nowrap">{{ (m.dateFin || m.dateEcheance) ? ((m.dateFin || m.dateEcheance) | date:'dd/MM/yyyy') : '—' }}</td>
                   <td class="text-nowrap">{{ prestataireNameById(m.prestataireId) }}</td>
                 </tr>
                 <tr *ngIf="displayedMissions.length === 0">
-                  <td colspan="6" class="text-center text-muted py-4">Aucune mission.</td>
+                  <td colspan="9" class="text-center text-muted py-4">Aucune mission.</td>
                 </tr>
               </tbody>
             </table>

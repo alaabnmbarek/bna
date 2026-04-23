@@ -172,11 +172,14 @@
   </app-card>
 </div>
 
-<div *ngIf="showForm" class="contentieux-overlay" (click)="closeForm()">
+<div *ngIf="showForm" class="contentieux-overlay contentieux-overlay--center" (click)="closeForm()">
   <div class="contentieux-modal" (click)="$event.stopPropagation()">
     <div class="contentieux-modal-head">
-      <div class="contentieux-modal-title">{{ editingId ? 'Modifier dossier contentieux' : 'Nouveau dossier contentieux' }}</div>
-      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeForm()">Fermer</button>
+      <div class="contentieux-modal-title">
+        <i class="feather icon-folder me-2"></i>
+        {{ editingId ? 'Modifier dossier' : 'Nouveau dossier' }}
+      </div>
+      <button type="button" class="btn-close" (click)="closeForm()"></button>
     </div>
 
     <form (ngSubmit)="submit()" class="contentieux-modal-body">
@@ -376,10 +379,13 @@
         </div>
 
         <div class="col-12">
-          <div class="contentieux-actions">
+          <div class="contentieux-modal-footer">
+            <button class="btn btn-outline-secondary contentieux-submit" type="button" (click)="closeForm()">
+              Annuler
+            </button>
             <button class="btn btn-success contentieux-submit" type="submit">
-              <i class="feather icon-save me-2"></i>
-              Enregistrer
+              <i class="feather icon-check-circle me-2"></i>
+              {{ editingId ? 'Enregistrer' : 'Créer' }}
             </button>
           </div>
         </div>
@@ -453,34 +459,36 @@
             Chargement des détails...
           </div>
 
-          <div class="contentieux-details-grid">
-            <div class="contentieux-detail">
-              <div class="contentieux-detail-k">Numéro du dossier</div>
-              <div class="contentieux-detail-v">{{ dossierDetails?.dossier?.reference || selected?.reference }}</div>
-            </div>
-            <div class="contentieux-detail">
-              <div class="contentieux-detail-k">Statut</div>
-              <div class="contentieux-detail-v">
-                <span [class]="selected ? badgeClass(selected.statut) : ''">
-                  {{ selected ? statusLabel(selected.statut) : '' }}
-                </span>
+          <div class="contentieux-summary-card">
+            <div class="contentieux-details-grid">
+              <div class="contentieux-detail">
+                <div class="contentieux-detail-k"><i class="feather icon-hash"></i> Numéro du dossier</div>
+                <div class="contentieux-detail-v">{{ dossierDetails?.dossier?.reference || selected?.reference }}</div>
               </div>
-            </div>
-            <div class="contentieux-detail">
-              <div class="contentieux-detail-k">Client / Partie concernée</div>
-              <div class="contentieux-detail-v">{{ dossierDetails?.dossier?.nomDebiteur || selected?.nomDebiteur || '—' }}</div>
-            </div>
-            <div class="contentieux-detail">
-              <div class="contentieux-detail-k">Date de création</div>
-              <div class="contentieux-detail-v">{{ (dossierDetails?.dossier?.createdAt || selected?.createdAt) ? ((dossierDetails?.dossier?.createdAt || selected?.createdAt) | date:'dd/MM/yyyy HH:mm') : '—' }}</div>
-            </div>
-            <div class="contentieux-detail">
-              <div class="contentieux-detail-k">Chargé</div>
-              <div class="contentieux-detail-v">{{ dossierDetails?.dossier?.chargeDossier || selected?.chargeDossier || '—' }}</div>
-            </div>
-            <div class="contentieux-detail">
-              <div class="contentieux-detail-k">Compte</div>
-              <div class="contentieux-detail-v contentieux-mono">{{ dossierDetails?.dossier?.compteActuel || selected?.compteActuel || '—' }}</div>
+              <div class="contentieux-detail">
+                <div class="contentieux-detail-k"><i class="feather icon-flag"></i> Statut</div>
+                <div class="contentieux-detail-v">
+                  <span [class]="dossierStatusBadge(dossierDetails?.dossier?.statut || selected?.statut || null)">
+                    {{ selected ? statusLabel(selected.statut) : '' }}
+                  </span>
+                </div>
+              </div>
+              <div class="contentieux-detail">
+                <div class="contentieux-detail-k"><i class="feather icon-user"></i> Client / Partie concernée</div>
+                <div class="contentieux-detail-v">{{ dossierDetails?.dossier?.nomDebiteur || selected?.nomDebiteur || '—' }}</div>
+              </div>
+              <div class="contentieux-detail">
+                <div class="contentieux-detail-k"><i class="feather icon-calendar"></i> Date de création</div>
+                <div class="contentieux-detail-v">{{ (dossierDetails?.dossier?.createdAt || selected?.createdAt) ? ((dossierDetails?.dossier?.createdAt || selected?.createdAt) | date:'dd/MM/yyyy HH:mm') : '—' }}</div>
+              </div>
+              <div class="contentieux-detail">
+                <div class="contentieux-detail-k"><i class="feather icon-user-check"></i> Chargé</div>
+                <div class="contentieux-detail-v">{{ dossierDetails?.dossier?.chargeDossier || selected?.chargeDossier || '—' }}</div>
+              </div>
+              <div class="contentieux-detail">
+                <div class="contentieux-detail-k"><i class="feather icon-credit-card"></i> Compte</div>
+                <div class="contentieux-detail-v contentieux-mono">{{ dossierDetails?.dossier?.compteActuel || selected?.compteActuel || '—' }}</div>
+              </div>
             </div>
           </div>
 
@@ -629,7 +637,7 @@
                     <i class="feather icon-file-minus me-2"></i>
                     {{ p.typeProcedure }} — {{ p.referenceTribunal }}
                   </div>
-                  <span class="badge bg-light-primary text-primary">{{ p.statut }}</span>
+                  <span [class]="procedureStatusBadge(p.statut)">{{ p.statut }}</span>
                 </div>
                 <div class="affaire-item-meta">
                   <div class="affaire-meta">
@@ -673,7 +681,7 @@
                     <i class="feather icon-check-square me-2"></i>
                     {{ m.titre }}
                   </div>
-                  <span class="badge bg-light-secondary text-secondary">{{ m.statut }}</span>
+                  <span [class]="missionStatusBadge(m.statut)">{{ m.statut }}</span>
                 </div>
                 <div class="affaire-item-meta">
                   <div class="affaire-meta">
@@ -708,7 +716,7 @@
                     <i class="feather icon-user-check me-2"></i>
                     {{ prestataireLabel(pr) }}
                   </div>
-                  <span class="badge bg-light-info text-info">{{ pr.type }}</span>
+                  <span [class]="prestataireTypeBadge(pr.type)">{{ pr.type }}</span>
                 </div>
                 <div class="affaire-item-meta">
                   <div class="affaire-meta" *ngIf="pr.email">
