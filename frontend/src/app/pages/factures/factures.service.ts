@@ -80,4 +80,14 @@ export class FacturesService {
     form.append('file', file);
     return this.http.post<FactureImportResponse>(`${this.apiUrl}/import`, form);
   }
+
+  downloadFile(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/file`, { responseType: 'blob' });
+  }
+
+  uploadFile(id: number, file: File): Observable<Facture> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<Facture>(`${this.apiUrl}/${id}/file`, form);
+  }
 }

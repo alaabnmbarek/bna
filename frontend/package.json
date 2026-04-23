@@ -20,6 +20,8 @@
     "@popperjs/core": "2.11.8",
     "apexcharts": "3.46.0",
     "bootstrap": "5.3.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "ng-apexcharts": "1.9.0",
     "ngx-scrollbar": "13.0.0",
     "rxjs": "7.8.1",

@@ -166,225 +166,225 @@
   </app-card>
 </div>
 
-<div *ngIf="showForm" class="contentieux-overlay contentieux-overlay--center" (click)="closeForm()">
-  <div class="contentieux-modal" (click)="$event.stopPropagation()">
-    <div class="contentieux-modal-head">
-      <div class="contentieux-modal-title">
-        <i class="feather icon-folder me-2"></i>
-        {{ editingId ? 'Modifier dossier' : 'Nouveau dossier' }}
+<div *ngIf="showForm" class="modal fade show app-modal" (click)="closeForm()">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="feather icon-folder me-2"></i>
+          {{ editingId ? 'Modifier dossier' : 'Nouveau dossier' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeForm()"></button>
       </div>
-      <button type="button" class="btn-close" (click)="closeForm()"></button>
+
+      <form (ngSubmit)="submit()" class="d-flex flex-column h-100">
+        <div class="modal-body flex-grow-1 overflow-auto">
+          <div class="row g-4">
+            <div class="col-12">
+              <div class="contentieux-card">
+                <div class="contentieux-card-title">Informations générales</div>
+
+                <div class="row g-3 mt-1">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label contentieux-label">Référence dossier</label>
+                    <input class="form-control contentieux-input" [(ngModel)]="form.reference" name="reference" placeholder="Générée automatiquement" readonly>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label contentieux-label">Objet</label>
+                    <input class="form-control contentieux-input" [(ngModel)]="form.objet" name="objet" placeholder="Ex: Recouvrement créance professionnelle">
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label contentieux-label">Nom du débiteur</label>
+                    <input class="form-control contentieux-input" [(ngModel)]="form.nomDebiteur" name="nomDebiteur" placeholder="Nom du client ou de la partie adverse">
+                  </div>
+
+                  <div class="col-12 col-md-4">
+                    <label class="form-label contentieux-label">Compte actuel</label>
+                    <input class="form-control contentieux-input" [(ngModel)]="form.compteActuel" name="compteActuel" placeholder="000123456789">
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label contentieux-label">Agence</label>
+                    <input class="form-control contentieux-input" [(ngModel)]="form.agence" name="agence" placeholder="Agence BNA Tunis">
+                  </div>
+
+                  <div class="col-12 col-md-6">
+                    <label class="form-label contentieux-label">Chargé de dossier</label>
+                    <select class="form-select contentieux-input" [(ngModel)]="form.chargeDossierId" name="chargeDossierId">
+                      <option [ngValue]="null">Non affecté</option>
+                      <option *ngFor="let a of chargeOptions" [ngValue]="a.id">{{ a.label }}</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label contentieux-label">Date d’ouverture</label>
+                    <input class="form-control contentieux-input" [(ngModel)]="form.dateOuverture" name="dateOuverture" type="date">
+                  </div>
+
+                  <div class="col-12 col-md-6">
+                    <label class="form-label contentieux-label">Montant total engagé</label>
+                    <input class="form-control contentieux-input" [(ngModel)]="form.montantEngage" name="montantEngage" placeholder="0.00">
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label contentieux-label">Montant récupéré</label>
+                    <input class="form-control contentieux-input" [(ngModel)]="form.montantRecupere" name="montantRecupere" placeholder="0.00">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12" *ngIf="editingId">
+              <div class="contentieux-card">
+                <div class="contentieux-card-title d-flex align-items-center justify-content-between">
+                  <span>Risques associés</span>
+                  <button type="button" class="btn btn-sm btn-outline-primary" (click)="openRisqueForEditing()">
+                    <i class="feather icon-plus-circle me-2"></i>Ajouter / Modifier
+                  </button>
+                </div>
+
+                <div *ngIf="editRisquesLoading" class="mt-2">
+                  <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                  Chargement des risques...
+                </div>
+
+                <div *ngIf="!editRisquesLoading" class="row g-3 mt-1">
+                  <div class="col-12">
+                    <div class="fw-bold mb-2">Engagements</div>
+                    <div class="table-responsive card">
+                      <table class="table table-hover mb-0">
+                        <thead>
+                          <tr>
+                            <th>N° compte</th>
+                            <th>Titre</th>
+                            <th>Num risque</th>
+                            <th class="text-end">Montant restant</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngIf="editEngagementItems.length === 0">
+                            <td colspan="4">Aucun engagement.</td>
+                          </tr>
+                          <tr *ngFor="let e of editEngagementItems">
+                            <td class="contentieux-mono">{{ e.payload?.numeroCompte || '—' }}</td>
+                            <td>{{ e.payload?.titreCreance || '—' }}</td>
+                            <td class="contentieux-mono">{{ e.payload?.numRisque || '—' }}</td>
+                            <td class="text-end contentieux-mono">{{ e.payload?.montantRestant || '—' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="fw-bold mb-2">Patrimoines</div>
+                    <div class="table-responsive card">
+                      <table class="table table-hover mb-0">
+                        <thead>
+                          <tr>
+                            <th>Nom</th>
+                            <th>Prénom</th>
+                            <th>Date naissance</th>
+                            <th>Numéro dossier</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngIf="editPatrimoineItems.length === 0">
+                            <td colspan="4">Aucun patrimoine.</td>
+                          </tr>
+                          <tr *ngFor="let p of editPatrimoineItems">
+                            <td>{{ p.payload?.nom || '—' }}</td>
+                            <td>{{ p.payload?.prenom || '—' }}</td>
+                            <td class="contentieux-mono">{{ p.payload?.dateNaissance || '—' }}</td>
+                            <td class="contentieux-mono">{{ p.payload?.numeroDossier || '—' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-xl-6">
+                    <div class="fw-bold mb-2">Garanties — Hypothèques</div>
+                    <div class="table-responsive card">
+                      <table class="table table-hover mb-0">
+                        <thead>
+                          <tr>
+                            <th>N° compte</th>
+                            <th class="text-end">Montant</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngIf="editHypothequeItems.length === 0">
+                            <td colspan="2">Aucune hypothèque.</td>
+                          </tr>
+                          <tr *ngFor="let h of editHypothequeItems">
+                            <td class="contentieux-mono">{{ h.payload?.numeroCompte || '—' }}</td>
+                            <td class="text-end contentieux-mono">{{ h.payload?.montant || '—' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-xl-6">
+                    <div class="fw-bold mb-2">Garanties — Nantissements</div>
+                    <div class="table-responsive card">
+                      <table class="table table-hover mb-0">
+                        <thead>
+                          <tr>
+                            <th>N° compte</th>
+                            <th class="text-end">Montant</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngIf="editNantissementItems.length === 0">
+                            <td colspan="2">Aucun nantissement.</td>
+                          </tr>
+                          <tr *ngFor="let n of editNantissementItems">
+                            <td class="contentieux-mono">{{ n.payload?.numeroCompte || '—' }}</td>
+                            <td class="text-end contentieux-mono">{{ n.payload?.montant || '—' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="fw-bold mb-2">Garanties — Cautions</div>
+                    <div class="table-responsive card">
+                      <table class="table table-hover mb-0">
+                        <thead>
+                          <tr>
+                            <th>N° compte</th>
+                            <th class="text-end">Montant limite</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngIf="editCautionItems.length === 0">
+                            <td colspan="2">Aucune caution.</td>
+                          </tr>
+                          <tr *ngFor="let c of editCautionItems">
+                            <td class="contentieux-mono">{{ c.payload?.numeroCompte || '—' }}</td>
+                            <td class="text-end contentieux-mono">{{ c.payload?.montantLimite || '—' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" type="button" (click)="closeForm()">Annuler</button>
+          <button class="btn btn-success" type="submit">
+            <i class="feather icon-check-circle me-2"></i>
+            {{ editingId ? 'Enregistrer' : 'Créer' }}
+          </button>
+        </div>
+      </form>
     </div>
-
-    <form (ngSubmit)="submit()" class="contentieux-modal-body">
-      <div class="row g-4">
-        <div class="col-12 col-xl-6">
-          <div class="contentieux-card">
-            <div class="contentieux-card-title">Informations générales</div>
-
-            <div class="row g-3 mt-1">
-              <div class="col-12 col-md-6">
-                <label class="form-label contentieux-label">Référence dossier</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.reference" name="reference" placeholder="Générée automatiquement" readonly>
-              </div>
-
-              <div class="col-12">
-                <label class="form-label contentieux-label">Objet</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.objet" name="objet" placeholder="Ex: Recouvrement créance professionnelle">
-              </div>
-
-              <div class="col-12">
-                <label class="form-label contentieux-label">Nom du débiteur</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.nomDebiteur" name="nomDebiteur" placeholder="Nom du client ou de la partie adverse">
-              </div>
-
-              <div class="col-12 col-md-4">
-                <label class="form-label contentieux-label">Compte actuel</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.compteActuel" name="compteActuel" placeholder="000123456789">
-              </div>
-              <div class="col-12 col-md-4">
-                <label class="form-label contentieux-label">Agence</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.agence" name="agence" placeholder="Agence BNA Tunis">
-              </div>
-
-              <div class="col-12 col-md-6">
-                <label class="form-label contentieux-label">Chargé de dossier</label>
-                <select class="form-select contentieux-input" [(ngModel)]="form.chargeDossierId" name="chargeDossierId">
-                  <option [ngValue]="null">Non affecté</option>
-                  <option *ngFor="let a of chargeOptions" [ngValue]="a.id">{{ a.label }}</option>
-                </select>
-              </div>
-              <div class="col-12 col-md-6">
-                <label class="form-label contentieux-label">Date d’ouverture</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.dateOuverture" name="dateOuverture" type="date">
-              </div>
-
-              <div class="col-12 col-md-6">
-                <label class="form-label contentieux-label">Montant total engagé</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.montantEngage" name="montantEngage" placeholder="0.00">
-              </div>
-              <div class="col-12 col-md-6">
-                <label class="form-label contentieux-label">Montant récupéré</label>
-                <input class="form-control contentieux-input" [(ngModel)]="form.montantRecupere" name="montantRecupere" placeholder="0.00">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12" *ngIf="editingId">
-          <div class="contentieux-card">
-            <div class="contentieux-card-title d-flex align-items-center justify-content-between">
-              <span>Risques associés</span>
-              <button type="button" class="btn btn-sm btn-outline-primary" (click)="openRisqueForEditing()">
-                <i class="feather icon-plus-circle me-2"></i>Ajouter / Modifier
-              </button>
-            </div>
-
-            <div *ngIf="editRisquesLoading" class="mt-2">
-              <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-              Chargement des risques...
-            </div>
-
-            <div *ngIf="!editRisquesLoading" class="row g-3 mt-1">
-              <div class="col-12">
-                <div class="fw-bold mb-2">Engagements</div>
-                <div class="table-responsive card">
-                  <table class="table table-hover mb-0">
-                    <thead>
-                      <tr>
-                        <th>N° compte</th>
-                        <th>Titre</th>
-                        <th>Num risque</th>
-                        <th class="text-end">Montant restant</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngIf="editEngagementItems.length === 0">
-                        <td colspan="4">Aucun engagement.</td>
-                      </tr>
-                      <tr *ngFor="let e of editEngagementItems">
-                        <td class="contentieux-mono">{{ e.payload?.numeroCompte || '—' }}</td>
-                        <td>{{ e.payload?.titreCreance || '—' }}</td>
-                        <td class="contentieux-mono">{{ e.payload?.numRisque || '—' }}</td>
-                        <td class="text-end contentieux-mono">{{ e.payload?.montantRestant || '—' }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div class="col-12">
-                <div class="fw-bold mb-2">Patrimoines</div>
-                <div class="table-responsive card">
-                  <table class="table table-hover mb-0">
-                    <thead>
-                      <tr>
-                        <th>Nom</th>
-                        <th>Prénom</th>
-                        <th>Date naissance</th>
-                        <th>Numéro dossier</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngIf="editPatrimoineItems.length === 0">
-                        <td colspan="4">Aucun patrimoine.</td>
-                      </tr>
-                      <tr *ngFor="let p of editPatrimoineItems">
-                        <td>{{ p.payload?.nom || '—' }}</td>
-                        <td>{{ p.payload?.prenom || '—' }}</td>
-                        <td class="contentieux-mono">{{ p.payload?.dateNaissance || '—' }}</td>
-                        <td class="contentieux-mono">{{ p.payload?.numeroDossier || '—' }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div class="col-12 col-xl-6">
-                <div class="fw-bold mb-2">Garanties — Hypothèques</div>
-                <div class="table-responsive card">
-                  <table class="table table-hover mb-0">
-                    <thead>
-                      <tr>
-                        <th>N° compte</th>
-                        <th class="text-end">Montant</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngIf="editHypothequeItems.length === 0">
-                        <td colspan="2">Aucune hypothèque.</td>
-                      </tr>
-                      <tr *ngFor="let h of editHypothequeItems">
-                        <td class="contentieux-mono">{{ h.payload?.numeroCompte || '—' }}</td>
-                        <td class="text-end contentieux-mono">{{ h.payload?.montant || '—' }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div class="col-12 col-xl-6">
-                <div class="fw-bold mb-2">Garanties — Nantissements</div>
-                <div class="table-responsive card">
-                  <table class="table table-hover mb-0">
-                    <thead>
-                      <tr>
-                        <th>N° compte</th>
-                        <th class="text-end">Montant</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngIf="editNantissementItems.length === 0">
-                        <td colspan="2">Aucun nantissement.</td>
-                      </tr>
-                      <tr *ngFor="let n of editNantissementItems">
-                        <td class="contentieux-mono">{{ n.payload?.numeroCompte || '—' }}</td>
-                        <td class="text-end contentieux-mono">{{ n.payload?.montant || '—' }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div class="col-12">
-                <div class="fw-bold mb-2">Garanties — Cautions</div>
-                <div class="table-responsive card">
-                  <table class="table table-hover mb-0">
-                    <thead>
-                      <tr>
-                        <th>N° compte</th>
-                        <th class="text-end">Montant limite</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngIf="editCautionItems.length === 0">
-                        <td colspan="2">Aucune caution.</td>
-                      </tr>
-                      <tr *ngFor="let c of editCautionItems">
-                        <td class="contentieux-mono">{{ c.payload?.numeroCompte || '—' }}</td>
-                        <td class="text-end contentieux-mono">{{ c.payload?.montantLimite || '—' }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12">
-          <div class="contentieux-modal-footer">
-            <button class="btn btn-outline-secondary contentieux-submit" type="button" (click)="closeForm()">
-              Annuler
-            </button>
-            <button class="btn btn-success contentieux-submit" type="submit">
-              <i class="feather icon-check-circle me-2"></i>
-              {{ editingId ? 'Enregistrer' : 'Créer' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </form>
   </div>
 </div>
 

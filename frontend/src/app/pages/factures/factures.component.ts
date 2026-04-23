@@ -84,6 +84,99 @@ export class FacturesComponent implements OnInit {
     window.print();
   }
 
+  async downloadFacturePdf() {
+    const el = document.getElementById('printableFacture');
+    if (!el) {
+      this.showBanner('danger', 'Impossible de générer le PDF');
+      return;
+    }
+
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
+
+      const canvas = await html2canvas(el as HTMLElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+        scrollX: 0,
+        scrollY: -window.scrollY
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'pt', 'a4');
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pageWidth;
+      const imgHeight = canvas.height * (imgWidth / canvas.width);
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
+
+      const numero = this.selectedFactureDetail?.numero || 'facture';
+      pdf.save(`${numero}.pdf`);
+    } catch (err) {
+      console.error('[DEBUG] Erreur génération PDF:', err);
+      this.showBanner('danger', 'Erreur lors de la génération du PDF');
+    }
+  }
+
+  downloadJustificatif(f: Facture) {
+    if (!f?.id) return;
+    this.facturesService.downloadFile(f.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const name = (f.fichierJustificatif && f.fichierJustificatif.includes('.'))
+          ? f.fichierJustificatif
+          : `${f.numero}.pdf`;
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('[DEBUG] Erreur téléchargement justificatif:', err);
+        this.showBanner('danger', 'Erreur lors du téléchargement du justificatif');
+      }
+    });
+  }
+
+  onJustificatifSelected(event: any, f: Facture | null) {
+    if (!f?.id) return;
+    const file: File | undefined = event?.target?.files?.[0];
+    if (!file) return;
+    this.facturesService.uploadFile(f.id, file).subscribe({
+      next: (updated) => {
+        this.showBanner('success', 'Justificatif uploadé');
+        if (this.selectedFactureDetail?.id === updated.id) {
+          this.selectedFactureDetail.fichierJustificatif = updated.fichierJustificatif;
+        }
+        const idx = this.factures.findIndex(x => x.id === updated.id);
+        if (idx >= 0) this.factures[idx] = { ...this.factures[idx], ...updated };
+        this.applyFilters();
+      },
+      error: (err) => {
+        console.error('[DEBUG] Erreur upload justificatif:', err);
+        this.showBanner('danger', 'Erreur lors de l’upload du justificatif');
+      }
+    });
+  }
+
   validateFacture(id: number) {
     if (!confirm('Voulez-vous vraiment valider cette facture ?')) return;
     const f = this.factures.find(x => x.id === id);

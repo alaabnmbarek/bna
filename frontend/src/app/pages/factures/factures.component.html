@@ -16,15 +16,6 @@
           </div>
         </div>
         <div class="factures-actions">
-          <button class="btn btn-outline-secondary btn-sm" (click)="exportData('pdf')" *ngIf="activeTab === 'FACTURES'">
-            <i class="feather icon-file-text me-1"></i> PDF
-          </button>
-          <button class="btn btn-outline-secondary btn-sm" (click)="exportData('excel')" *ngIf="activeTab === 'FACTURES'">
-            <i class="feather icon-download me-1"></i> Excel
-          </button>
-          <button class="btn btn-outline-primary btn-sm" type="button" (click)="openImportModal()" *ngIf="activeTab === 'FACTURES'">
-            <i class="feather icon-upload-cloud me-1"></i> Importer
-          </button>
           <button class="btn btn-primary btn-sm" (click)="openModal()" *ngIf="activeTab === 'FACTURES'">
             <i class="feather icon-plus me-1"></i> Nouvelle Facture
           </button>
@@ -107,7 +98,7 @@
                 </span>
                 </td>
                 <td class="text-center">
-                  <button class="btn btn-sm btn-icon btn-light" *ngIf="f.fichierJustificatif" title="Voir fichier">
+                  <button class="btn btn-sm btn-icon btn-light" *ngIf="f.fichierJustificatif" (click)="downloadJustificatif(f)" title="Télécharger">
                     <i class="feather icon-paperclip text-info"></i>
                   </button>
                   <span class="text-muted small" *ngIf="!f.fichierJustificatif">-</span>
@@ -313,7 +304,12 @@
             <div class="card p-3 border-0 shadow-sm">
               <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <div class="fw-bold">Aperçu & Données détectées</div>
-                <div class="text-muted small">Prestataire : {{ profile?.fullName || profile?.username || '-' }}</div>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="text-muted small">Prestataire : {{ profile?.fullName || profile?.username || '-' }}</div>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" *ngIf="importResult.facture?.id" (click)="downloadJustificatif(importResult.facture!)">
+                    <i class="feather icon-download me-1"></i> Télécharger
+                  </button>
+                </div>
               </div>
               <div class="row g-3 mt-1">
                 <div class="col-md-4">
@@ -378,6 +374,16 @@
           <button class="btn btn-outline-secondary btn-sm" (click)="printFacture()">
             <i class="feather icon-printer me-1"></i> Imprimer
           </button>
+          <button class="btn btn-outline-secondary btn-sm" (click)="downloadFacturePdf()">
+            <i class="feather icon-download me-1"></i> Télécharger facture
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" *ngIf="selectedFactureDetail?.fichierJustificatif" (click)="downloadJustificatif(selectedFactureDetail!)">
+            <i class="feather icon-download me-1"></i> Télécharger PDF
+          </button>
+          <label class="btn btn-outline-primary btn-sm mb-0">
+            <i class="feather icon-upload me-1"></i> Uploader PDF
+            <input type="file" hidden accept=".pdf,image/*" (change)="onJustificatifSelected($event, selectedFactureDetail)" />
+          </label>
           <button type="button" class="btn-close" (click)="closeFactureDetail()"></button>
         </div>
       </div>

@@ -79,6 +79,12 @@ public class FactureController {
                 .body(res);
     }
 
+    @PostMapping(value = "/{id}/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX', 'PRESTATAIRE', 'AVOCAT', 'HUISSIER', 'EXPERT') or hasAnyAuthority('ROLE_ADMIN')")
+    public ResponseEntity<FactureDto> uploadFile(@PathVariable("id") Long id, @RequestPart("file") MultipartFile file, Authentication authentication) {
+        return ResponseEntity.ok(factureService.attachFile(id, file, authentication));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX')")
     public ResponseEntity<FactureDto> updateFacture(@PathVariable Long id, @RequestBody FactureDto dto) {

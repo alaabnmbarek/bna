@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -234,6 +235,24 @@ public class FactureService {
         Path p = uploadDir.resolve(entity.getFichierJustificatif());
         if (!Files.exists(p)) throw new RuntimeException("Fichier introuvable");
         return new FileSystemResource(p);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public FactureDto attachFile(Long factureId, MultipartFile file, Authentication authentication) {
+        if (file == null || file.isEmpty()) throw new RuntimeException("Fichier invalide");
+        FactureEntity entity = factureRepository.findById(factureId)
+                .orElseThrow(() -> new RuntimeException("Facture non trouvée"));
+        if (!isInternal(authentication)) {
+            Long pid = currentPrestataireId(authentication);
+            if (entity.getPrestataireId() == null || !entity.getPrestataireId().equals(pid)) {
+                throw new AccessDeniedException("Accès refusé");
+            }
+        }
+        ensureUploadDir();
+        String stored = storeFile(file);
+        entity.setFichierJustificatif(stored);
+        entity = factureRepository.save(entity);
+        return mapToDto(entity);
     }
 
     private FactureDto mapToDto(FactureEntity entity) {
