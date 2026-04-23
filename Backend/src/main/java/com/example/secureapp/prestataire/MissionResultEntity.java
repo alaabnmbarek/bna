@@ -18,7 +18,7 @@ public class MissionResultEntity {
     private MissionEntity mission;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 50, columnDefinition = "VARCHAR(50)")
     private MissionResultStatus statut;
 
     private LocalDate dateDebut;

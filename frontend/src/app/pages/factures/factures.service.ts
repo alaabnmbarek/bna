@@ -2,6 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface FacturePrestation {
+  type: string;
+  description: string;
+  quantite: number;
+  prixUnitaire: number;
+  montant: number;
+}
+
 export interface Facture {
   id?: number;
   numero: string;
@@ -14,7 +22,13 @@ export interface Facture {
   dateFacture: string;
   typeLien: 'DOSSIER' | 'AFFAIRE' | 'MISSION';
   referenceLien: string;
+  prestataireId?: number;
   fichierJustificatif?: string;
+  remarques?: string;
+  conditionsPaiement?: string;
+  modePaiement?: string;
+  noteHonoraireId?: number;
+  prestations?: FacturePrestation[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -37,7 +51,7 @@ export interface FactureImportResponse {
   providedIn: 'root'
 })
 export class FacturesService {
-  private apiUrl = 'http://localhost:8080/api/factures';
+  private apiUrl = '/api/factures';
 
   constructor(private http: HttpClient) {}
 

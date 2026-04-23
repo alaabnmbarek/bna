@@ -34,6 +34,7 @@ public class MissionResultService {
 
     @Transactional
     public MissionResultDto upsert(Long missionId, MissionResultDto dto, Authentication authentication) {
+        System.out.println("DEBUG: upsert missionId=" + missionId + " status=" + dto.getStatut());
         MissionEntity mission = missionRepository.findById(missionId).orElseThrow(() -> new RuntimeException("Mission non trouvée"));
         ensureMissionAccess(mission, authentication);
         MissionResultEntity entity = missionResultRepository.findByMissionId(missionId).orElseGet(() -> {
@@ -49,12 +50,19 @@ public class MissionResultService {
         entity.setResultat(dto.getResultat());
         entity.setMontantRecuperee(dto.getMontantRecuperee());
 
+        System.out.println("DEBUG: Setting mission status to: " + dto.getStatut());
         switch (dto.getStatut()) {
             case EN_COURS -> mission.setStatut(MissionStatus.EN_COURS);
             case TERMINEE -> mission.setStatut(MissionStatus.TERMINEE);
             case ECHOUEE -> mission.setStatut(MissionStatus.ECHOUEE);
         }
-        missionRepository.save(mission);
+        
+        try {
+            missionRepository.save(mission);
+        } catch (Exception e) {
+            System.err.println("DEBUG ERROR saving mission: " + e.getMessage());
+            throw e;
+        }
 
         MissionResultEntity saved = missionResultRepository.save(entity);
         return toDto(saved);

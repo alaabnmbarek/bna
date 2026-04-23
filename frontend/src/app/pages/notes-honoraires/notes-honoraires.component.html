@@ -175,8 +175,16 @@
             </div>
 
             <div class="col-12">
-              <label class="form-label">Prestataire</label>
-              <input type="text" class="form-control" [ngModel]="profile?.fullName || profile?.username || ''" readonly disabled>
+              <label class="form-label">Prestataire <span class="text-danger" *ngIf="isResponsable && !editMode">*</span></label>
+              
+              <!-- Mode édition ou utilisateur prestataire : simple texte -->
+              <input type="text" class="form-control" [value]="prestataireNomToShow" readonly disabled *ngIf="editMode || !isResponsable">
+              
+              <!-- Mode création par un responsable : sélection du prestataire -->
+              <select class="form-select" name="prestataireId" [(ngModel)]="currentRequest.prestataireId" required *ngIf="!editMode && isResponsable">
+                <option [ngValue]="undefined" disabled>Choisir le prestataire concerné...</option>
+                <option *ngFor="let p of prestataires" [ngValue]="p.id">{{ p.nom }} {{ p.prenom }} ({{ p.type }})</option>
+              </select>
             </div>
 
             <div class="col-md-6">
@@ -231,7 +239,7 @@
 
           <div class="modal-footer border-top-0 px-0 pb-0 mt-4">
             <button type="button" class="btn btn-light" (click)="closeModal()">Annuler</button>
-            <button type="submit" class="btn btn-primary" [disabled]="!noteForm.form.valid || currentRequest.dossierId <= 0 || !currentRequest.referenceLien">
+            <button type="submit" class="btn btn-primary" [disabled]="!noteForm.form.valid || currentRequest.dossierId <= 0 || !currentRequest.referenceLien || (isResponsable && !editMode && !currentRequest.prestataireId)">
               {{ editMode ? 'Enregistrer les modifications' : 'Créer la note' }}
             </button>
           </div>

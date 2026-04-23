@@ -19,6 +19,20 @@ public class FactureDto {
     private String referenceLien;
     private Long prestataireId;
     private String fichierJustificatif;
+    private String remarques;
+    private String conditionsPaiement;
+    private String modePaiement;
+    private Long noteHonoraireId;
+    private java.util.List<PrestationDto> prestations;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @Data
+    public static class PrestationDto {
+        private String type;
+        private String description;
+        private Integer quantite;
+        private java.math.BigDecimal prixUnitaire;
+        private java.math.BigDecimal montant;
+    }
 }

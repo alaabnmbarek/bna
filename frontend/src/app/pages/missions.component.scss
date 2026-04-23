@@ -3,6 +3,82 @@
   background-color: #f8fafc;
   min-height: 100vh;
   font-family: 'Inter', 'Poppins', sans-serif;
+  position: relative;
+}
+
+/* Banner Notifications */
+.banner-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  min-width: 300px;
+  max-width: 450px;
+  animation: slideInRight 0.3s ease-out;
+
+  &.banner-success {
+    background: #ecfdf5;
+    border-left: 4px solid #10b981;
+    color: #065f46;
+  }
+
+  &.banner-info {
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    color: #1e40af;
+  }
+
+  &.banner-danger {
+    background: #fef2f2;
+    border-left: 4px solid #ef4444;
+    color: #991b1b;
+  }
+
+  .banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 500;
+
+    i {
+      font-size: 20px;
+    }
+  }
+
+  .btn-close-banner {
+    background: transparent;
+    border: none;
+    color: currentColor;
+    opacity: 0.6;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* Header Section */
@@ -270,18 +346,52 @@
   }
 }
 
+/* Status Badges Fintech Style */
 .modern-badge {
-  padding: 4px 12px;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  
+  &.badge-soft-success {
+    background-color: #ecfdf5;
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.1);
+  }
+  
+  &.badge-soft-primary {
+    background-color: #eff6ff;
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+  }
 
-  &.badge-soft-success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-  &.badge-soft-primary { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-  &.badge-soft-warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-  &.badge-soft-danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-  &.badge-soft-secondary { background: rgba(100, 116, 139, 0.1); color: #64748b; }
+  &.badge-soft-info {
+    background-color: #f0f9ff;
+    color: #0ea5e9;
+    border: 1px solid rgba(14, 165, 233, 0.1);
+  }
+  
+  &.badge-soft-warning {
+    background-color: #fffbeb;
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.1);
+  }
+  
+  &.badge-soft-danger {
+    background-color: #fef2f2;
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.1);
+  }
+  
+  &.badge-soft-secondary {
+    background-color: #f8fafc;
+    color: #64748b;
+    border: 1px solid rgba(100, 116, 139, 0.1);
+  }
 }
 
 .code-pill {

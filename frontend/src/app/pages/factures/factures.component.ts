@@ -7,6 +7,7 @@ import { AuthService } from '../../auth/auth.service';
 import { NotesHonorairesComponent } from '../notes-honoraires/notes-honoraires.component';
 import { NoteHonoraire, NoteHonoraireService } from '../notes-honoraires/note-honoraire.service';
 import { ProfileService, UserProfile } from '../../auth/profile.service';
+import { PrestatairesService } from '../../prestataires/prestataires.service';
 
 @Component({
   selector: 'app-factures',
@@ -43,10 +44,15 @@ export class FacturesComponent implements OnInit {
   banner: { kind: 'success' | 'danger'; message: string } | null = null;
   private bannerTimer: any;
 
+  showFactureDetail = false;
+  selectedFactureDetail: Facture | null = null;
+  selectedFacturePrestataire: any = null;
+
   constructor(
     private facturesService: FacturesService,
     private noteService: NoteHonoraireService,
     private profileService: ProfileService,
+    private prestatairesService: PrestatairesService,
     public auth: AuthService
   ) {}
 
@@ -57,8 +63,89 @@ export class FacturesComponent implements OnInit {
     if (this.auth.token()) this.profileService.getProfile().subscribe();
   }
 
+  viewFacture(facture: Facture) {
+    this.selectedFactureDetail = facture;
+    this.showFactureDetail = true;
+    if (facture.prestataireId) {
+      this.prestatairesService.getPrestataire(facture.prestataireId).subscribe({
+        next: (p) => this.selectedFacturePrestataire = p,
+        error: () => this.selectedFacturePrestataire = null
+      });
+    }
+  }
+
+  closeFactureDetail() {
+    this.showFactureDetail = false;
+    this.selectedFactureDetail = null;
+    this.selectedFacturePrestataire = null;
+  }
+
+  printFacture() {
+    window.print();
+  }
+
+  validateFacture(id: number) {
+    if (!confirm('Voulez-vous vraiment valider cette facture ?')) return;
+    const f = this.factures.find(x => x.id === id);
+    if (f) {
+      const updated = { ...f, statut: 'VALIDEE' as const };
+      this.facturesService.update(id, updated).subscribe({
+        next: () => {
+          this.showBanner('success', 'Facture validée');
+          this.loadFactures();
+          if (this.selectedFactureDetail?.id === id) this.selectedFactureDetail.statut = 'VALIDEE';
+        },
+        error: () => this.showBanner('danger', 'Erreur lors de la validation')
+      });
+    }
+  }
+
+  markAsPaid(id: number) {
+    if (!confirm('Marquer cette facture comme payée ?')) return;
+    const f = this.factures.find(x => x.id === id);
+    if (f) {
+      const updated = { ...f, statut: 'PAYEE' as const, montantPaye: f.montantTtc, resteAPayer: 0 };
+      this.facturesService.update(id, updated).subscribe({
+        next: () => {
+          this.showBanner('success', 'Facture marquée comme payée');
+          this.loadFactures();
+          if (this.selectedFactureDetail?.id === id) {
+            this.selectedFactureDetail.statut = 'PAYEE';
+            this.selectedFactureDetail.montantPaye = f.montantTtc;
+            this.selectedFactureDetail.resteAPayer = 0;
+          }
+        },
+        error: () => this.showBanner('danger', 'Erreur lors de la mise à jour')
+      });
+    }
+  }
+
+  validateNoteInTab(id: number) {
+    if (!confirm('Voulez-vous vraiment valider cette note ? Une facture sera automatiquement générée.')) return;
+    this.noteService.validate(id).subscribe({
+      next: () => {
+        this.showBanner('success', 'Note validée et facture générée');
+        this.loadNotesOptions();
+        this.loadFactures(); // Recharger les factures pour voir la nouvelle
+      },
+      error: (err) => {
+        console.error('Erreur validation note:', err);
+        this.showBanner('danger', 'Erreur lors de la validation');
+      }
+    });
+  }
+
   setTab(tab: 'FACTURES' | 'NOTES_HONORAIRES') {
     this.activeTab = tab;
+    if (tab === 'FACTURES') {
+      this.loadFactures();
+    }
+  }
+
+  onFactureGeneratedFromNote() {
+    console.log('[DEBUG] Facture générée, retour à l\'onglet Factures');
+    this.activeTab = 'FACTURES';
+    this.loadFactures();
   }
 
   getEmptyFacture(): Facture {
@@ -72,7 +159,11 @@ export class FacturesComponent implements OnInit {
       statut: 'EN_COURS',
       dateFacture: new Date().toISOString().split('T')[0],
       typeLien: 'DOSSIER',
-      referenceLien: ''
+      referenceLien: '',
+      prestations: [],
+      remarques: '',
+      conditionsPaiement: 'Paiement à réception de facture par virement bancaire.',
+      modePaiement: 'Virement'
     };
   }
 
@@ -87,25 +178,42 @@ export class FacturesComponent implements OnInit {
 
   loadFactures() {
     this.loading = true;
+    console.log('[DEBUG] Chargement des factures...');
     this.facturesService.getAll().subscribe({
       next: (data) => {
+        console.log('[DEBUG] Factures reçues:', data);
         this.factures = data;
         this.applyFilters();
         this.loading = false;
       },
       error: (err) => {
-        console.error(err);
-        this.showBanner('danger', 'Erreur lors du chargement des factures');
+        console.error('[DEBUG] Erreur chargement factures:', err);
+        const status = err?.status;
+        const apiMsg = err?.error?.message;
+        if (status === 0) {
+          this.showBanner('danger', 'Impossible de joindre le serveur (backend indisponible ou proxy non configuré)');
+        } else if (status === 401) {
+          this.showBanner('danger', 'Session expirée (401). Veuillez vous reconnecter.');
+        } else if (status === 403) {
+          this.showBanner('danger', 'Accès refusé (403)');
+        } else {
+          this.showBanner('danger', apiMsg ? `Erreur (${status}): ${apiMsg}` : 'Erreur lors du chargement des factures');
+        }
         this.loading = false;
       }
     });
   }
 
   applyFilters() {
+    if (!this.factures) {
+      this.filteredFactures = [];
+      return;
+    }
     this.filteredFactures = this.factures.filter(f => {
+      const s = this.search.toLowerCase();
       const matchSearch = this.search === '' || 
-        f.numero.toLowerCase().includes(this.search.toLowerCase()) || 
-        f.referenceLien.toLowerCase().includes(this.search.toLowerCase());
+        (f.numero && f.numero.toLowerCase().includes(s)) || 
+        (f.referenceLien && f.referenceLien.toLowerCase().includes(s));
       
       const matchStatus = this.filterStatus === 'ALL' || f.statut === this.filterStatus;
       const matchType = this.filterType === 'ALL' || f.typeLien === this.filterType;
@@ -200,7 +308,7 @@ export class FacturesComponent implements OnInit {
     if (!note) return;
 
     this.currentFacture.numero = `FAC-${note.numero}`;
-    this.currentFacture.montantHt = Number(note.montantHonoraires || 0);
+    this.currentFacture.montantHt = Number(note.montantHonoraires || 0) + Number(note.fraisAdministratifs || 0);
     this.currentFacture.tva = 19.0;
     this.currentFacture.montantTtc = Number(note.total || 0);
     this.currentFacture.montantPaye = 0;
@@ -210,6 +318,27 @@ export class FacturesComponent implements OnInit {
     this.currentFacture.typeLien = note.typeLien;
     this.currentFacture.referenceLien = note.referenceLien;
     this.currentFacture.fichierJustificatif = note.fichierJustificatif;
+    this.currentFacture.prestataireId = note.prestataireId;
+    this.currentFacture.remarques = note.remarques;
+    this.currentFacture.noteHonoraireId = note.id;
+
+    if (note.prestations && note.prestations.length > 0) {
+      this.currentFacture.prestations = note.prestations.map(p => ({
+        type: p.type,
+        description: p.description,
+        quantite: 1,
+        prixUnitaire: p.montant,
+        montant: p.montant
+      }));
+    } else {
+      this.currentFacture.prestations = [{
+        type: 'HONORAIRES',
+        description: 'Prestation forfaitaire',
+        quantite: 1,
+        prixUnitaire: this.currentFacture.montantHt,
+        montant: this.currentFacture.montantHt
+      }];
+    }
   }
 
   calculateTtc() {
@@ -232,9 +361,38 @@ export class FacturesComponent implements OnInit {
   onFileSelected(event: any) {
     if (event.target.files && event.target.files.length > 0) {
       this.selectedFile = event.target.files[0];
-      // Simulate file upload by setting a fake name
       this.currentFacture.fichierJustificatif = this.selectedFile?.name;
     }
+  }
+
+  addPrestation() {
+    if (!this.currentFacture.prestations) this.currentFacture.prestations = [];
+    this.currentFacture.prestations.push({
+      type: 'HONORAIRES',
+      description: '',
+      quantite: 1,
+      prixUnitaire: 0,
+      montant: 0
+    });
+  }
+
+  removePrestation(index: number) {
+    this.currentFacture.prestations?.splice(index, 1);
+    this.recalcTotal();
+  }
+
+  recalcPrestation(index: number) {
+    const p = this.currentFacture.prestations?.[index];
+    if (p) {
+      p.montant = (p.quantite || 0) * (p.prixUnitaire || 0);
+      this.recalcTotal();
+    }
+  }
+
+  recalcTotal() {
+    const totalHt = this.currentFacture.prestations?.reduce((acc, curr) => acc + (curr.montant || 0), 0) || 0;
+    this.currentFacture.montantHt = totalHt;
+    this.calculateTtc();
   }
 
   saveFacture() {

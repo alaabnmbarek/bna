@@ -52,6 +52,14 @@ public class NoteHonoraireEntity {
     @Column(columnDefinition = "LONGTEXT")
     private String fichierJustificatif;
 
+    @Column(columnDefinition = "TEXT")
+    private String remarques;
+
+    private LocalDateTime dateEmission;
+
+    @OneToMany(mappedBy = "noteHonoraire", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<NotePrestationEntity> prestations = new java.util.ArrayList<>();
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -104,6 +112,15 @@ public class NoteHonoraireEntity {
 
     public String getFichierJustificatif() { return fichierJustificatif; }
     public void setFichierJustificatif(String fichierJustificatif) { this.fichierJustificatif = fichierJustificatif; }
+
+    public String getRemarques() { return remarques; }
+    public void setRemarques(String remarques) { this.remarques = remarques; }
+
+    public LocalDateTime getDateEmission() { return dateEmission; }
+    public void setDateEmission(LocalDateTime dateEmission) { this.dateEmission = dateEmission; }
+
+    public java.util.List<NotePrestationEntity> getPrestations() { return prestations; }
+    public void setPrestations(java.util.List<NotePrestationEntity> prestations) { this.prestations = prestations; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

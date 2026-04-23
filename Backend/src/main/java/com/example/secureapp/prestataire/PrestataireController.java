@@ -85,7 +85,8 @@ public class PrestataireController {
             @RequestBody NoteHonoraireDtos.CreateNoteRequest request
     ) {
         return ResponseEntity.ok(noteHonoraireService.create(null, new NoteHonoraireDtos.CreateNoteRequest(
-                id, request.dossierId(), request.typeLien(), request.referenceLien(), request.montantHonoraires(), request.fraisAdministratifs(), request.fichierJustificatif()
+                id, request.dossierId(), request.typeLien(), request.referenceLien(), request.montantHonoraires(), request.fraisAdministratifs(), request.fichierJustificatif(),
+                request.remarques(), request.dateEmission(), request.prestations()
         )));
     }
 

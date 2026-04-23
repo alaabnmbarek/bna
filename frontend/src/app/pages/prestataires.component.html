@@ -241,62 +241,185 @@
 </div>
 
 <div *ngIf="showHonorairesModalState" class="admin-overlay" (click)="closeHonorairesModal()">
-  <div class="admin-modal hon-modal" (click)="$event.stopPropagation()">
+  <div class="admin-modal hon-modal-v2" (click)="$event.stopPropagation()">
     <div class="admin-modal-head">
-      <div class="admin-modal-title">Note d’Honoraire</div>
-      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeHonorairesModal()">Fermer</button>
+      <div class="admin-modal-title">
+        <i class="feather icon-file-text me-2"></i>Note d’honoraires professionnelle
+      </div>
+      <button type="button" class="btn-close" (click)="closeHonorairesModal()"></button>
     </div>
 
     <form class="admin-modal-body" (ngSubmit)="saveHonoraires()">
-      <div class="row g-3">
+      <div class="row g-4">
+        <!-- Section 1: Informations Avocat -->
+        <div class="col-12 col-lg-6">
+          <div class="hon-card">
+            <div class="hon-card-title"><i class="feather icon-user me-2"></i>Informations de l’avocat</div>
+            <div class="hon-info-grid">
+              <div class="hon-info-item">
+                <span class="hon-label">Nom</span>
+                <span class="hon-value fw-bold">{{ form.nom }} {{ form.prenom }}</span>
+              </div>
+              <div class="hon-info-item">
+                <span class="hon-label">Cabinet</span>
+                <span class="hon-value">{{ form.cabinet || '—' }}</span>
+              </div>
+              <div class="hon-info-item">
+                <span class="hon-label">Email</span>
+                <span class="hon-value">{{ form.email || '—' }}</span>
+              </div>
+              <div class="hon-info-item">
+                <span class="hon-label">Téléphone</span>
+                <span class="hon-value">{{ form.telephone || '—' }}</span>
+              </div>
+              <div class="hon-info-item">
+                <span class="hon-label">Spécialité</span>
+                <span class="hon-value">{{ form.specialites || '—' }}</span>
+              </div>
+              <div class="hon-info-item">
+                <span class="hon-label">Nature</span>
+                <span class="hon-value">{{ formatNatureJuridique(form.natureJuridique) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Informations Dossier -->
+        <div class="col-12 col-lg-6">
+          <div class="hon-card">
+            <div class="hon-card-title"><i class="feather icon-folder me-2"></i>Informations du dossier</div>
+            <div class="mb-3">
+              <label class="form-label admin-label">Sélectionner le dossier</label>
+              <select class="form-select admin-input" [(ngModel)]="honorairesForm.dossierId" name="dossierId" (change)="onDossierChange()" required>
+                <option [ngValue]="null">Choisir un dossier contentieux…</option>
+                <option *ngFor="let d of dossiers" [ngValue]="d.id">{{ dossierLabel(d) }}</option>
+              </select>
+            </div>
+            <div class="hon-info-grid" *ngIf="honorairesForm.dossierId">
+              <div class="hon-info-item">
+                <span class="hon-label">Référence</span>
+                <span class="hon-value">{{ honorairesForm.reference || '—' }}</span>
+              </div>
+              <div class="hon-info-item">
+                <span class="hon-label">Compte</span>
+                <span class="hon-value text-mono">{{ honorairesForm.compteActuel || '—' }}</span>
+              </div>
+              <div class="hon-info-item">
+                <span class="hon-label">Agence</span>
+                <span class="hon-value">{{ honorairesForm.agence || '—' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Tableau des prestations -->
         <div class="col-12">
-          <label class="form-label admin-label">Dossier</label>
-          <select class="form-select admin-input" [(ngModel)]="honorairesForm.dossierId" name="dossierId" (change)="onDossierChange()" required>
-            <option [ngValue]="null">Sélectionner un dossier…</option>
-            <option *ngFor="let d of dossiers" [ngValue]="d.id">{{ dossierLabel(d) }}</option>
-          </select>
+          <div class="hon-card">
+            <div class="hon-card-title d-flex justify-content-between align-items-center">
+              <span><i class="feather icon-list me-2"></i>Détail des prestations</span>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="addPrestation()">
+                <i class="feather icon-plus me-1"></i>Ajouter prestation
+              </button>
+            </div>
+            <div class="table-responsive mt-3">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th style="width: 200px;">Type</th>
+                    <th>Description</th>
+                    <th style="width: 150px;">Montant (DT)</th>
+                    <th style="width: 50px;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let p of honorairesForm.prestations; let i = index">
+                    <td>
+                      <select class="form-select form-select-sm" [(ngModel)]="p.type" [name]="'p_type_' + i">
+                        <option value="HONORAIRES">Honoraires</option>
+                        <option value="FRAIS">Frais de justice</option>
+                        <option value="DEPLACEMENT">Déplacement</option>
+                        <option value="AUTRE">Autre</option>
+                      </select>
+                    </td>
+                    <td>
+                      <input class="form-control form-control-sm" [(ngModel)]="p.description" [name]="'p_desc_' + i" placeholder="Description de la prestation...">
+                    </td>
+                    <td>
+                      <input class="form-control form-control-sm" type="number" step="0.001" [(ngModel)]="p.montant" [name]="'p_amt_' + i" (input)="recalcHonoraires()">
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-sm text-danger" (click)="removePrestation(i)">
+                        <i class="feather icon-trash-2"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="honorairesForm.prestations.length === 0">
+                    <td colspan="4" class="text-center py-3 text-muted">
+                      Aucune prestation ajoutée. Cliquez sur "Ajouter prestation".
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">Référence dossier</label>
-          <input class="form-control admin-input" [value]="honorairesForm.reference || ''" readonly>
-        </div>
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">Agence</label>
-          <input class="form-control admin-input" [value]="honorairesForm.agence || ''" readonly>
+        <!-- Section 4: Récapitulatif financier -->
+        <div class="col-12 col-lg-7">
+          <div class="hon-card">
+            <div class="hon-card-title"><i class="feather icon-info me-2"></i>Détails complémentaires</div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label admin-label">Date d’émission</label>
+                <input type="date" class="form-control admin-input" [(ngModel)]="honorairesForm.dateEmission" name="dateEmission">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label admin-label">Statut</label>
+                <select class="form-select admin-input" [(ngModel)]="honorairesForm.statut" name="statut">
+                  <option value="BROUILLON">Brouillon</option>
+                  <option value="EN_ATTENTE">En attente</option>
+                  <option value="VALIDEE">Validée</option>
+                  <option value="REJETEE">Rejetée</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label admin-label">Remarques</label>
+                <textarea class="form-control admin-input" rows="2" [(ngModel)]="honorairesForm.remarques" name="remarques" placeholder="Notes internes ou précisions..."></textarea>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">Numéro de compte</label>
-          <input class="form-control admin-input" [value]="honorairesForm.compteActuel || ''" readonly>
-        </div>
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">Montant total engagé</label>
-          <input class="form-control admin-input" [value]="formatMoney(honorairesForm.montantEngage)" readonly>
-        </div>
-
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">Montant des honoraires</label>
-          <input class="form-control admin-input" type="number" step="0.001" [(ngModel)]="honorairesForm.montantHonoraires" name="montantHonoraires" (input)="recalcHonoraires()">
-        </div>
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">Frais administratifs</label>
-          <input class="form-control admin-input" type="number" step="0.001" [(ngModel)]="honorairesForm.fraisAdministratifs" name="fraisAdministratifs" (input)="recalcHonoraires()">
-        </div>
-
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">TVA (19%)</label>
-          <input class="form-control admin-input" [value]="formatMoney(honorairesForm.tva)" readonly>
-        </div>
-        <div class="col-12 col-md-6">
-          <label class="form-label admin-label">TOTAL À PAYER</label>
-          <input class="form-control admin-input" [value]="formatMoney(honorairesForm.total)" readonly>
+        <div class="col-12 col-lg-5">
+          <div class="hon-card hon-card-total">
+            <div class="hon-card-title text-white"><i class="feather icon-credit-card me-2"></i>Récapitulatif financier</div>
+            <div class="hon-total-row">
+              <span>Honoraires de base</span>
+              <span>{{ formatMoney(honorairesForm.montantHonoraires) }}</span>
+            </div>
+            <div class="hon-total-row">
+              <span>Frais administratifs</span>
+              <span>{{ formatMoney(honorairesForm.fraisAdministratifs) }}</span>
+            </div>
+            <div class="hon-total-row">
+              <span>TVA (19%)</span>
+              <span>{{ formatMoney(honorairesForm.tva) }}</span>
+            </div>
+            <hr class="border-light opacity-25">
+            <div class="hon-total-final">
+              <div class="hon-total-label">MONTANT TOTAL TTC</div>
+              <div class="hon-total-amount">{{ formatMoney(honorairesForm.total) }}</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="admin-modal-actions">
+      <div class="admin-modal-actions mt-4">
         <button type="button" class="btn btn-outline-secondary" (click)="closeHonorairesModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary" [disabled]="honorairesSaving">{{ honorairesSaving ? 'Enregistrement…' : 'Enregistrer' }}</button>
+        <button type="button" class="btn btn-outline-primary" (click)="saveHonoraires()">Modifier</button>
+        <button type="submit" class="btn btn-primary" [disabled]="honorairesSaving || !honorairesForm.dossierId">
+          <i class="feather icon-check me-2"></i>{{ honorairesSaving ? 'Validation...' : 'Valider la note' }}
+        </button>
       </div>
     </form>
   </div>

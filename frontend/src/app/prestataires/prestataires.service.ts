@@ -73,6 +73,10 @@ export interface CreateNoteHonoraireRequest {
   dossierId: number;
   montantHonoraires: number;
   fraisAdministratifs: number;
+  dateEmission?: string;
+  statut?: string;
+  remarques?: string;
+  prestations?: Array<{ type: string; description: string; montant: number }>;
 }
 
 export interface NoteHonoraire {
@@ -88,6 +92,10 @@ export interface NoteHonoraire {
   fraisAdministratifs: number;
   tva: number;
   total: number;
+  dateEmission?: string;
+  statut?: string;
+  remarques?: string;
+  prestations?: Array<{ type: string; description: string; montant: number }>;
   createdAt?: string;
 }
 

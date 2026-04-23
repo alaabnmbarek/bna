@@ -44,12 +44,18 @@ public class FactureService {
         this.prestataireRepository = prestataireRepository;
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<FactureDto> getAll() {
-        return factureRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
+        List<FactureEntity> all = factureRepository.findAll();
+        System.out.println("[DEBUG] FactureService.getAll - Nombre de factures trouvées en base: " + all.size());
+        return all.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<FactureDto> getByPrestataireId(Long prestataireId) {
-        return factureRepository.findByPrestataireIdOrderByDateFactureDesc(prestataireId).stream()
+        List<FactureEntity> mine = factureRepository.findByPrestataireIdOrderByDateFactureDesc(prestataireId);
+        System.out.println("[DEBUG] FactureService.getByPrestataireId - ID Prestataire: " + prestataireId + ", Nombre: " + mine.size());
+        return mine.stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
@@ -72,30 +78,63 @@ public class FactureService {
         return resolvePrestataire(authentication).getId();
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public FactureDto getById(Long id) {
         FactureEntity entity = factureRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Facture non trouvée"));
         return mapToDto(entity);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public FactureDto create(FactureDto dto) {
+        System.out.println("[DEBUG] FactureService.create - Numero: " + dto.getNumero() + ", Prestataire: " + dto.getPrestataireId());
         FactureEntity entity = new FactureEntity();
-        BeanUtils.copyProperties(dto, entity, "id", "createdAt", "updatedAt");
+        BeanUtils.copyProperties(dto, entity, "id", "createdAt", "updatedAt", "prestations");
+        
+        if (dto.getPrestations() != null) {
+            System.out.println("[DEBUG] Ajout de " + dto.getPrestations().size() + " prestations à l'entité");
+            for (FactureDto.PrestationDto pDto : dto.getPrestations()) {
+                FacturePrestationEntity pEntity = new FacturePrestationEntity();
+                BeanUtils.copyProperties(pDto, pEntity);
+                pEntity.setFacture(entity);
+                entity.getPrestations().add(pEntity);
+            }
+        }
+        
         entity.calculateReste();
-        entity = factureRepository.save(entity);
+        try {
+            entity = factureRepository.save(entity);
+            System.out.println("[DEBUG] Facture sauvegardée en base, ID: " + entity.getId());
+        } catch (Exception e) {
+            System.err.println("[ERROR] Echec de sauvegarde de la facture: " + e.getMessage());
+            throw e;
+        }
         return mapToDto(entity);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public FactureDto update(Long id, FactureDto dto) {
         FactureEntity entity = factureRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Facture non trouvée"));
         
-        BeanUtils.copyProperties(dto, entity, "id", "createdAt", "updatedAt");
+        BeanUtils.copyProperties(dto, entity, "id", "createdAt", "updatedAt", "prestations");
+        
+        entity.getPrestations().clear();
+        if (dto.getPrestations() != null) {
+            for (FactureDto.PrestationDto pDto : dto.getPrestations()) {
+                FacturePrestationEntity pEntity = new FacturePrestationEntity();
+                BeanUtils.copyProperties(pDto, pEntity);
+                pEntity.setFacture(entity);
+                entity.getPrestations().add(pEntity);
+            }
+        }
+
         entity.calculateReste();
         entity = factureRepository.save(entity);
         return mapToDto(entity);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void delete(Long id) {
         factureRepository.deleteById(id);
     }
@@ -199,7 +238,14 @@ public class FactureService {
 
     private FactureDto mapToDto(FactureEntity entity) {
         FactureDto dto = new FactureDto();
-        BeanUtils.copyProperties(entity, dto);
+        BeanUtils.copyProperties(entity, dto, "prestations");
+        if (entity.getPrestations() != null) {
+            dto.setPrestations(entity.getPrestations().stream().map(p -> {
+                FactureDto.PrestationDto pDto = new FactureDto.PrestationDto();
+                BeanUtils.copyProperties(p, pDto);
+                return pDto;
+            }).collect(Collectors.toList()));
+        }
         return dto;
     }
 

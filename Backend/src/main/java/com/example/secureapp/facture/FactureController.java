@@ -25,10 +25,15 @@ public class FactureController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','CHARGE_DOSSIER','RESPONSABLE_CONTENTIEUX','PRESTATAIRE','AVOCAT','HUISSIER','EXPERT') or hasAnyAuthority('ROLE_ADMIN','ROLE_CHARGE_DOSSIER','ROLE_RESPONSABLE_CONTENTIEUX')")
     public ResponseEntity<List<FactureDto>> getAllFactures(Authentication authentication) {
+        System.out.println("[DEBUG] GET /api/factures appelé par user: " + (authentication != null ? authentication.getName() : "null"));
         if (factureService.isInternal(authentication)) {
-            return ResponseEntity.ok(factureService.getAll());
+            List<FactureDto> all = factureService.getAll();
+            System.out.println("[DEBUG] Mode interne - Retourne " + all.size() + " factures");
+            return ResponseEntity.ok(all);
         }
-        return ResponseEntity.ok(factureService.listMine(authentication));
+        List<FactureDto> mine = factureService.listMine(authentication);
+        System.out.println("[DEBUG] Mode prestataire - Retourne " + mine.size() + " factures");
+        return ResponseEntity.ok(mine);
     }
 
     @GetMapping("/{id}")

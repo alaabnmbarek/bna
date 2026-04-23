@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NoteHonoraire, CreateNoteRequest, NoteHonoraireService } from './note-honoraire.service';
@@ -7,6 +7,8 @@ import { AuthService } from '../../auth/auth.service';
 import { ContentieuxService, DossierContentieux, DossierDetailsResponse } from '../../contentieux/contentieux.service';
 import { AffaireJudiciaire, SuiviJudiciaireService } from '../../suivi-judiciaire/suivi-judiciaire.service';
 import { ProfileService, UserProfile } from '../../auth/profile.service';
+import { PrestatairesService, Prestataire } from '../../prestataires/prestataires.service';
+import { Facture, FacturesService } from '../factures/factures.service';
 
 @Component({
   selector: 'app-notes-honoraires',
@@ -16,6 +18,8 @@ import { ProfileService, UserProfile } from '../../auth/profile.service';
   styleUrls: ['./notes-honoraires.component.scss']
 })
 export class NotesHonorairesComponent implements OnInit {
+  @Output() factureGenerated = new EventEmitter<void>();
+
   notes: NoteHonoraire[] = [];
   filteredNotes: NoteHonoraire[] = [];
   loading = false;
@@ -37,6 +41,9 @@ export class NotesHonorairesComponent implements OnInit {
   affairesJudiciaires: AffaireJudiciaire[] = [];
   affairesLoading = false;
 
+  prestataires: Prestataire[] = [];
+  prestataireNomToShow: string = '';
+
   selectedAffaireId: number | null = null;
   selectedMissionId: number | null = null;
 
@@ -53,20 +60,33 @@ export class NotesHonorairesComponent implements OnInit {
     private contentieuxService: ContentieuxService,
     private suiviJudiciaireService: SuiviJudiciaireService,
     private profileService: ProfileService,
+    private prestatairesService: PrestatairesService,
+    private facturesService: FacturesService,
     public auth: AuthService
   ) {}
 
   ngOnInit() {
     this.loadNotes();
     this.loadDossiers();
+    if (this.isResponsable) {
+      this.loadPrestataires();
+    }
     this.profileService.profile$.subscribe(p => this.profile = p);
     if (this.auth.token()) {
       this.profileService.getProfile().subscribe();
     }
   }
 
+  loadPrestataires() {
+    this.prestatairesService.listPrestataires({ actif: true }).subscribe({
+      next: (data) => this.prestataires = data,
+      error: () => console.error('Erreur chargement prestataires')
+    });
+  }
+
   getEmptyRequest(): CreateNoteRequest {
     return {
+      prestataireId: undefined,
       dossierId: 0,
       typeLien: 'DOSSIER',
       referenceLien: '',
@@ -155,7 +175,8 @@ export class NotesHonorairesComponent implements OnInit {
     }
 
     if (this.currentRequest.typeLien === 'DOSSIER') {
-      this.currentRequest.referenceLien = String(this.currentRequest.dossierId);
+      const d = this.dossiers.find(x => x.id === this.currentRequest.dossierId);
+      this.currentRequest.referenceLien = d?.reference || String(this.currentRequest.dossierId);
       return;
     }
 
@@ -216,11 +237,16 @@ export class NotesHonorairesComponent implements OnInit {
   }
 
   applyFilters() {
+    if (!this.notes) {
+      this.filteredNotes = [];
+      return;
+    }
     this.filteredNotes = this.notes.filter(n => {
+      const s = this.search.toLowerCase();
       const matchSearch = this.search === '' || 
-        n.numero.toLowerCase().includes(this.search.toLowerCase()) || 
-        n.referenceLien.toLowerCase().includes(this.search.toLowerCase()) ||
-        n.prestataireNom.toLowerCase().includes(this.search.toLowerCase());
+        (n.numero && n.numero.toLowerCase().includes(s)) || 
+        (n.referenceLien && n.referenceLien.toLowerCase().includes(s)) ||
+        (n.prestataireNom && n.prestataireNom.toLowerCase().includes(s));
       
       const matchStatus = this.filterStatus === 'ALL' || n.statut === this.filterStatus;
       const matchType = this.filterType === 'ALL' || n.typeLien === this.filterType;
@@ -233,7 +259,9 @@ export class NotesHonorairesComponent implements OnInit {
     if (note) {
       this.editMode = true;
       this.currentNoteId = note.id;
+      this.prestataireNomToShow = note.prestataireNom;
       this.currentRequest = {
+        prestataireId: note.prestataireId,
         dossierId: note.dossierId,
         typeLien: note.typeLien,
         referenceLien: note.referenceLien,
@@ -256,6 +284,7 @@ export class NotesHonorairesComponent implements OnInit {
     } else {
       this.editMode = false;
       this.currentNoteId = undefined;
+      this.prestataireNomToShow = this.profile?.fullName || this.profile?.username || '';
       this.currentRequest = this.getEmptyRequest();
       this.currentFileName = undefined;
     }
@@ -278,6 +307,8 @@ export class NotesHonorairesComponent implements OnInit {
 
   saveNote() {
     this.currentRequest.fraisAdministratifs = 0;
+    console.log('Tentative d\'enregistrement de la note:', this.currentRequest);
+    
     if (this.editMode && this.currentNoteId) {
       this.noteService.update(this.currentNoteId, this.currentRequest).subscribe({
         next: () => {
@@ -285,16 +316,23 @@ export class NotesHonorairesComponent implements OnInit {
           this.loadNotes();
           this.closeModal();
         },
-        error: () => this.showBanner('danger', 'Erreur lors de la modification')
+        error: (err) => {
+          console.error('Erreur modification note:', err);
+          this.showBanner('danger', 'Erreur lors de la modification');
+        }
       });
     } else {
       this.noteService.create(this.currentRequest).subscribe({
-        next: () => {
+        next: (res) => {
+          console.log('Note créée avec succès:', res);
           this.showBanner('success', 'Note créée avec succès');
           this.loadNotes();
           this.closeModal();
         },
-        error: () => this.showBanner('danger', 'Erreur lors de la création')
+        error: (err) => {
+          console.error('Erreur création note:', err);
+          this.showBanner('danger', 'Erreur lors de la création');
+        }
       });
     }
   }
@@ -312,15 +350,79 @@ export class NotesHonorairesComponent implements OnInit {
   }
 
   validateNote(id: number) {
-    if (confirm('Voulez-vous valider cette note ? Elle sera convertie en facture validée.')) {
-      this.noteService.validate(id).subscribe({
-        next: () => {
-          this.showBanner('success', 'Note validée et convertie en facture');
-          this.loadNotes();
-        },
-        error: () => this.showBanner('danger', 'Erreur lors de la validation')
-      });
-    }
+    if (!confirm('Voulez-vous vraiment valider cette note ? Une facture sera automatiquement générée.')) return;
+    console.log('[DEBUG] Validation de la note ID:', id);
+    const noteSnapshot = this.notes.find(n => n.id === id);
+    this.noteService.validate(id).subscribe({
+      next: () => {
+        console.log('[DEBUG] Note validée avec succès, émission de factureGenerated');
+        this.showBanner('success', 'Note validée et facture générée');
+        this.loadNotes();
+        if (noteSnapshot) {
+          this.facturesService.getAll().subscribe({
+            next: (factures) => {
+              const alreadyExists = factures.some(f => f.noteHonoraireId === id || f.numero === `FAC-${noteSnapshot.numero}`);
+              if (alreadyExists) {
+                this.factureGenerated.emit();
+                return;
+              }
+
+              const facture: Facture = {
+                numero: `FAC-${noteSnapshot.numero}`,
+                montantHt: Number((noteSnapshot.montantHonoraires || 0) + (noteSnapshot.fraisAdministratifs || 0)),
+                tva: Number(noteSnapshot.tva ?? 19),
+                montantTtc: Number(noteSnapshot.total || 0),
+                montantPaye: 0,
+                resteAPayer: Number(noteSnapshot.total || 0),
+                statut: 'VALIDEE',
+                dateFacture: new Date().toISOString().split('T')[0],
+                typeLien: noteSnapshot.typeLien,
+                referenceLien: noteSnapshot.referenceLien,
+                prestataireId: noteSnapshot.prestataireId,
+                fichierJustificatif: noteSnapshot.fichierJustificatif,
+                remarques: noteSnapshot.remarques || '',
+                noteHonoraireId: id,
+                prestations: (noteSnapshot.prestations || []).map(p => ({
+                  type: p.type,
+                  description: p.description,
+                  quantite: 1,
+                  prixUnitaire: p.montant,
+                  montant: p.montant
+                }))
+              };
+
+              if (!facture.prestations || facture.prestations.length === 0) {
+                facture.prestations = [{
+                  type: 'HONORAIRES',
+                  description: 'Honoraires forfaitaires',
+                  quantite: 1,
+                  prixUnitaire: facture.montantHt,
+                  montant: facture.montantHt
+                }];
+              }
+
+              this.facturesService.create(facture).subscribe({
+                next: () => this.factureGenerated.emit(),
+                error: (err) => {
+                  console.error('[DEBUG] Erreur création facture fallback:', err);
+                  this.factureGenerated.emit();
+                }
+              });
+            },
+            error: (err) => {
+              console.error('[DEBUG] Erreur chargement factures fallback:', err);
+              this.factureGenerated.emit();
+            }
+          });
+        } else {
+          this.factureGenerated.emit();
+        }
+      },
+      error: (err) => {
+        console.error('[DEBUG] Erreur validation note:', err);
+        this.showBanner('danger', 'Erreur lors de la validation');
+      }
+    });
   }
 
   rejectNote(id: number) {

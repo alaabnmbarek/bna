@@ -4,8 +4,15 @@ import com.example.secureapp.facture.TypeLien;
 import com.example.secureapp.prestataire.honoraire.NoteHonoraireStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class NoteHonoraireDtos {
+    public record NotePrestationDto(
+            String type,
+            String description,
+            BigDecimal montant
+    ) {}
+
     public record CreateNoteRequest(
             Long prestataireId,
             Long dossierId,
@@ -13,7 +20,10 @@ public class NoteHonoraireDtos {
             String referenceLien,
             BigDecimal montantHonoraires,
             BigDecimal fraisAdministratifs,
-            String fichierJustificatif
+            String fichierJustificatif,
+            String remarques,
+            LocalDateTime dateEmission,
+            List<NotePrestationDto> prestations
     ) {}
 
     public record NoteResponse(
@@ -34,6 +44,9 @@ public class NoteHonoraireDtos {
             BigDecimal total,
             NoteHonoraireStatus statut,
             String fichierJustificatif,
+            String remarques,
+            LocalDateTime dateEmission,
+            List<NotePrestationDto> prestations,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {}

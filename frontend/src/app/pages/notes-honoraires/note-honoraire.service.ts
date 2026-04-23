@@ -2,6 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface NoteHonorairePrestation {
+  type: string;
+  description: string;
+  montant: number;
+}
+
 export interface NoteHonoraire {
   id?: number;
   numero: string;
@@ -20,24 +26,29 @@ export interface NoteHonoraire {
   total: number;
   statut: 'EN_COURS' | 'SOUMISE' | 'VALIDEE' | 'REJETEE';
   fichierJustificatif?: string;
+  remarques?: string;
+  prestations?: NoteHonorairePrestation[];
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface CreateNoteRequest {
+  prestataireId?: number;
   dossierId: number;
   typeLien: 'DOSSIER' | 'AFFAIRE' | 'MISSION';
   referenceLien: string;
   montantHonoraires: number;
   fraisAdministratifs: number;
   fichierJustificatif?: string;
+  remarques?: string;
+  prestations?: NoteHonorairePrestation[];
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class NoteHonoraireService {
-  private apiUrl = 'http://localhost:8080/api/notes-honoraires';
+  private apiUrl = '/api/notes-honoraires';
 
   constructor(private http: HttpClient) {}
 

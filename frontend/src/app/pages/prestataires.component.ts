@@ -42,6 +42,10 @@ export class PrestatairesPageComponent implements OnInit {
     fraisAdministratifs: number | null;
     tva: number | null;
     total: number | null;
+    dateEmission: string;
+    statut: string;
+    remarques: string;
+    prestations: Array<{ type: string; description: string; montant: number }>;
   } = {
     dossierId: null,
     dossierLabel: null,
@@ -52,7 +56,11 @@ export class PrestatairesPageComponent implements OnInit {
     montantHonoraires: null,
     fraisAdministratifs: null,
     tva: null,
-    total: null
+    total: null,
+    dateEmission: new Date().toISOString().split('T')[0],
+    statut: 'BROUILLON',
+    remarques: '',
+    prestations: []
   };
 
   q = '';
@@ -383,7 +391,11 @@ export class PrestatairesPageComponent implements OnInit {
       montantHonoraires: null,
       fraisAdministratifs: null,
       tva: null,
-      total: null
+      total: null,
+      dateEmission: new Date().toISOString().split('T')[0],
+      statut: 'BROUILLON',
+      remarques: '',
+      prestations: []
     };
   }
 
@@ -424,15 +436,22 @@ export class PrestatairesPageComponent implements OnInit {
     this.recalcHonoraires();
   }
 
+  addPrestation(): void {
+    this.honorairesForm.prestations.push({ type: 'HONORAIRES', description: '', montant: 0 });
+    this.recalcHonoraires();
+  }
+
+  removePrestation(index: number): void {
+    this.honorairesForm.prestations.splice(index, 1);
+    this.recalcHonoraires();
+  }
+
   recalcHonoraires(): void {
-    const honoraires = this.toNumberOrNull(this.honorairesForm.montantHonoraires);
-    const frais = this.toNumberOrNull(this.honorairesForm.fraisAdministratifs);
-    if (honoraires === null || frais === null) {
-      this.honorairesForm.tva = null;
-      this.honorairesForm.total = null;
-      return;
-    }
-    const base = honoraires + frais;
+    const prestationsSum = this.honorairesForm.prestations.reduce((acc, curr) => acc + (this.toNumberOrNull(curr.montant) || 0), 0);
+    const honoraires = this.toNumberOrNull(this.honorairesForm.montantHonoraires) || 0;
+    const frais = this.toNumberOrNull(this.honorairesForm.fraisAdministratifs) || 0;
+    
+    const base = prestationsSum + honoraires + frais;
     const tva = base * 0.19;
     const total = base + tva;
     this.honorairesForm.tva = this.round3(tva);
@@ -448,12 +467,21 @@ export class PrestatairesPageComponent implements OnInit {
     const montantHonoraires = this.toNumberOrNull(this.honorairesForm.montantHonoraires) ?? 0;
     const fraisAdministratifs = this.toNumberOrNull(this.honorairesForm.fraisAdministratifs) ?? 0;
 
+    // Vérification de cohérence
+    if (this.honorairesForm.total && this.honorairesForm.total > 50000) {
+      if (!confirm('Le montant total semble très élevé (> 50,000 DT). Voulez-vous continuer ?')) return;
+    }
+
     const createNote = (prestataireId: number) => {
       this.honorairesSaving = true;
       this.service.createNoteHonoraire(prestataireId, {
         dossierId: this.honorairesForm.dossierId!,
         montantHonoraires,
-        fraisAdministratifs
+        fraisAdministratifs,
+        dateEmission: this.honorairesForm.dateEmission,
+        statut: this.honorairesForm.statut,
+        remarques: this.honorairesForm.remarques,
+        prestations: this.honorairesForm.prestations
       }).subscribe({
         next: () => {
           this.honorairesSaving = false;

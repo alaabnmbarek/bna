@@ -1,4 +1,19 @@
 <div class="missions-container">
+  <!-- Banner Notifications -->
+  <div *ngIf="banner" class="banner-notification anim-fade-in" [ngClass]="'banner-' + banner.kind">
+    <div class="banner-content">
+      <i class="feather" [ngClass]="{
+        'icon-check-circle': banner.kind === 'success',
+        'icon-info': banner.kind === 'info',
+        'icon-alert-triangle': banner.kind === 'danger'
+      }"></i>
+      <span>{{ banner.message }}</span>
+    </div>
+    <button class="btn-close-banner" (click)="banner = null">
+      <i class="feather icon-x"></i>
+    </button>
+  </div>
+
   <div class="missions-header-modern">
     <div class="header-content">
       <div class="title-section">
@@ -118,7 +133,7 @@
 
         <div class="form-footer-modern">
           <button class="btn-fintech btn-glass" type="button" (click)="cancelAssignForm()" [disabled]="savingMission">Annuler</button>
-          <button class="btn-fintech btn-gradient-primary" type="submit" [disabled]="savingMission">
+          <button class="btn-fintech btn-gradient-primary" type="button" (click)="submitMission()" [disabled]="savingMission">
             <span *ngIf="savingMission" class="spinner-border spinner-border-sm me-2"></span>
             <i *ngIf="!savingMission" class="feather icon-send me-2"></i>
             Confirmer l'affectation
@@ -258,7 +273,7 @@
             <label class="form-label">Statut mission *</label>
             <div class="input-group">
               <span class="input-group-text"><i class="feather icon-flag"></i></span>
-              <select class="form-select" [(ngModel)]="formResult.statut" name="result_statut_modal">
+              <select class="form-select" [(ngModel)]="formResult.statut" name="result_statut_modal" required>
                 <option [ngValue]="''" disabled>Sélectionner</option>
                 <option *ngFor="let s of resultStatuses" [ngValue]="s.value">{{ s.label }}</option>
               </select>

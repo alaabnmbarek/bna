@@ -114,7 +114,10 @@
                 </td>
                 <td class="text-center">
                   <div class="btn-group">
-                    <button class="btn btn-icon btn-sm btn-light-primary" (click)="openModal(f)" title="Modifier">
+                    <button class="btn btn-icon btn-sm btn-light-info" (click)="viewFacture(f)" title="Consulter la facture">
+                      <i class="feather icon-eye"></i>
+                    </button>
+                    <button class="btn btn-icon btn-sm btn-light-primary" (click)="openModal(f)" title="Modifier" *ngIf="f.statut === 'EN_COURS'">
                       <i class="feather icon-edit"></i>
                     </button>
                     <button class="btn btn-icon btn-sm btn-light-danger" (click)="deleteFacture(f.id!)" title="Supprimer" *ngIf="auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
@@ -141,7 +144,7 @@
       </div>
 
       <div *ngIf="activeTab === 'NOTES_HONORAIRES'" class="factures-notes-wrap">
-        <app-notes-honoraires></app-notes-honoraires>
+        <app-notes-honoraires (factureGenerated)="onFactureGeneratedFromNote()"></app-notes-honoraires>
       </div>
     </app-card>
   </div>
@@ -194,6 +197,79 @@
               <label class="form-label">Montant TTC</label>
               <input type="number" class="form-control text-end bg-light fw-bold" name="montantTtc" [ngModel]="currentFacture.montantTtc" readonly disabled>
             </div>
+
+            <!-- Nouveau: Détail des prestations -->
+            <div class="col-12 mt-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label mb-0 fw-bold">Détail des prestations</label>
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="addPrestation()" *ngIf="editMode && currentFacture.statut === 'EN_COURS'">
+                  <i class="feather icon-plus me-1"></i> Ajouter
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Type</th>
+                      <th>Description</th>
+                      <th style="width: 80px;">Qté</th>
+                      <th style="width: 120px;">P.U HT</th>
+                      <th style="width: 120px;">Total HT</th>
+                      <th style="width: 40px;" *ngIf="editMode && currentFacture.statut === 'EN_COURS'"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let p of currentFacture.prestations; let i = index">
+                      <td>
+                        <select class="form-select form-select-sm" [(ngModel)]="p.type" [name]="'p_type_' + i" [disabled]="!editMode || currentFacture.statut !== 'EN_COURS'">
+                          <option value="HONORAIRES">Honoraires</option>
+                          <option value="FRAIS">Frais</option>
+                          <option value="DEPLACEMENT">Déplacement</option>
+                          <option value="AUTRE">Autre</option>
+                        </select>
+                      </td>
+                      <td>
+                        <input class="form-control form-control-sm" [(ngModel)]="p.description" [name]="'p_desc_' + i" [readonly]="!editMode || currentFacture.statut !== 'EN_COURS'">
+                      </td>
+                      <td>
+                        <input type="number" class="form-control form-control-sm text-center" [(ngModel)]="p.quantite" [name]="'p_qty_' + i" (input)="recalcPrestation(i)" [readonly]="!editMode || currentFacture.statut !== 'EN_COURS'">
+                      </td>
+                      <td>
+                        <input type="number" class="form-control form-control-sm text-end" [(ngModel)]="p.prixUnitaire" [name]="'p_pu_' + i" (input)="recalcPrestation(i)" [readonly]="!editMode || currentFacture.statut !== 'EN_COURS'">
+                      </td>
+                      <td class="text-end align-middle fw-bold">{{ p.montant | number:'1.2-2' }}</td>
+                      <td *ngIf="editMode && currentFacture.statut === 'EN_COURS'">
+                        <button type="button" class="btn btn-link text-danger p-0" (click)="removePrestation(i)">
+                          <i class="feather icon-trash-2"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr *ngIf="!currentFacture.prestations?.length">
+                      <td colspan="6" class="text-center text-muted py-3">Aucune prestation définie.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Nouveau: Informations complémentaires -->
+            <div class="col-md-6 mt-2">
+              <label class="form-label">Mode de Paiement</label>
+              <select class="form-select" name="modePaiement" [(ngModel)]="currentFacture.modePaiement">
+                <option value="Virement">Virement Bancaire</option>
+                <option value="Cheque">Chèque</option>
+                <option value="Especes">Espèces</option>
+              </select>
+            </div>
+            <div class="col-md-6 mt-2">
+              <label class="form-label">Conditions de Paiement</label>
+              <input type="text" class="form-control" name="conditionsPaiement" [(ngModel)]="currentFacture.conditionsPaiement">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Remarques</label>
+              <textarea class="form-control" name="remarques" [(ngModel)]="currentFacture.remarques" rows="2"></textarea>
+            </div>
+
 
           </div>
 
@@ -291,3 +367,155 @@
   </div>
 </div>
 <div class="modal-backdrop fade show" *ngIf="showImportModal"></div>
+
+<!-- Modal Facture Detail (View) -->
+<div class="modal fade" [class.show]="showFactureDetail" [style.display]="showFactureDetail ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content facture-view-modal">
+      <div class="modal-header border-bottom-0 no-print">
+        <h5 class="modal-title">Détail de la Facture</h5>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary btn-sm" (click)="printFacture()">
+            <i class="feather icon-printer me-1"></i> Imprimer
+          </button>
+          <button type="button" class="btn-close" (click)="closeFactureDetail()"></button>
+        </div>
+      </div>
+      <div class="modal-body p-0">
+        <div class="facture-document" id="printableFacture">
+          <!-- Header Facture -->
+          <div class="facture-doc-header">
+            <div class="row align-items-center">
+              <div class="col-6">
+                <img src="assets/images/logo-bna-new.png.jpg" alt="BNA BANK" class="facture-logo">
+              </div>
+              <div class="col-6 text-end">
+                <h2 class="facture-type-title">FACTURE</h2>
+                <div class="facture-meta">
+                  <div class="meta-item"><span>N° Facture :</span> <strong>{{ selectedFactureDetail?.numero }}</strong></div>
+                  <div class="meta-item"><span>Date d'émission :</span> <strong>{{ selectedFactureDetail?.dateFacture | date:'dd/MM/yyyy' }}</strong></div>
+                  <div class="meta-item"><span>Statut :</span> <strong [class.text-success]="selectedFactureDetail?.statut === 'PAYEE'" [class.text-primary]="selectedFactureDetail?.statut === 'VALIDEE'">{{ selectedFactureDetail?.statut }}</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="facture-doc-addresses">
+            <div class="row">
+              <div class="col-6">
+                <div class="address-box">
+                  <div class="address-title">ÉMETTEUR (PRESTATAIRE)</div>
+                  <div class="address-content" *ngIf="selectedFacturePrestataire; else loadingP">
+                    <div class="name">{{ selectedFacturePrestataire.nom }} {{ selectedFacturePrestataire.prenom }}</div>
+                    <div class="cabinet" *ngIf="selectedFacturePrestataire.cabinet">{{ selectedFacturePrestataire.cabinet }}</div>
+                    <div class="detail"><i class="feather icon-map-pin me-1"></i> {{ selectedFacturePrestataire.adresse || '—' }}</div>
+                    <div class="detail"><i class="feather icon-mail me-1"></i> {{ selectedFacturePrestataire.email || '—' }}</div>
+                    <div class="detail"><i class="feather icon-phone me-1"></i> {{ selectedFacturePrestataire.telephone || '—' }}</div>
+                    <div class="detail"><i class="feather icon-info me-1"></i> {{ selectedFacturePrestataire.natureJuridique || '—' }}</div>
+                  </div>
+                  <ng-template #loadingP>
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                  </ng-template>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="address-box client">
+                  <div class="address-title">DESTINATAIRE (CLIENT)</div>
+                  <div class="address-content">
+                    <div class="name">BNA BANK - DIRECTION DU CONTENTIEUX</div>
+                    <div class="detail">Immeuble BNA, Avenue Mohamed V</div>
+                    <div class="detail">1002 Tunis, Tunisie</div>
+                    <div class="detail mt-2"><strong>Dossier Réf :</strong> {{ selectedFactureDetail?.referenceLien }}</div>
+                    <div class="detail"><strong>Type Lien :</strong> {{ selectedFactureDetail?.typeLien }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tableau des prestations -->
+          <div class="facture-doc-items">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Type de prestation</th>
+                  <th>Description</th>
+                  <th class="text-center" style="width: 80px;">Qté</th>
+                  <th class="text-end" style="width: 150px;">Prix Unit. HT</th>
+                  <th class="text-end" style="width: 150px;">Montant HT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of selectedFactureDetail?.prestations">
+                  <td>{{ p.type }}</td>
+                  <td>{{ p.description }}</td>
+                  <td class="text-center">{{ p.quantite }}</td>
+                  <td class="text-end">{{ p.prixUnitaire | number:'1.3-3' }}</td>
+                  <td class="text-end fw-bold">{{ p.montant | number:'1.3-3' }}</td>
+                </tr>
+                <tr *ngIf="!selectedFactureDetail?.prestations?.length">
+                  <td colspan="5" class="text-center py-4 text-muted">Aucun détail de prestation disponible.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Récapitulatif financier -->
+          <div class="facture-doc-summary">
+            <div class="row">
+              <div class="col-7">
+                <div class="summary-notes" *ngIf="selectedFactureDetail?.remarques">
+                  <div class="title">Remarques & Observations :</div>
+                  <div class="content">{{ selectedFactureDetail?.remarques }}</div>
+                </div>
+                <div class="summary-conditions mt-3">
+                  <div class="title">Conditions de paiement :</div>
+                  <div class="content">{{ selectedFactureDetail?.conditionsPaiement || 'Paiement à réception de facture par virement bancaire.' }}</div>
+                  <div class="mode mt-1" *ngIf="selectedFactureDetail?.modePaiement"><strong>Mode :</strong> {{ selectedFactureDetail?.modePaiement }}</div>
+                </div>
+              </div>
+              <div class="col-5">
+                <div class="total-box">
+                  <div class="total-row">
+                    <span>Total HT :</span>
+                    <span>{{ selectedFactureDetail?.montantHt | number:'1.3-3' }} DT</span>
+                  </div>
+                  <div class="total-row">
+                    <span>TVA ({{ selectedFactureDetail?.tva }}%) :</span>
+                    <span>{{ (selectedFactureDetail?.montantHt || 0) * (selectedFactureDetail?.tva || 0) / 100 | number:'1.3-3' }} DT</span>
+                  </div>
+                  <div class="total-row-final">
+                    <span>TOTAL TTC :</span>
+                    <span class="amount">{{ selectedFactureDetail?.montantTtc | number:'1.3-3' }} DT</span>
+                  </div>
+                  <div class="total-row-paye" *ngIf="selectedFactureDetail?.montantPaye">
+                    <span>Montant réglé :</span>
+                    <span>- {{ selectedFactureDetail?.montantPaye | number:'1.3-3' }} DT</span>
+                  </div>
+                  <div class="total-row-reste" *ngIf="selectedFactureDetail?.resteAPayer">
+                    <span>Reste à payer :</span>
+                    <span>{{ selectedFactureDetail?.resteAPayer | number:'1.3-3' }} DT</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="facture-doc-footer">
+            <div class="thanks">Merci pour votre confiance.</div>
+            <div class="legal">Facture générée numériquement par le portail BNA BANK Contentieux.</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-top-0 no-print">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeFactureDetail()">Fermer</button>
+        <button type="button" class="btn btn-primary" (click)="validateFacture(selectedFactureDetail!.id!)" *ngIf="selectedFactureDetail?.statut === 'EN_COURS' && auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
+          <i class="feather icon-check-circle me-1"></i> Valider la facture
+        </button>
+        <button type="button" class="btn btn-success" (click)="markAsPaid(selectedFactureDetail!.id!)" *ngIf="selectedFactureDetail?.statut === 'VALIDEE' && auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
+          <i class="feather icon-dollar-sign me-1"></i> Marquer comme payée
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

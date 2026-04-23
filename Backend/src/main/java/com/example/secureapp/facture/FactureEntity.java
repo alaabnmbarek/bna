@@ -45,6 +45,19 @@ public class FactureEntity {
 
     private String fichierJustificatif;
 
+    @Column(columnDefinition = "TEXT")
+    private String remarques;
+
+    @Column(columnDefinition = "TEXT")
+    private String conditionsPaiement;
+
+    private String modePaiement;
+
+    private Long noteHonoraireId;
+
+    @OneToMany(mappedBy = "facture", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<FacturePrestationEntity> prestations = new java.util.ArrayList<>();
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

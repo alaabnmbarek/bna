@@ -90,7 +90,20 @@ public class NoteHonoraireService {
         entity.setTva(tva);
         entity.setTotal(total);
         entity.setFichierJustificatif(request.fichierJustificatif());
+        entity.setRemarques(request.remarques());
+        entity.setDateEmission(request.dateEmission());
         entity.setStatut(NoteHonoraireStatus.EN_COURS);
+
+        if (request.prestations() != null) {
+            for (NoteHonoraireDtos.NotePrestationDto pDto : request.prestations()) {
+                NotePrestationEntity pEntity = new NotePrestationEntity();
+                pEntity.setType(pDto.type());
+                pEntity.setDescription(pDto.description());
+                pEntity.setMontant(pDto.montant().setScale(3, RoundingMode.HALF_UP));
+                pEntity.setNoteHonoraire(entity);
+                entity.getPrestations().add(pEntity);
+            }
+        }
 
         NoteHonoraireEntity saved = repository.save(entity);
         return toResponse(saved);
@@ -124,6 +137,20 @@ public class NoteHonoraireService {
         if (request.fichierJustificatif() != null) {
             entity.setFichierJustificatif(request.fichierJustificatif());
         }
+        entity.setRemarques(request.remarques());
+        entity.setDateEmission(request.dateEmission());
+
+        entity.getPrestations().clear();
+        if (request.prestations() != null) {
+            for (NoteHonoraireDtos.NotePrestationDto pDto : request.prestations()) {
+                NotePrestationEntity pEntity = new NotePrestationEntity();
+                pEntity.setType(pDto.type());
+                pEntity.setDescription(pDto.description());
+                pEntity.setMontant(pDto.montant().setScale(3, RoundingMode.HALF_UP));
+                pEntity.setNoteHonoraire(entity);
+                entity.getPrestations().add(pEntity);
+            }
+        }
 
         NoteHonoraireEntity saved = repository.save(entity);
         return toResponse(saved);
@@ -142,15 +169,18 @@ public class NoteHonoraireService {
 
     @Transactional
     public void validate(Long id) {
+        System.out.println("[DEBUG] Validation de la note ID: " + id);
         NoteHonoraireEntity entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Note non trouvée"));
         if (entity.getStatut() != NoteHonoraireStatus.SOUMISE) {
+            System.out.println("[DEBUG] Statut invalide pour validation: " + entity.getStatut());
             throw new RuntimeException("La note doit être soumise pour être validée");
         }
         entity.setStatut(NoteHonoraireStatus.VALIDEE);
         repository.save(entity);
+        System.out.println("[DEBUG] Note " + entity.getNumero() + " marquée comme VALIDEE");
 
-        // Convertir automatiquement en Facture validée
+        // Convertir automatiquement en Facture validée avec tous les détails
         FactureDto facture = new FactureDto();
         facture.setNumero("FAC-" + entity.getNumero());
         facture.setMontantHt(entity.getMontantHonoraires().add(entity.getFraisAdministratifs()).doubleValue());
@@ -164,8 +194,42 @@ public class NoteHonoraireService {
         facture.setReferenceLien(entity.getReferenceLien());
         facture.setPrestataireId(entity.getPrestataire().getId());
         facture.setFichierJustificatif(entity.getFichierJustificatif());
+        facture.setRemarques(entity.getRemarques());
+        facture.setNoteHonoraireId(entity.getId());
 
-        factureService.create(facture);
+        System.out.println("[DEBUG] Création de la facture pour le prestataire: " + entity.getPrestataire().getId());
+        // Copier les prestations
+        if (entity.getPrestations() != null && !entity.getPrestations().isEmpty()) {
+            System.out.println("[DEBUG] Copie de " + entity.getPrestations().size() + " prestations");
+            facture.setPrestations(entity.getPrestations().stream().map(p -> {
+                FactureDto.PrestationDto pDto = new FactureDto.PrestationDto();
+                pDto.setType(p.getType());
+                pDto.setDescription(p.getDescription());
+                pDto.setQuantite(1);
+                pDto.setPrixUnitaire(p.getMontant());
+                pDto.setMontant(p.getMontant());
+                return pDto;
+            }).collect(java.util.stream.Collectors.toList()));
+        } else {
+            System.out.println("[DEBUG] Création d'une prestation par défaut");
+            // Si pas de prestations détaillées, en créer une par défaut à partir des montants globaux
+            FactureDto.PrestationDto pDto = new FactureDto.PrestationDto();
+            pDto.setType("HONORAIRES");
+            pDto.setDescription("Honoraires forfaitaires");
+            pDto.setQuantite(1);
+            pDto.setPrixUnitaire(entity.getMontantHonoraires().add(entity.getFraisAdministratifs()));
+            pDto.setMontant(entity.getMontantHonoraires().add(entity.getFraisAdministratifs()));
+            facture.setPrestations(java.util.List.of(pDto));
+        }
+
+        try {
+            FactureDto created = factureService.create(facture);
+            System.out.println("[DEBUG] Facture créée avec succès, ID: " + created.getId());
+        } catch (Exception e) {
+            System.err.println("[ERROR] Erreur lors de la création de la facture: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @Transactional
@@ -213,6 +277,11 @@ public class NoteHonoraireService {
                 e.getTotal(),
                 e.getStatut(),
                 e.getFichierJustificatif(),
+                e.getRemarques(),
+                e.getDateEmission(),
+                e.getPrestations().stream()
+                        .map(item -> new NoteHonoraireDtos.NotePrestationDto(item.getType(), item.getDescription(), item.getMontant()))
+                        .toList(),
                 e.getCreatedAt(),
                 e.getUpdatedAt()
         );

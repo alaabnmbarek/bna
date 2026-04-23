@@ -19,7 +19,7 @@ public class MissionEntity {
     private PrestataireEntity prestataire;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 40)
+    @Column(length = 60, columnDefinition = "VARCHAR(60)")
     private MissionType typeMission;
 
     @Column(length = 80)
@@ -41,7 +41,7 @@ public class MissionEntity {
     private Integer dureeEstimee;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 50, columnDefinition = "VARCHAR(50)")
     private MissionStatus statut = MissionStatus.ASSIGNEE;
 
     private LocalDate dateDebut;

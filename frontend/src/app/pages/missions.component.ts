@@ -50,17 +50,17 @@ export class MissionsPageComponent implements OnInit {
   ];
 
   missionStatuses: Array<{ value: MissionStatus; label: string }> = [
-    { value: 'ASSIGNEE', label: 'assignée' },
-    { value: 'EN_COURS', label: 'en cours' },
-    { value: 'TERMINEE', label: 'terminée' },
-    { value: 'ECHOUEE', label: 'échouée' },
-    { value: 'ANNULEE', label: 'annulée' }
+    { value: 'ASSIGNEE', label: 'Assignée' },
+    { value: 'EN_COURS', label: 'En cours' },
+    { value: 'TERMINEE', label: 'Terminée' },
+    { value: 'ECHOUEE', label: 'Échouée' },
+    { value: 'ANNULEE', label: 'Annulée' }
   ];
 
   resultStatuses: Array<{ value: MissionResultStatus; label: string }> = [
-    { value: 'EN_COURS', label: 'en cours' },
-    { value: 'TERMINEE', label: 'terminée' },
-    { value: 'ECHOUEE', label: 'échouée' }
+    { value: 'EN_COURS', label: 'En cours' },
+    { value: 'TERMINEE', label: 'Terminée' },
+    { value: 'ECHOUEE', label: 'Échouée' }
   ];
 
   formMission: {
@@ -337,39 +337,50 @@ export class MissionsPageComponent implements OnInit {
 
   onProcedureChange(): void {
     const p = this.selectedProcedure;
-    this.formMission.affaireNumero = p?.referenceTribunal || '';
+    if (p) {
+      this.formMission.affaireNumero = p.referenceTribunal || '';
+      console.log('Procédure sélectionnée:', p);
+    }
   }
 
   submitMission(): void {
+    console.log('--- submitMission START ---');
+    console.log('formMission:', JSON.stringify(this.formMission));
     this.missionCreateError = null;
+    
     if (!this.formMission.typeMission) {
+      console.warn('Validation failed: typeMission is missing');
       this.showBanner('Type mission obligatoire.', 'danger');
-      alert('Type mission obligatoire.');
       return;
     }
     if (!this.formMission.prestataireType) {
+      console.warn('Validation failed: prestataireType is missing');
       this.showBanner('Prestataire assigné (type) obligatoire.', 'danger');
-      alert('Prestataire assigné (type) obligatoire.');
       return;
     }
     if (!this.formMission.prestataireId) {
+      console.warn('Validation failed: prestataireId is missing');
       this.showBanner('Nom prestataire obligatoire.', 'danger');
-      alert('Nom prestataire obligatoire.');
       return;
     }
+    
     const pid = Number(this.formMission.prestataireId);
     if (!Number.isFinite(pid) || pid <= 0) {
       const msg = `Prestataire invalide: ${String(this.formMission.prestataireId)}`;
+      console.error(msg);
       this.showBanner(msg, 'danger');
       this.missionCreateError = msg;
       return;
     }
 
     const proc = this.selectedProcedure;
+    console.log('Selected procedure:', proc);
+    
     const titre = this.missionTypes.find((m) => m.value === this.formMission.typeMission)?.label || 'Mission';
+    console.log('Titre de la mission:', titre);
 
     const payload: Partial<Mission> = {
-      typeMission: this.formMission.typeMission,
+      typeMission: this.formMission.typeMission as MissionType,
       codeMission: this.formMission.codeMission || undefined,
       titre,
       description: this.formMission.description || undefined,
@@ -379,28 +390,24 @@ export class MissionsPageComponent implements OnInit {
       statut: 'ASSIGNEE'
     };
 
+    console.log('Payload envoyé au service:', JSON.stringify(payload));
     this.savingMission = true;
     this.prestatairesService.createMission(pid, payload).subscribe({
       next: (m) => {
+        console.log('Mission créée avec succès (RETOUR BACKEND):', m);
         this.savingMission = false;
         this.missions = [m, ...this.missions];
         this.missionSearch = '';
         this.formMission = this.blankMissionForm();
         this.showAssignForm = false;
         this.showBanner('Mission affectée avec succès.', 'success');
-        this.prestatairesService.listAllMissions().subscribe({
-          next: (rows) => {
-            this.missions = rows || [];
-            this.prefetchResults(this.missions);
-          },
-          error: () => {}
-        });
+        this.loadAll();
       },
       error: (err) => {
+        console.error('Erreur lors de createMission (RETOUR BACKEND):', err);
         this.savingMission = false;
         const msg = err?.error?.message || err?.error?.error || `Erreur lors de l'affectation de la mission. (${err?.status || ''})`;
         this.showBanner(msg, 'danger');
-        alert(msg);
         this.missionCreateError = msg;
       }
     });
@@ -492,39 +499,42 @@ export class MissionsPageComponent implements OnInit {
   }
 
   submitResult(): void {
-    if (!this.formResult.missionId) {
-      this.showBanner('Mission obligatoire.', 'danger');
-      return;
-    }
-    if (!this.formResult.statut) {
-      this.showBanner('Statut mission obligatoire.', 'danger');
+    if (!this.formResult.missionId || !this.formResult.statut) {
+      this.showBanner('Mission et Statut sont obligatoires.', 'danger');
       return;
     }
 
     const payload: Partial<MissionResult> = {
-      statut: this.formResult.statut,
+      missionId: this.formResult.missionId,
+      statut: this.formResult.statut as MissionResultStatus,
       dateDebut: this.formResult.dateDebut || undefined,
       dateFin: this.formResult.dateFin || undefined,
       resultat: this.formResult.resultat || undefined,
       montantRecuperee: this.toDecimalOrUndefined(this.formResult.montantRecuperee)
     };
 
+    console.log('Envoi résultat mission, payload:', payload);
     this.savingResult = true;
-    this.prestatairesService.upsertMissionResult(this.formResult.missionId, payload).subscribe({
-      next: (saved) => {
-        const mission = this.missions.find((m) => m.id === this.formResult.missionId);
-        if (mission) {
-          if (this.formResult.statut === 'EN_COURS') mission.statut = 'EN_COURS';
-          if (this.formResult.statut === 'TERMINEE') mission.statut = 'TERMINEE';
-          if (this.formResult.statut === 'ECHOUEE') mission.statut = 'ECHOUEE';
+    this.prestatairesService.upsertMissionResult(payload.missionId!, payload).subscribe({
+      next: (res) => {
+        console.log('Résultat mission enregistré:', res);
+        this.savingResult = false;
+        this.showBanner('Résultat enregistré avec succès.', 'success');
+        
+        // Mettre à jour le statut de la mission dans la liste locale si nécessaire
+        const m = this.missions.find(x => x.id === payload.missionId);
+        if (m) {
+          // Mapper le statut de résultat au statut de mission
+          // (Backend gère normalement la synchro, on rafraîchit pour être sûr)
+          this.loadAll();
         }
-        this.resultsByMissionId[this.formResult.missionId as number] = saved;
+        
         this.closeResultModal();
-        this.showBanner('Résultat mission enregistré.', 'success');
       },
       error: (err) => {
+        console.error('Erreur lors de upsertMissionResult:', err);
         this.savingResult = false;
-        const msg = err?.error?.message || err?.error?.error || "Erreur lors de l'enregistrement du résultat.";
+        const msg = err?.error?.message || err?.error?.error || 'Erreur lors de l\'enregistrement du résultat.';
         this.showBanner(msg, 'danger');
       }
     });
@@ -596,10 +606,11 @@ export class MissionsPageComponent implements OnInit {
 
   statusBadgeClassFintech(m: Mission): string {
     const s = (m.statut || '').toUpperCase();
-    if (s === 'TERMINÉE' || s === 'CLÔTURÉE' || s === 'COMPLÉTÉE' || s === 'DONE' || s === 'TERMINER') return 'badge-soft-success';
-    if (s === 'EN_COURS' || s === 'IN_PROGRESS' || s === 'AFFECTÉE' || s === 'ASSIGNÉE') return 'badge-soft-primary';
+    if (s === 'TERMINEE' || s === 'TERMINÉE' || s === 'CLÔTURÉE' || s === 'COMPLÉTÉE' || s === 'DONE' || s === 'TERMINER') return 'badge-soft-success';
+    if (s === 'EN_COURS' || s === 'IN_PROGRESS') return 'badge-soft-primary';
+    if (s === 'ASSIGNEE' || s === 'AFFECTÉE' || s === 'ASSIGNÉE') return 'badge-soft-info';
     if (s === 'EN_ATTENTE' || s === 'PENDING') return 'badge-soft-warning';
-    if (s === 'ANNULÉE' || s === 'CANCELLED' || s === 'REJETÉE') return 'badge-soft-danger';
+    if (s === 'ECHOUEE' || s === 'ÉCHOUÉE' || s === 'ANNULEE' || s === 'ANNULÉE' || s === 'CANCELLED' || s === 'REJETÉE') return 'badge-soft-danger';
     return 'badge-soft-secondary';
   }
 
@@ -659,16 +670,16 @@ export class MissionsPageComponent implements OnInit {
     return id != null ? String(id) : '—';
   }
 
-  private toIntOrUndefined(value: string): number | undefined {
-    const v = (value ?? '').trim();
+  private toIntOrUndefined(value: any): number | undefined {
+    const v = String(value ?? '').trim();
     if (!v) return undefined;
     const n = Number(v);
     if (!Number.isFinite(n)) return undefined;
     return Math.trunc(n);
   }
 
-  private toDecimalOrUndefined(value: string): number | undefined {
-    const v = (value ?? '').trim().replace(',', '.');
+  private toDecimalOrUndefined(value: any): number | undefined {
+    const v = String(value ?? '').trim().replace(',', '.');
     if (!v) return undefined;
     const n = Number(v);
     if (!Number.isFinite(n)) return undefined;

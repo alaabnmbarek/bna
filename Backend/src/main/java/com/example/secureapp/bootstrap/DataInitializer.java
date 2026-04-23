@@ -155,7 +155,20 @@ public class DataInitializer {
             ensureColumn(dataSource, "dossiers_contentieux", "motif_rejet", "LONGTEXT");
             ensureColumn(dataSource, "dossiers_contentieux", "rejected_by", "VARCHAR(150)");
             ensureColumn(dataSource, "dossiers_contentieux", "rejected_at", "DATETIME(6)");
+            
+            ensureFacturePrestationsTable(dataSource);
             ensureColumn(dataSource, "factures", "prestataire_id", "BIGINT");
+            ensureColumn(dataSource, "factures", "note_honoraire_id", "BIGINT");
+            ensureColumn(dataSource, "factures", "remarques", "TEXT");
+            ensureColumn(dataSource, "factures", "conditions_paiement", "TEXT");
+            ensureColumn(dataSource, "factures", "mode_paiement", "VARCHAR(255)");
+            ensureColumn(dataSource, "factures", "type_lien", "VARCHAR(50)");
+            ensureColumn(dataSource, "factures", "reference_lien", "VARCHAR(255)");
+            ensureColumn(dataSource, "factures", "fichier_justificatif", "VARCHAR(255)");
+            ensureColumn(dataSource, "factures", "montant_paye", "DOUBLE DEFAULT 0.0");
+            ensureColumn(dataSource, "factures", "reste_apayer", "DOUBLE DEFAULT 0.0");
+            ensureColumn(dataSource, "factures", "created_at", "DATETIME(6)");
+            ensureColumn(dataSource, "factures", "updated_at", "DATETIME(6)");
         };
     }
 
@@ -198,6 +211,30 @@ public class DataInitializer {
             }
         } catch (Exception ex) {
             log.warn("bootstrap.schema ensure_column_failed table={} column={} error={}", table, column, ex.getMessage());
+        }
+    }
+
+    private void ensureFacturePrestationsTable(DataSource dataSource) {
+        try (Connection c = dataSource.getConnection();
+             Statement st = c.createStatement()) {
+            st.executeUpdate(
+                    "CREATE TABLE IF NOT EXISTS facture_prestations (" +
+                            "id BIGINT NOT NULL AUTO_INCREMENT," +
+                            "type VARCHAR(255) NOT NULL," +
+                            "description TEXT," +
+                            "quantite INT DEFAULT 1," +
+                            "prix_unitaire DECIMAL(12,3) NOT NULL," +
+                            "montant DECIMAL(12,3) NOT NULL," +
+                            "facture_id BIGINT NOT NULL," +
+                            "PRIMARY KEY (id)" +
+                            ")"
+            );
+            try {
+                st.executeUpdate("CREATE INDEX idx_facture_prestations_facture_id ON facture_prestations (facture_id)");
+            } catch (Exception ignored) {
+            }
+        } catch (Exception ex) {
+            log.warn("bootstrap.schema ensure_table_failed table={} error={}", "facture_prestations", ex.getMessage());
         }
     }
 }

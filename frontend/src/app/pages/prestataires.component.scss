@@ -442,3 +442,114 @@
     white-space: normal;
   }
 }
+
+/* Improved Fee Note Popup V2 */
+.hon-modal-v2 {
+  max-width: 1100px;
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+
+  .admin-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    background: #f8fafc;
+    padding: 24px;
+  }
+}
+
+.hon-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  height: 100%;
+
+  .hon-card-title {
+    font-weight: 1200;
+    font-size: 14px;
+    color: #0f172a;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 12px;
+  }
+}
+
+.hon-info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.hon-info-item {
+  display: flex;
+  flex-direction: column;
+  
+  .hon-label {
+    font-size: 11px;
+    font-weight: 900;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  
+  .hon-value {
+    font-size: 14px;
+    color: #1e293b;
+  }
+}
+
+.hon-card-total {
+  background: linear-gradient(135deg, #006847 0%, #004d35 100%);
+  color: #ffffff;
+  border: none;
+
+  .hon-card-title {
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .hon-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 800;
+    font-size: 14px;
+    margin-bottom: 8px;
+    opacity: 0.9;
+  }
+
+  .hon-total-final {
+    margin-top: 16px;
+    text-align: right;
+    
+    .hon-total-label {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    
+    .hon-total-amount {
+      font-size: 32px;
+      font-weight: 1200;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+  }
+}
+
+.text-mono {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* Animations and Responsive */
+@media (min-width: 768px) {
+  .hon-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
