@@ -87,8 +87,8 @@ public class FactureController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX')")
-    public ResponseEntity<FactureDto> updateFacture(@PathVariable Long id, @RequestBody FactureDto dto) {
-        return ResponseEntity.ok(factureService.update(id, dto));
+    public ResponseEntity<FactureDto> updateFacture(@PathVariable Long id, @RequestBody FactureDto dto, Authentication authentication) {
+        return ResponseEntity.ok(factureService.update(id, dto, authentication));
     }
 
     @DeleteMapping("/{id}")

@@ -4,6 +4,14 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import com.example.secureapp.prestataire.PrestataireEntity;
 import com.example.secureapp.prestataire.PrestataireRepository;
+import com.example.secureapp.prestataire.MissionEntity;
+import com.example.secureapp.prestataire.MissionRepository;
+import com.example.secureapp.prestataire.honoraire.NoteHonoraireEntity;
+import com.example.secureapp.prestataire.honoraire.NoteHonoraireRepository;
+import com.example.secureapp.contentieux.DossierContentieuxEntity;
+import com.example.secureapp.contentieux.DossierContentieuxRepository;
+import com.example.secureapp.suivi_judiciaire.AffaireJudiciaireEntity;
+import com.example.secureapp.suivi_judiciaire.AffaireJudiciaireRepository;
 import com.example.secureapp.user.UserEntity;
 import com.example.secureapp.user.UserRepository;
 import org.springframework.beans.BeanUtils;
@@ -26,6 +34,8 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,12 +47,20 @@ public class FactureService {
     private final FactureRepository factureRepository;
     private final UserRepository userRepository;
     private final PrestataireRepository prestataireRepository;
+    private final MissionRepository missionRepository;
+    private final NoteHonoraireRepository noteHonoraireRepository;
+    private final AffaireJudiciaireRepository affaireJudiciaireRepository;
+    private final DossierContentieuxRepository dossierContentieuxRepository;
     private final Path uploadDir = Paths.get("uploads", "factures");
 
-    public FactureService(FactureRepository factureRepository, UserRepository userRepository, PrestataireRepository prestataireRepository) {
+    public FactureService(FactureRepository factureRepository, UserRepository userRepository, PrestataireRepository prestataireRepository, MissionRepository missionRepository, NoteHonoraireRepository noteHonoraireRepository, AffaireJudiciaireRepository affaireJudiciaireRepository, DossierContentieuxRepository dossierContentieuxRepository) {
         this.factureRepository = factureRepository;
         this.userRepository = userRepository;
         this.prestataireRepository = prestataireRepository;
+        this.missionRepository = missionRepository;
+        this.noteHonoraireRepository = noteHonoraireRepository;
+        this.affaireJudiciaireRepository = affaireJudiciaireRepository;
+        this.dossierContentieuxRepository = dossierContentieuxRepository;
     }
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
@@ -61,9 +79,22 @@ public class FactureService {
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public List<FactureDto> listMine(Authentication authentication) {
         PrestataireEntity p = resolvePrestataire(authentication);
+        backfillPrestataireIdForNullFactures();
         return getByPrestataireId(p.getId());
+    }
+
+    private void backfillPrestataireIdForNullFactures() {
+        List<FactureEntity> nullPrestataires = factureRepository.findByPrestataireIdIsNull();
+        for (FactureEntity f : nullPrestataires) {
+            Long resolved = resolvePrestataireIdForFacture(f);
+            if (resolved != null) {
+                f.setPrestataireId(resolved);
+                factureRepository.save(f);
+            }
+        }
     }
 
     public boolean isInternal(Authentication authentication) {
@@ -101,6 +132,14 @@ public class FactureService {
                 entity.getPrestations().add(pEntity);
             }
         }
+
+        if (entity.getPrestataireId() == null) {
+            Long resolved = resolvePrestataireIdForFacture(entity);
+            if (resolved != null) entity.setPrestataireId(resolved);
+        }
+        if (entity.getPrestataireId() == null) {
+            throw new RuntimeException("Prestataire obligatoire pour créer une facture (prestataireId ou lien univoque requis)");
+        }
         
         entity.calculateReste();
         try {
@@ -114,10 +153,11 @@ public class FactureService {
     }
 
     @org.springframework.transaction.annotation.Transactional
-    public FactureDto update(Long id, FactureDto dto) {
+    public FactureDto update(Long id, FactureDto dto, Authentication authentication) {
         FactureEntity entity = factureRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Facture non trouvée"));
-        
+
+        FactureStatus previousStatus = entity.getStatut();
         BeanUtils.copyProperties(dto, entity, "id", "createdAt", "updatedAt", "prestations");
         
         entity.getPrestations().clear();
@@ -128,6 +168,20 @@ public class FactureService {
                 pEntity.setFacture(entity);
                 entity.getPrestations().add(pEntity);
             }
+        }
+
+        if (previousStatus != FactureStatus.VALIDEE && entity.getStatut() == FactureStatus.VALIDEE) {
+            if (authentication == null || !hasAnyAuthority(authentication, "ROLE_RESPONSABLE_CONTENTIEUX", "ROLE_ADMIN", "RESPONSABLE_CONTENTIEUX", "ADMIN")) {
+                throw new AccessDeniedException("Accès refusé");
+            }
+        }
+
+        if (entity.getPrestataireId() == null) {
+            Long resolved = resolvePrestataireIdForFacture(entity);
+            if (resolved != null) entity.setPrestataireId(resolved);
+        }
+        if (entity.getPrestataireId() == null) {
+            throw new RuntimeException("Prestataire obligatoire (prestataireId ou lien univoque requis)");
         }
 
         entity.calculateReste();
@@ -279,6 +333,87 @@ public class FactureService {
         if (email == null || email.isBlank()) email = username;
         return prestataireRepository.findFirstByEmailIgnoreCase(email)
                 .orElseThrow(() -> new RuntimeException("Prestataire lié au compte introuvable (vérifiez l'email du profil et du prestataire)"));
+    }
+
+    private boolean hasAnyAuthority(Authentication authentication, String... authorities) {
+        if (authentication == null || authorities == null) return false;
+        return authentication.getAuthorities().stream().anyMatch(a -> {
+            String v = a.getAuthority();
+            if (v == null) return false;
+            for (String wanted : authorities) {
+                if (wanted != null && wanted.equals(v)) return true;
+            }
+            return false;
+        });
+    }
+
+    private Long resolvePrestataireIdForFacture(FactureEntity entity) {
+        if (entity == null) return null;
+        if (entity.getPrestataireId() != null) return entity.getPrestataireId();
+
+        Set<Long> candidates = new LinkedHashSet<>();
+
+        if (entity.getNoteHonoraireId() != null) {
+            NoteHonoraireEntity note = noteHonoraireRepository.findById(entity.getNoteHonoraireId()).orElse(null);
+            if (note != null && note.getPrestataire() != null && note.getPrestataire().getId() != null) {
+                candidates.add(note.getPrestataire().getId());
+            }
+        }
+
+        if (entity.getTypeLien() == null || entity.getReferenceLien() == null || entity.getReferenceLien().isBlank()) {
+            return candidates.size() == 1 ? candidates.iterator().next() : null;
+        }
+
+        String ref = entity.getReferenceLien().trim();
+
+        if (entity.getTypeLien() == TypeLien.MISSION) {
+            try {
+                Long missionId = Long.parseLong(ref);
+                MissionEntity mission = missionRepository.findById(missionId).orElse(null);
+                if (mission != null && mission.getPrestataire() != null && mission.getPrestataire().getId() != null) {
+                    candidates.add(mission.getPrestataire().getId());
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        if (entity.getTypeLien() == TypeLien.DOSSIER) {
+            List<MissionEntity> missions = missionRepository.findByDossierReferenceOrderByCreatedAtDesc(ref);
+            for (MissionEntity m : missions) {
+                if (m != null && m.getPrestataire() != null && m.getPrestataire().getId() != null) {
+                    candidates.add(m.getPrestataire().getId());
+                }
+            }
+
+            DossierContentieuxEntity dossier = dossierContentieuxRepository.findByReference(ref)
+                    .or(() -> dossierContentieuxRepository.findTopByCompteActuelOrderByCreatedAtDesc(ref))
+                    .or(() -> dossierContentieuxRepository.findTopByAncienCompteOrderByCreatedAtDesc(ref))
+                    .orElse(null);
+            if (dossier != null && dossier.getId() != null) {
+                List<AffaireJudiciaireEntity> affaires = affaireJudiciaireRepository.findByDossierContentieuxId(dossier.getId());
+                for (AffaireJudiciaireEntity a : affaires) {
+                    if (a == null) continue;
+                    if (a.getAvocat() != null && a.getAvocat().getId() != null) candidates.add(a.getAvocat().getId());
+                    if (a.getHuissier() != null && a.getHuissier().getId() != null) candidates.add(a.getHuissier().getId());
+                }
+            }
+        }
+
+        if (entity.getTypeLien() == TypeLien.AFFAIRE) {
+            AffaireJudiciaireEntity affaire = null;
+            try {
+                Long affaireId = Long.parseLong(ref);
+                affaire = affaireJudiciaireRepository.findById(affaireId).orElse(null);
+            } catch (NumberFormatException ignored) {
+                affaire = affaireJudiciaireRepository.findFirstByReferenceTribunalIgnoreCase(ref).orElse(null);
+            }
+            if (affaire != null) {
+                if (affaire.getAvocat() != null && affaire.getAvocat().getId() != null) candidates.add(affaire.getAvocat().getId());
+                if (affaire.getHuissier() != null && affaire.getHuissier().getId() != null) candidates.add(affaire.getHuissier().getId());
+            }
+        }
+
+        return candidates.size() == 1 ? candidates.iterator().next() : null;
     }
 
     private void ensureUploadDir() {

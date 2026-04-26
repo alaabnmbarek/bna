@@ -8,4 +8,8 @@ public interface FactureRepository extends JpaRepository<FactureEntity, Long> {
     boolean existsByNumero(String numero);
 
     List<FactureEntity> findByPrestataireIdOrderByDateFactureDesc(Long prestataireId);
+
+    List<FactureEntity> findByNoteHonoraireIdInOrderByDateFactureDesc(List<Long> noteHonoraireIds);
+
+    List<FactureEntity> findByPrestataireIdIsNull();
 }
