@@ -1,6 +1,6 @@
 <div class="dash-wrap">
   <app-card [hidHeader]="true" [options]="false" cardClass="dash-shell">
-    <div class="dash-head">
+    <div class="dash-head" data-aos="fade-up">
       <div>
         <div class="dash-title">Tableau de bord Admin</div>
         <div class="dash-subtitle">Vue synthétique des dossiers contentieux et indicateurs de suivi.</div>
@@ -38,7 +38,7 @@
 
     <div class="dash-hero">
       <div class="dash-hero-kpis">
-        <div class="dash-kpi-card dash-kpi-primary">
+        <div class="dash-kpi-card dash-kpi-primary" data-aos="zoom-in" data-aos-delay="0">
           <div class="dash-kpi-top">
             <div class="dash-kpi-k"><i class="feather icon-folder text-primary me-1"></i> Total dossiers</div>
             <div class="dash-kpi-chip">+ {{ countBy('A_VALIDER') }} à valider</div>
@@ -54,7 +54,7 @@
           ></apx-chart>
         </div>
 
-        <div class="dash-kpi-card dash-kpi-success">
+        <div class="dash-kpi-card dash-kpi-success" data-aos="zoom-in" data-aos-delay="80">
           <div class="dash-kpi-top">
             <div class="dash-kpi-k"><i class="feather icon-activity text-success me-1"></i> En cours</div>
             <div class="dash-kpi-chip">Taux {{ recouvrementRate() | number:'1.0-1' }}%</div>
@@ -70,7 +70,7 @@
           ></apx-chart>
         </div>
 
-        <div class="dash-kpi-card dash-kpi-sky">
+        <div class="dash-kpi-card dash-kpi-sky" data-aos="zoom-in" data-aos-delay="160">
           <div class="dash-kpi-top">
             <div class="dash-kpi-k"><i class="feather icon-credit-card text-info me-1"></i> Montant engagé</div>
             <div class="dash-kpi-chip">Total</div>
@@ -86,7 +86,7 @@
           ></apx-chart>
         </div>
 
-        <div class="dash-kpi-card dash-kpi-bna">
+        <div class="dash-kpi-card dash-kpi-bna" data-aos="zoom-in" data-aos-delay="240">
           <div class="dash-kpi-top">
             <div class="dash-kpi-k"><i class="feather icon-dollar-sign text-warning me-1"></i> Montant récupéré</div>
             <div class="dash-kpi-chip">6 mois</div>
@@ -104,7 +104,7 @@
       </div>
 
       <div class="dash-hero-right">
-        <div class="dash-widget dash-pipeline-top">
+        <div class="dash-widget dash-pipeline-top" data-aos="fade-left" data-aos-delay="80">
           <div class="dash-widget-head">
             <div class="dash-widget-title">Pipeline</div>
             <span class="dash-widget-pill">{{ pipelineTotal() }}</span>
@@ -121,7 +121,7 @@
           </div>
         </div>
 
-        <div class="dash-widget dash-urgences">
+        <div class="dash-widget dash-urgences" data-aos="fade-left" data-aos-delay="160">
             <div class="dash-widget-head">
               <div class="dash-widget-title"><i class="feather icon-alert-triangle text-danger me-1"></i> Urgences (48h)</div>
               <span class="dash-widget-pill">{{ urgences.length }}</span>
@@ -165,7 +165,7 @@
 
       <div class="col-12 col-xl-6">
         <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
-          <div class="dash-panel">
+          <div class="dash-panel" data-aos="fade-up" data-aos-delay="80">
             <div class="dash-panel-head">
               <div class="dash-panel-title"><i class="feather icon-trending-up me-2 text-success"></i> Évolution (6 mois)</div>
               <div class="dash-panel-sub">Montants récupérés (tendance).</div>
@@ -188,7 +188,7 @@
 
       <div class="col-12">
         <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
-          <div class="dash-panel">
+          <div class="dash-panel" data-aos="fade-up" data-aos-delay="160">
             <div class="dash-panel-head dash-panel-head-row">
               <div>
                 <div class="dash-panel-title">Derniers dossiers</div>

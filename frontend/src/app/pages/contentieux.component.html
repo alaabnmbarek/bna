@@ -1,9 +1,9 @@
 <div class="contentieux-wrap">
   <app-card [hidHeader]="true" [options]="false" cardClass="contentieux-shell">
     <div class="contentieux-header">
-      <div class="contentieux-head">
+      <div class="contentieux-head" data-aos="fade-up">
         <div>
-          <div class="contentieux-title">Gestion Dossier Contentieux</div>
+          <div class="contentieux-title" data-aos="fade-right">Gestion Dossier Contentieux</div>
           <div class="contentieux-subtitle">
             Suivi complet du cycle de vie : ouverture, affectation, changement de compte, suppression, clôture et réouverture.
           </div>
@@ -38,25 +38,25 @@
       </div>
 
       <div class="contentieux-kpis">
-        <div class="contentieux-kpi contentieux-kpi-total">
+        <div class="contentieux-kpi contentieux-kpi-total" data-aos="zoom-in" data-aos-delay="0">
           <div class="contentieux-kpi-k">Total</div>
           <div class="contentieux-kpi-v">{{ countAll() }}</div>
         </div>
-        <div class="contentieux-kpi contentieux-kpi-pending">
+        <div class="contentieux-kpi contentieux-kpi-pending" data-aos="zoom-in" data-aos-delay="80">
           <div class="contentieux-kpi-k">En attente</div>
           <div class="contentieux-kpi-v">{{ countByStatus('A_VALIDER') }}</div>
         </div>
-        <div class="contentieux-kpi contentieux-kpi-open">
+        <div class="contentieux-kpi contentieux-kpi-open" data-aos="zoom-in" data-aos-delay="160">
           <div class="contentieux-kpi-k">Ouverts</div>
           <div class="contentieux-kpi-v">{{ countByStatus('OUVERT') }}</div>
         </div>
-        <div class="contentieux-kpi contentieux-kpi-closed">
+        <div class="contentieux-kpi contentieux-kpi-closed" data-aos="zoom-in" data-aos-delay="240">
           <div class="contentieux-kpi-k">Clôturés</div>
           <div class="contentieux-kpi-v">{{ countByStatus('CLOTURE') }}</div>
         </div>
       </div>
 
-      <div class="contentieux-toolbar">
+      <div class="contentieux-toolbar" data-aos="fade-up" data-aos-delay="120">
         <div class="contentieux-filters">
           <div class="contentieux-search">
             <i class="feather icon-search"></i>
@@ -100,7 +100,7 @@
         </div>
       </div>
 
-      <div class="contentieux-table card">
+      <div class="contentieux-table card" data-aos="fade-up" data-aos-delay="180">
         <div class="table-responsive">
           <table class="table table-hover mb-0">
             <thead>

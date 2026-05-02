@@ -3,32 +3,39 @@
     <div class="dropdown" ngbDropdown display="static">
       <a ngbDropdownToggle href="javascript:">
         <i class="icon feather icon-bell"></i>
-        <span class="badge badge-pill badge-danger">5</span>
+        <span *ngIf="unreadCount > 0" class="badge badge-pill badge-danger">{{ unreadCount }}</span>
       </a>
       <div ngbDropdownMenu class="dropdown-menu-end notification">
         <div class="noti-head">
           <h6 class="d-inline-block m-b-0">Notifications</h6>
           <div class="float-right">
-            <a href="javascript:" class="m-r-10">marquer comme lu</a>
-            <a href="javascript:">tout effacer</a>
+            <a href="javascript:" class="m-r-10" (click)="markAllRead()">marquer comme lu</a>
+            <a href="javascript:" (click)="clearNotifications()">tout effacer</a>
           </div>
         </div>
         <ul class="noti-body">
-          <li class="n-title">
-            <p class="m-b-0">NOUVEAU</p>
+          <li *ngIf="notifications.length === 0" class="notification">
+            <div class="media">
+              <div class="media-body">
+                <p class="m-b-0">Aucune notification</p>
+              </div>
+            </div>
           </li>
-          <li class="notification">
+          <li *ngFor="let n of notifications | slice:0:6" class="notification" (click)="openNotification(n)">
             <div class="media">
               <img class="img-radius" [src]="profileImage" alt="Notification image">
               <div class="media-body">
-                <p><strong>Système BNA</strong><span class="n-time text-muted"><i class="icon feather icon-clock m-r-10"></i>30 min</span></p>
-                <p>Bienvenue sur votre espace sécurisé</p>
+                <p>
+                  <strong *ngIf="!n.lu">Nouveau</strong>
+                  <span class="n-time text-muted"><i class="icon feather icon-clock m-r-10"></i>{{ n.date | date:'short' }}</span>
+                </p>
+                <p class="m-b-0">{{ n.message }}</p>
               </div>
             </div>
           </li>
         </ul>
         <div class="noti-footer">
-          <a href="javascript:">tout afficher</a>
+          <a [routerLink]="['/user']">tout afficher</a>
         </div>
       </div>
     </div>

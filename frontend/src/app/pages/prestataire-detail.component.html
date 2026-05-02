@@ -1,5 +1,5 @@
 <app-card [cardTitle]="prestataire ? ('Prestataire: ' + prestataire.nom) : 'Prestataire'" [options]="false">
-  <div class="prestataire-head">
+  <div class="prestataire-head" data-aos="fade-up">
     <div class="prestataire-meta text-muted" *ngIf="prestataire">
       <div><span class="fw-semibold">Type:</span> {{ prestataire.type }}</div>
       <div><span class="fw-semibold">Contact:</span> {{ prestataire.email }} {{ prestataire.telephone ? '• ' + prestataire.telephone : '' }}</div>
@@ -14,7 +14,7 @@
     </div>
   </div>
 
-  <div *ngIf="showAssignForm" class="assign-panel mt-3">
+  <div *ngIf="showAssignForm" class="assign-panel mt-3" data-aos="fade-up" data-aos-delay="80">
     <div class="row g-2">
       <div class="col-md-4">
         <label class="form-label">Titre</label>
@@ -43,7 +43,7 @@
 
   <div *ngIf="loading" class="text-muted">Chargement...</div>
 
-  <div class="missions-tools" *ngIf="!loading">
+  <div class="missions-tools" *ngIf="!loading" data-aos="fade-up" data-aos-delay="120">
     <div class="missions-filters">
       <button class="filter-chip" [class.active]="missionFilter === 'ALL'" type="button" (click)="missionFilter='ALL'">Toutes</button>
       <button class="filter-chip" [class.active]="missionFilter === 'EN_COURS'" type="button" (click)="missionFilter='EN_COURS'">En cours</button>
@@ -56,7 +56,7 @@
     </div>
   </div>
 
-  <div class="table-responsive" *ngIf="!loading">
+  <div class="table-responsive" *ngIf="!loading" data-aos="fade-up" data-aos-delay="180">
     <table class="table align-middle">
       <thead>
         <tr>

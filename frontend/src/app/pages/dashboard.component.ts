@@ -8,6 +8,7 @@ import { CardComponent } from '../theme/shared/components/card/card.component';
 import { AuthService } from '../auth/auth.service';
 import { ProfileService } from '../auth/profile.service';
 import { Audience, AffaireJudiciaire, SuiviJudiciaireService } from '../suivi-judiciaire/suivi-judiciaire.service';
+import { AosService } from '../aos/aos.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -44,7 +45,8 @@ export class DashboardPageComponent implements OnInit {
     private contentieux: ContentieuxService,
     private suivi: SuiviJudiciaireService,
     public auth: AuthService,
-    private profileService: ProfileService
+    private profileService: ProfileService,
+    private aos: AosService
   ) {}
 
   ngOnInit(): void {
@@ -72,6 +74,7 @@ export class DashboardPageComponent implements OnInit {
         this.rebuildCharts();
         this.loadWidgets();
         this.rebuildZones();
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.loading = false;
@@ -80,6 +83,7 @@ export class DashboardPageComponent implements OnInit {
         this.loadWidgets();
         this.rebuildZones();
         this.showBanner('Impossible de charger les dossiers contentieux.', 'danger');
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }

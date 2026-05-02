@@ -14,13 +14,13 @@
     </button>
   </div>
 
-  <div class="missions-header-modern">
+  <div class="missions-header-modern" data-aos="fade-up">
     <div class="header-content">
       <div class="title-section">
         <h1 class="main-title">Gestion des Missions</h1>
         <p class="subtitle">Suivi et affectation des missions juridiques et bancaires</p>
       </div>
-      <div class="header-actions-modern">
+      <div class="header-actions-modern" data-aos="fade-left" data-aos-delay="80">
         <button *ngIf="canAssignMission" class="btn-fintech btn-gradient-primary" type="button" (click)="toggleAssignForm()">
           <i class="feather icon-plus-circle me-2"></i>
           <span>Affecter Mission</span>
@@ -39,7 +39,7 @@
 
   <div class="missions-content-modern">
     <!-- Formulaire d'affectation (Style Card Fintech) -->
-    <div *ngIf="canAssignMission && showAssignForm" class="modern-card form-card mb-4 anim-fade-in">
+    <div *ngIf="canAssignMission && showAssignForm" class="modern-card form-card mb-4 anim-fade-in" data-aos="fade-up" data-aos-delay="60">
       <div class="card-header-modern">
         <div class="header-title">
           <div class="icon-box-modern bg-soft-primary">
@@ -179,7 +179,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let m of displayedMissions" class="modern-row">
+            <tr *ngFor="let m of displayedMissions; trackBy: trackByMissionId" class="modern-row">
               <td><span class="code-pill">{{ missionCodeOrAuto(m) }}</span></td>
               <td><span class="type-text">{{ missionTypeLabelOrInfer(m) }}</span></td>
               <td><span class="dossier-ref">{{ m.dossierReference || '—' }}</span></td>
@@ -221,7 +221,7 @@
       </div>
       
       <div class="results-grid-modern">
-        <div *ngFor="let row of missionResultsTable | slice:0:3" class="result-item-modern">
+        <div *ngFor="let row of missionResultsTable | slice:0:3; trackBy: trackByResultMissionId" class="result-item-modern">
           <div class="result-head">
             <span class="result-code">#{{ row.mission.id }}</span>
             <span class="result-status">{{ row.result.statut }}</span>

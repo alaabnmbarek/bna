@@ -2,8 +2,13 @@ package com.example.secureapp.prestataire;
 
 import com.example.secureapp.prestataire.dto.MissionDto;
 import com.example.secureapp.contentieux.DossierContentieuxRepository;
+import com.example.secureapp.notification.NotificationPriority;
+import com.example.secureapp.notification.NotificationService;
+import com.example.secureapp.notification.NotificationType;
 import com.example.secureapp.suivi_judiciaire.AffaireJudiciaireEntity;
 import com.example.secureapp.suivi_judiciaire.AffaireJudiciaireRepository;
+import com.example.secureapp.user.UserEntity;
+import com.example.secureapp.user.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,12 +21,21 @@ public class MissionService {
     private final PrestataireRepository prestataireRepository;
     private final AffaireJudiciaireRepository affaireJudiciaireRepository;
     private final DossierContentieuxRepository dossierContentieuxRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public MissionService(MissionRepository missionRepository, PrestataireRepository prestataireRepository, AffaireJudiciaireRepository affaireJudiciaireRepository, DossierContentieuxRepository dossierContentieuxRepository) {
+    public MissionService(MissionRepository missionRepository,
+                          PrestataireRepository prestataireRepository,
+                          AffaireJudiciaireRepository affaireJudiciaireRepository,
+                          DossierContentieuxRepository dossierContentieuxRepository,
+                          UserRepository userRepository,
+                          NotificationService notificationService) {
         this.missionRepository = missionRepository;
         this.prestataireRepository = prestataireRepository;
         this.affaireJudiciaireRepository = affaireJudiciaireRepository;
         this.dossierContentieuxRepository = dossierContentieuxRepository;
+        this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -75,12 +89,14 @@ public class MissionService {
             saved.setCodeMission(generateCode(saved.getId(), saved.getCreatedAt()));
             saved = missionRepository.save(saved);
         }
+        notifyPrestataireIfLinkedUser(saved);
         return toDto(saved);
     }
 
     @Transactional
     public MissionDto update(Long missionId, MissionDto dto) {
         MissionEntity entity = missionRepository.findById(missionId).orElseThrow(() -> new RuntimeException("Mission non trouvée"));
+        MissionStatus oldStatus = entity.getStatut();
         if (dto.getTypeMission() != null) entity.setTypeMission(dto.getTypeMission());
         if (dto.getCodeMission() != null) entity.setCodeMission(dto.getCodeMission());
         if (dto.getTitre() != null) entity.setTitre(dto.getTitre());
@@ -114,7 +130,35 @@ public class MissionService {
             saved.setCodeMission(generateCode(saved.getId(), saved.getCreatedAt()));
         }
         saved = missionRepository.save(saved);
+        if (dto.getStatut() != null && oldStatus != null && dto.getStatut() != oldStatus) {
+            notifyPrestataireIfLinkedUser(saved, "Changement de statut mission " + saved.getCodeMission() + " : " + oldStatus + " → " + saved.getStatut());
+        }
         return toDto(saved);
+    }
+
+    private void notifyPrestataireIfLinkedUser(MissionEntity mission) {
+        notifyPrestataireIfLinkedUser(mission, "Nouvelle mission assignée : " + safe(mission.getCodeMission()));
+    }
+
+    private void notifyPrestataireIfLinkedUser(MissionEntity mission, String message) {
+        PrestataireEntity prestataire = mission.getPrestataire();
+        if (prestataire == null) return;
+        String email = prestataire.getEmail();
+        if (email == null || email.isBlank()) return;
+        UserEntity user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) return;
+        notificationService.notifyUser(
+                user.getId(),
+                message,
+                NotificationType.INFO,
+                NotificationPriority.NORMAL,
+                "MISSION",
+                mission.getId()
+        );
+    }
+
+    private String safe(String v) {
+        return v != null ? v : "—";
     }
 
     private void backfill(List<MissionEntity> rows) {

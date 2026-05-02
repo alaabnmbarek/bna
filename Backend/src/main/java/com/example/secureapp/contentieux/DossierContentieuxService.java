@@ -1,6 +1,9 @@
 package com.example.secureapp.contentieux;
 
 import com.example.secureapp.contentieux.dto.ContentieuxDtos;
+import com.example.secureapp.notification.NotificationPriority;
+import com.example.secureapp.notification.NotificationService;
+import com.example.secureapp.notification.NotificationType;
 import com.example.secureapp.user.UserEntity;
 import com.example.secureapp.user.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
@@ -21,10 +24,12 @@ import java.util.Objects;
 public class DossierContentieuxService {
     private final DossierContentieuxRepository repository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public DossierContentieuxService(DossierContentieuxRepository repository, UserRepository userRepository) {
+    public DossierContentieuxService(DossierContentieuxRepository repository, UserRepository userRepository, NotificationService notificationService) {
         this.repository = repository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -77,7 +82,18 @@ public class DossierContentieuxService {
             dossier.setValidatedBy(authentication.getName());
             dossier.setValidatedAt(LocalDateTime.now());
         }
-        return toResponse(repository.save(dossier));
+        DossierContentieuxEntity saved = repository.save(dossier);
+        if (saved.getChargeDossierId() != null) {
+            notificationService.notifyUser(
+                    saved.getChargeDossierId(),
+                    "Un dossier vous a été affecté : " + saved.getReference(),
+                    NotificationType.INFO,
+                    NotificationPriority.NORMAL,
+                    "DOSSIER",
+                    saved.getId()
+            );
+        }
+        return toResponse(saved);
     }
 
     @Transactional
@@ -93,6 +109,7 @@ public class DossierContentieuxService {
     @Transactional
     public ContentieuxDtos.DossierResponse update(Long id, ContentieuxDtos.CreateDossierRequest request, Authentication authentication) {
         DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
+        Long oldChargeId = dossier.getChargeDossierId();
         dossier.setObjet(request.objet());
         dossier.setNomDebiteur(request.nomDebiteur());
         dossier.setAgence(request.agence());
@@ -108,12 +125,24 @@ public class DossierContentieuxService {
             applyChargeAssignmentFromRequest(dossier, request.chargeDossierId(), request.chargeDossier(), authentication);
             if (request.dateOuverture() != null) dossier.setDateOuverture(request.dateOuverture());
         }
-        return toResponse(repository.save(dossier));
+        DossierContentieuxEntity saved = repository.save(dossier);
+        if (saved.getChargeDossierId() != null && !Objects.equals(oldChargeId, saved.getChargeDossierId())) {
+            notificationService.notifyUser(
+                    saved.getChargeDossierId(),
+                    "Un dossier vous a été affecté : " + saved.getReference(),
+                    NotificationType.INFO,
+                    NotificationPriority.NORMAL,
+                    "DOSSIER",
+                    saved.getId()
+            );
+        }
+        return toResponse(saved);
     }
 
     @Transactional
     public ContentieuxDtos.DossierResponse assign(Long id, ContentieuxDtos.AssignRequest request, Authentication authentication) {
         DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
+        Long oldChargeId = dossier.getChargeDossierId();
         if (dossier.getStatut() == ContentieuxStatus.A_VALIDER) {
             throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Validation requise");
         }
@@ -122,7 +151,18 @@ public class DossierContentieuxService {
                 && dossier.getChargeDossierId() != null) {
             dossier.setStatut(ContentieuxStatus.AFFECTE);
         }
-        return toResponse(repository.save(dossier));
+        DossierContentieuxEntity saved = repository.save(dossier);
+        if (saved.getChargeDossierId() != null && !Objects.equals(oldChargeId, saved.getChargeDossierId())) {
+            notificationService.notifyUser(
+                    saved.getChargeDossierId(),
+                    "Un dossier vous a été affecté : " + saved.getReference(),
+                    NotificationType.INFO,
+                    NotificationPriority.NORMAL,
+                    "DOSSIER",
+                    saved.getId()
+            );
+        }
+        return toResponse(saved);
     }
 
     @Transactional

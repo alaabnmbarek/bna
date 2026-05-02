@@ -9,6 +9,7 @@ import { AffaireJudiciaire, SuiviJudiciaireService } from '../../suivi-judiciair
 import { ProfileService, UserProfile } from '../../auth/profile.service';
 import { PrestatairesService, Prestataire } from '../../prestataires/prestataires.service';
 import { Facture, FacturesService } from '../factures/factures.service';
+import { AosService } from '../../aos/aos.service';
 
 @Component({
   selector: 'app-notes-honoraires',
@@ -62,7 +63,8 @@ export class NotesHonorairesComponent implements OnInit {
     private profileService: ProfileService,
     private prestatairesService: PrestatairesService,
     private facturesService: FacturesService,
-    public auth: AuthService
+    public auth: AuthService,
+    private aos: AosService
   ) {}
 
   ngOnInit() {
@@ -79,8 +81,14 @@ export class NotesHonorairesComponent implements OnInit {
 
   loadPrestataires() {
     this.prestatairesService.listPrestataires({ actif: true }).subscribe({
-      next: (data) => this.prestataires = data,
-      error: () => console.error('Erreur chargement prestataires')
+      next: (data) => {
+        this.prestataires = data;
+        setTimeout(() => this.aos.refresh(), 0);
+      },
+      error: () => {
+        console.error('Erreur chargement prestataires');
+        setTimeout(() => this.aos.refresh(), 0);
+      }
     });
   }
 
@@ -120,9 +128,11 @@ export class NotesHonorairesComponent implements OnInit {
     this.contentieuxService.list().subscribe({
       next: (data) => {
         this.dossiers = data;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.showBanner('danger', 'Erreur lors du chargement des dossiers');
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }
@@ -143,10 +153,12 @@ export class NotesHonorairesComponent implements OnInit {
       next: (details) => {
         this.dossierDetails = details;
         this.dossierDetailsLoading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.dossierDetails = null;
         this.dossierDetailsLoading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
 
@@ -155,10 +167,12 @@ export class NotesHonorairesComponent implements OnInit {
       next: (data) => {
         this.affairesJudiciaires = data;
         this.affairesLoading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.affairesJudiciaires = [];
         this.affairesLoading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
 
@@ -227,11 +241,13 @@ export class NotesHonorairesComponent implements OnInit {
         this.notes = data;
         this.applyFilters();
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: (err) => {
         console.error(err);
         this.showBanner('danger', 'Erreur lors du chargement des notes d\'honoraires');
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }

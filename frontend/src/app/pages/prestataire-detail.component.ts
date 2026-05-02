@@ -6,6 +6,7 @@ import { CardComponent } from '../theme/shared/components/card/card.component';
 import { Mission, MissionStatus, Prestataire, PrestatairesService } from '../prestataires/prestataires.service';
 import { AuthService } from '../auth/auth.service';
 import { ProfileService } from '../auth/profile.service';
+import { AosService } from '../aos/aos.service';
 
 @Component({
   selector: 'app-prestataire-detail-page',
@@ -41,7 +42,8 @@ export class PrestataireDetailPageComponent implements OnInit, OnDestroy {
     private router: Router,
     private service: PrestatairesService,
     public auth: AuthService,
-    private profileService: ProfileService
+    private profileService: ProfileService,
+    private aos: AosService
   ) {}
 
   ngOnInit(): void {
@@ -123,16 +125,19 @@ export class PrestataireDetailPageComponent implements OnInit, OnDestroy {
           };
         }
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: (err) => {
         console.error(err);
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }
 
   toggleAssign(): void {
     this.showAssignForm = !this.showAssignForm;
+    setTimeout(() => this.aos.refresh(), 0);
   }
 
   get displayedMissions(): Mission[] {

@@ -1,6 +1,6 @@
 <div class="admin-wrap">
   <app-card [hidHeader]="true" [options]="false" cardClass="admin-shell">
-    <div class="admin-head">
+    <div class="admin-head" data-aos="fade-up">
       <div>
         <div class="admin-title">Gestion des Utilisateurs</div>
         <div class="admin-subtitle">Création, activation et attribution des rôles.</div>
@@ -25,7 +25,7 @@
       {{ banner.message }}
     </div>
 
-    <div class="admin-filters">
+    <div class="admin-filters" data-aos="fade-up" data-aos-delay="80">
       <div class="admin-search">
         <i class="feather icon-search"></i>
         <input class="form-control" [(ngModel)]="q" placeholder="Rechercher (nom, username, email…)" />
@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <div class="admin-table card">
+    <div class="admin-table card" data-aos="fade-up" data-aos-delay="140">
       <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
           <thead>

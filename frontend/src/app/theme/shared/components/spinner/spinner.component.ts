@@ -16,7 +16,7 @@ export class SpinnerComponent implements OnDestroy {
   private router = inject(Router);
 
   // public props
-  isSpinnerVisible = true;
+  isSpinnerVisible = false;
   Spinkit = Spinkit;
   backgroundColor = input('#2689E2');
   spinner = input(Spinkit.skLine);

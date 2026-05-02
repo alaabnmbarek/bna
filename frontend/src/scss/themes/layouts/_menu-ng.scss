@@ -716,7 +716,7 @@ body {
       }
     }
 
-    &.active-#{$value} {
+    &.active-#{"" + $value} {
       &[class*="menu-item-icon-style"] {
         .pcoded-inner-navbar li.pcoded-hasmenu .pcoded-submenu li.active > a:before {
           color: nth($color-active-color,$i);

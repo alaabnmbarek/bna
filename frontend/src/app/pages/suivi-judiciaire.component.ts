@@ -6,6 +6,7 @@ import { SuiviJudiciaireService, AffaireJudiciaire, Audience, Jugement, Procedur
 import { AffaireContentieux, ContentieuxService, DossierContentieux, DossierDetailsResponse } from '../contentieux/contentieux.service';
 import { PrestatairesService, Prestataire } from '../prestataires/prestataires.service';
 import { AuthService } from '../auth/auth.service';
+import { AosService } from '../aos/aos.service';
 
 @Component({
   selector: 'app-suivi-judiciaire',
@@ -53,7 +54,8 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     public suiviService: SuiviJudiciaireService,
     public contentieuxService: ContentieuxService,
     public prestataireService: PrestatairesService,
-    public auth: AuthService
+    public auth: AuthService,
+    private aos: AosService
   ) {}
 
   get canCreateProcedure(): boolean {
@@ -91,8 +93,12 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.affaires = data;
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
-      error: () => this.loading = false
+      error: () => {
+        this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
+      }
     });
   }
 
@@ -104,6 +110,7 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     this.prestataireService.listPrestataires().subscribe(data => {
       this.avocats = data.filter(p => p.type === 'AVOCAT');
       this.huissiers = data.filter(p => p.type === 'HUISSIER');
+      setTimeout(() => this.aos.refresh(), 0);
     });
   }
 
@@ -150,6 +157,7 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     this.dossierAffaires = [];
     this.selectedNumeroAffaire = '';
     this.showAffaireForm = true;
+    setTimeout(() => this.aos.refresh(), 0);
   }
 
   openDossierDetails(dossierId: number): void {
@@ -163,9 +171,11 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.dossierDetails = data;
         this.dossierDetailsLoading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.dossierDetailsLoading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }
@@ -203,9 +213,11 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
           this.selectedNumeroAffaire = first.numeroAffaire;
           this.newAffaire.referenceTribunal = first.numeroAffaire;
         }
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.dossierAffairesLoading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }

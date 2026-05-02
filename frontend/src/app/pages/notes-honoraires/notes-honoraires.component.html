@@ -2,7 +2,7 @@
   <div class="col-sm-12">
     <app-card [hidHeader]="true" [options]="false" cardClass="notes-card">
       <!-- Header -->
-      <div class="notes-header">
+      <div class="notes-header" data-aos="fade-up">
         <div>
           <h5 class="notes-title">Notes d'Honoraires</h5>
           <p class="notes-subtitle">Gestion et validation des honoraires prestataires.</p>
@@ -22,7 +22,7 @@
       </div>
 
       <!-- Filters -->
-      <div class="notes-filters">
+      <div class="notes-filters" data-aos="fade-up" data-aos-delay="80">
         <div class="input-group search-group">
           <span class="input-group-text"><i class="feather icon-search"></i></span>
           <input type="text" class="form-control" placeholder="Rechercher..." [(ngModel)]="search" (ngModelChange)="applyFilters()">
@@ -45,7 +45,7 @@
       </div>
 
       <!-- Table -->
-      <div class="table-responsive">
+      <div class="table-responsive" data-aos="fade-up" data-aos-delay="140">
         <table class="table table-hover notes-table mb-0">
           <thead>
             <tr>

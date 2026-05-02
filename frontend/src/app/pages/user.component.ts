@@ -9,6 +9,7 @@ import { Prestataire, PrestatairesService, Mission } from '../prestataires/prest
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { RouterModule } from '@angular/router';
+import { AosService } from '../aos/aos.service';
 
 @Component({
   selector: 'app-user',
@@ -42,6 +43,7 @@ export class UserPageComponent implements OnInit {
   private profileService = inject(ProfileService);
   private auth = inject(AuthService);
   private prestatairesService = inject(PrestatairesService);
+  private aos = inject(AosService);
 
   ngOnInit() {
     this.loadProfile();
@@ -73,11 +75,13 @@ export class UserPageComponent implements OnInit {
       next: (data) => {
         this.profile = data;
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: (err) => {
         this.message = err?.error?.message || 'Erreur lors du chargement du profil';
         this.isError = true;
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }
@@ -98,6 +102,7 @@ export class UserPageComponent implements OnInit {
         this.notesCount = (res.notes || []).length;
         this.facturesCount = (res.factures || []).length;
         this.dashboardLoading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.prestataire = null;
@@ -106,6 +111,7 @@ export class UserPageComponent implements OnInit {
         this.notesCount = 0;
         this.facturesCount = 0;
         this.dashboardLoading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }

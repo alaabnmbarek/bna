@@ -2,3 +2,11 @@
 
 /* SCSS */
 @import "scss/style";
+
+@media (max-width: 767.98px) {
+  [data-aos] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

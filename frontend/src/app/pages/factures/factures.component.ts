@@ -8,6 +8,7 @@ import { NotesHonorairesComponent } from '../notes-honoraires/notes-honoraires.c
 import { NoteHonoraire, NoteHonoraireService } from '../notes-honoraires/note-honoraire.service';
 import { ProfileService, UserProfile } from '../../auth/profile.service';
 import { PrestatairesService } from '../../prestataires/prestataires.service';
+import { AosService } from '../../aos/aos.service';
 
 @Component({
   selector: 'app-factures',
@@ -53,7 +54,8 @@ export class FacturesComponent implements OnInit {
     private noteService: NoteHonoraireService,
     private profileService: ProfileService,
     private prestatairesService: PrestatairesService,
-    public auth: AuthService
+    public auth: AuthService,
+    private aos: AosService
   ) {}
 
   ngOnInit() {
@@ -233,12 +235,14 @@ export class FacturesComponent implements OnInit {
     if (tab === 'FACTURES') {
       this.loadFactures();
     }
+    setTimeout(() => this.aos.refresh(), 0);
   }
 
   onFactureGeneratedFromNote() {
     console.log('[DEBUG] Facture générée, retour à l\'onglet Factures');
     this.activeTab = 'FACTURES';
     this.loadFactures();
+    setTimeout(() => this.aos.refresh(), 0);
   }
 
   getEmptyFacture(): Facture {
@@ -278,6 +282,7 @@ export class FacturesComponent implements OnInit {
         this.factures = data;
         this.applyFilters();
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: (err) => {
         console.error('[DEBUG] Erreur chargement factures:', err);
@@ -293,6 +298,7 @@ export class FacturesComponent implements OnInit {
           this.showBanner('danger', apiMsg ? `Erreur (${status}): ${apiMsg}` : 'Erreur lors du chargement des factures');
         }
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }
@@ -386,11 +392,13 @@ export class FacturesComponent implements OnInit {
           return bTime - aTime;
         });
         this.notesLoading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.notesOptions = [];
         this.notesLoading = false;
         this.showBanner('danger', 'Impossible de charger les notes d\'honoraires');
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }

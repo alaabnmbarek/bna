@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { RoleAdminService, Role } from '../auth/role-admin.service';
 import { UserAdminService } from '../auth/user-admin.service';
+import { AosService } from '../aos/aos.service';
 
 @Component({
   selector: 'app-roles-page',
@@ -31,7 +32,8 @@ export class RolesPageComponent implements OnInit {
 
   constructor(
     private roleService: RoleAdminService,
-    private userService: UserAdminService
+    private userService: UserAdminService,
+    private aos: AosService
   ) {}
 
   ngOnInit() {
@@ -45,18 +47,26 @@ export class RolesPageComponent implements OnInit {
       next: (data) => {
         this.roles = data;
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: (err) => {
         this.loading = false;
         this.showBanner('Erreur lors du chargement des rôles.', 'danger');
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }
 
   loadPermissions() {
     this.userService.getAvailablePermissions().subscribe({
-      next: (data) => this.availablePermissions = data,
-      error: () => this.showBanner('Erreur lors du chargement des permissions.', 'danger')
+      next: (data) => {
+        this.availablePermissions = data;
+        setTimeout(() => this.aos.refresh(), 0);
+      },
+      error: () => {
+        this.showBanner('Erreur lors du chargement des permissions.', 'danger');
+        setTimeout(() => this.aos.refresh(), 0);
+      }
     });
   }
 
@@ -65,6 +75,7 @@ export class RolesPageComponent implements OnInit {
     if (!this.showForm) {
       this.resetNewRole();
     }
+    else setTimeout(() => this.aos.refresh(), 0);
   }
 
   closeForm(): void {

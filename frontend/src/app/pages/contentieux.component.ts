@@ -7,6 +7,7 @@ import { ProfileService } from '../auth/profile.service';
 import { AffaireContentieux, AffaireStatut, ChargeDossierOption, ContentieuxService, ContentieuxStatus, CreateAffaireRequest, DossierContentieux, DossierDetailsResponse } from '../contentieux/contentieux.service';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { DossierRisqueService, RisqueCategory, RisqueItem } from '../risque/dossier-risque.service';
+import { AosService } from '../aos/aos.service';
 
 type ActionDialogType = 'assign' | 'changeAccount' | 'close' | 'reject' | 'details';
 
@@ -61,7 +62,8 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     public auth: AuthService,
     private contentieux: ContentieuxService,
     private profileService: ProfileService,
-    private risque: DossierRisqueService
+    private risque: DossierRisqueService,
+    private aos: AosService
   ) {}
 
   ngOnInit(): void {
@@ -232,10 +234,12 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
       next: (rows) => {
         this.dossiers = rows;
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.loading = false;
         this.showBanner('Erreur lors du chargement des dossiers.', 'danger');
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }

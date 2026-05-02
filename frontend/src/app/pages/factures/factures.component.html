@@ -2,7 +2,7 @@
   <div class="col-sm-12">
     <app-card [hidHeader]="true" [options]="false" cardClass="factures-card">
       <!-- Header -->
-      <div class="factures-header">
+      <div class="factures-header" data-aos="fade-up">
         <div>
           <h5 class="factures-title">Gestion des Factures</h5>
           <p class="factures-subtitle">Suivi des paiements, justificatifs et statuts.</p>
@@ -30,7 +30,7 @@
       </div>
 
       <div *ngIf="activeTab === 'FACTURES'">
-        <div class="factures-filters">
+        <div class="factures-filters" data-aos="fade-up" data-aos-delay="80">
           <div class="input-group search-group">
             <span class="input-group-text"><i class="feather icon-search"></i></span>
             <input type="text" class="form-control" placeholder="Rechercher N° Facture ou Réf..." [(ngModel)]="search" (ngModelChange)="applyFilters()">
@@ -51,7 +51,7 @@
           </select>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive" data-aos="fade-up" data-aos-delay="140">
           <table class="table table-hover factures-table mb-0">
             <thead>
               <tr>

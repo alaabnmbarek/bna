@@ -1,9 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
+import { AosService } from '../aos/aos.service';
 import { ContentieuxService, DossierContentieux } from '../contentieux/contentieux.service';
 import { SuiviJudiciaireService, AffaireJudiciaire } from '../suivi-judiciaire/suivi-judiciaire.service';
 import { CardComponent } from '../theme/shared/components/card/card.component';
@@ -38,6 +37,11 @@ export class MissionsPageComponent implements OnInit {
   missionSearch = '';
   missionSortKey: 'code' | 'type' | 'statut' | 'dateDebut' | 'dateFin' | 'prestataire' = 'dateDebut';
   missionSortDir: 'asc' | 'desc' = 'desc';
+
+  private missionsVersion = 0;
+  private displayedMissionsCache: Mission[] = [];
+  private displayedMissionsKey = '';
+  private prestataireNameMap: Record<number, string> = {};
 
   selectedPrestataireType: PrestataireType | '' = '';
   selectedPrestataireId: number | null = null;
@@ -95,7 +99,8 @@ export class MissionsPageComponent implements OnInit {
     private prestatairesService: PrestatairesService,
     private suiviService: SuiviJudiciaireService,
     private contentieuxService: ContentieuxService,
-    public auth: AuthService
+    public auth: AuthService,
+    private aos: AosService
   ) {}
 
   get canAssignMission(): boolean {
@@ -203,42 +208,35 @@ export class MissionsPageComponent implements OnInit {
     });
 
     this.prestatairesService.listPrestataires({ actif: true }).subscribe({
-      next: (rows) => (this.prestataires = rows || []),
-      error: () => (this.prestataires = [])
+      next: (rows) => {
+        this.prestataires = rows || [];
+        this.rebuildPrestataireMap();
+      },
+      error: () => {
+        this.prestataires = [];
+        this.rebuildPrestataireMap();
+      }
     });
 
     const missions$ = this.canAssignMission ? this.prestatairesService.listAllMissions() : this.prestatairesService.listMyMissions();
     missions$.subscribe({
       next: (rows) => {
         this.missions = rows || [];
-        this.prefetchResults(this.missions);
+        this.missionsVersion++;
+        this.displayedMissionsKey = '';
+        this.resultsByMissionId = {};
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.missions = [];
+        this.missionsVersion++;
+        this.displayedMissionsKey = '';
+        this.resultsByMissionId = {};
         this.loading = false;
         this.showBanner('Erreur lors du chargement des missions.', 'danger');
+        setTimeout(() => this.aos.refresh(), 0);
       }
-    });
-  }
-
-  private prefetchResults(missions: Mission[]): void {
-    this.resultsByMissionId = {};
-    if (!this.canSubmitMissionResult) return;
-    if (!missions || missions.length === 0) return;
-    const requests = missions.map((m) =>
-      this.prestatairesService.getMissionResult(m.id).pipe(
-        catchError(() => of(null)),
-        map((r) => ({ missionId: m.id, result: r }))
-      )
-    );
-    forkJoin(requests).subscribe({
-      next: (rows) => {
-        for (const row of rows) {
-          this.resultsByMissionId[row.missionId] = row.result;
-        }
-      },
-      error: () => {}
     });
   }
 
@@ -253,6 +251,10 @@ export class MissionsPageComponent implements OnInit {
   }
 
   get displayedMissions(): Mission[] {
+    const key = `${this.missionsVersion}|${this.missionSearch}|${this.missionSortKey}|${this.missionSortDir}`;
+    if (key === this.displayedMissionsKey) return this.displayedMissionsCache;
+    this.displayedMissionsKey = key;
+
     const q = (this.missionSearch || '').trim().toLowerCase();
     let rows = this.missions.slice();
     if (q) {
@@ -304,7 +306,8 @@ export class MissionsPageComponent implements OnInit {
       if (ka > kb) return 1 * dir;
       return 0;
     });
-    return rows;
+    this.displayedMissionsCache = rows;
+    return this.displayedMissionsCache;
   }
 
   toggleMissionSort(key: 'code' | 'type' | 'statut' | 'dateDebut' | 'dateFin' | 'prestataire'): void {
@@ -475,9 +478,25 @@ export class MissionsPageComponent implements OnInit {
 
   prestataireNameById(id?: number | null): string {
     if (!id) return '—';
-    const p = this.prestataires.find(x => x.id === id);
-    if (!p) return `#${id}`;
-    return `${p.nom} ${p.prenom || ''}`.trim();
+    return this.prestataireNameMap[id] || `#${id}`;
+  }
+
+  trackByMissionId(_: number, m: Mission): number {
+    return m.id;
+  }
+
+  trackByResultMissionId(_: number, row: { mission: Mission }): number {
+    return row.mission.id;
+  }
+
+  private rebuildPrestataireMap(): void {
+    const mapOut: Record<number, string> = {};
+    for (const p of this.prestataires || []) {
+      if (!p?.id) continue;
+      mapOut[p.id] = `${p.nom} ${p.prenom || ''}`.trim();
+    }
+    this.prestataireNameMap = mapOut;
+    this.displayedMissionsKey = '';
   }
 
   downloadSelectedProof(): void {

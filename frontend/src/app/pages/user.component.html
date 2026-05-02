@@ -23,9 +23,9 @@
                 <div class="spinner-border text-primary" role="status"></div>
               </div>
 
-              <div *ngIf="!dashboardLoading" class="prest-dashboard">
+              <div *ngIf="!dashboardLoading" class="prest-dashboard" data-aos="fade-up">
                 <div class="prest-kpis">
-                  <a class="prest-kpi" [routerLink]="['/missions']">
+                  <a class="prest-kpi" [routerLink]="['/missions']" data-aos="zoom-in" data-aos-delay="0">
                     <div class="prest-kpi-icon"><i class="feather icon-check-square"></i></div>
                     <div class="prest-kpi-meta">
                       <div class="prest-kpi-value">{{ missions.length }}</div>
@@ -38,7 +38,7 @@
                     </div>
                   </a>
 
-                  <a class="prest-kpi" [routerLink]="['/notes-honoraires']">
+                  <a class="prest-kpi" [routerLink]="['/notes-honoraires']" data-aos="zoom-in" data-aos-delay="80">
                     <div class="prest-kpi-icon"><i class="feather icon-file-text"></i></div>
                     <div class="prest-kpi-meta">
                       <div class="prest-kpi-value">{{ notesCount }}</div>
@@ -47,7 +47,7 @@
                     </div>
                   </a>
 
-                  <a class="prest-kpi" [routerLink]="['/factures']">
+                  <a class="prest-kpi" [routerLink]="['/factures']" data-aos="zoom-in" data-aos-delay="160">
                     <div class="prest-kpi-icon"><i class="feather icon-credit-card"></i></div>
                     <div class="prest-kpi-meta">
                       <div class="prest-kpi-value">{{ facturesCount }}</div>
@@ -56,7 +56,7 @@
                     </div>
                   </a>
 
-                  <div class="prest-kpi prest-kpi--static">
+                  <div class="prest-kpi prest-kpi--static" data-aos="zoom-in" data-aos-delay="240">
                     <div class="prest-kpi-icon"><i class="feather icon-folder"></i></div>
                     <div class="prest-kpi-meta">
                       <div class="prest-kpi-value">{{ dossiersAffectes.length }}</div>

@@ -4,6 +4,7 @@ import { RoleAdminService, Role as UserRole } from '../auth/role-admin.service';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AosService } from '../aos/aos.service';
 
 @Component({
   selector: 'app-users-page',
@@ -40,7 +41,8 @@ export class UsersPageComponent implements OnInit {
 
   constructor(
     private userAdminService: UserAdminService,
-    private roleService: RoleAdminService
+    private roleService: RoleAdminService,
+    private aos: AosService
   ) {}
 
   ngOnInit() {
@@ -63,15 +65,25 @@ export class UsersPageComponent implements OnInit {
         if (this.newUser.role) {
           this.syncPermissionsForRole(this.newUser.role);
         }
+        setTimeout(() => this.aos.refresh(), 0);
       },
-      error: () => this.showBanner('Erreur lors du chargement des rôles.', 'danger')
+      error: () => {
+        this.showBanner('Erreur lors du chargement des rôles.', 'danger');
+        setTimeout(() => this.aos.refresh(), 0);
+      }
     });
   }
 
   loadPermissions() {
     this.userAdminService.getAvailablePermissions().subscribe({
-      next: (data) => this.availablePermissions = data,
-      error: () => this.showBanner('Erreur lors du chargement des permissions.', 'danger')
+      next: (data) => {
+        this.availablePermissions = data;
+        setTimeout(() => this.aos.refresh(), 0);
+      },
+      error: () => {
+        this.showBanner('Erreur lors du chargement des permissions.', 'danger');
+        setTimeout(() => this.aos.refresh(), 0);
+      }
     });
   }
 
@@ -81,10 +93,12 @@ export class UsersPageComponent implements OnInit {
       next: (data) => {
         this.users = data;
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.loading = false;
         this.showBanner('Erreur lors du chargement des utilisateurs.', 'danger');
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }
@@ -94,6 +108,7 @@ export class UsersPageComponent implements OnInit {
     if (!this.showForm) {
       this.resetNewUser();
     }
+    else setTimeout(() => this.aos.refresh(), 0);
   }
 
   closeForm(): void {

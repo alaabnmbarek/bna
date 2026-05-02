@@ -7,6 +7,7 @@ import { Mission, NoteHonoraire, Prestataire, PrestataireType, PrestatairesServi
 import { AuthService } from '../auth/auth.service';
 import { ProfileService } from '../auth/profile.service';
 import { ContentieuxService, DossierContentieux } from '../contentieux/contentieux.service';
+import { AosService } from '../aos/aos.service';
 
 @Component({
   selector: 'app-prestataires-page',
@@ -92,7 +93,8 @@ export class PrestatairesPageComponent implements OnInit {
     private router: Router,
     public auth: AuthService,
     private profileService: ProfileService,
-    private contentieux: ContentieuxService
+    private contentieux: ContentieuxService,
+    private aos: AosService
   ) {}
 
   ngOnInit(): void {
@@ -122,10 +124,12 @@ export class PrestatairesPageComponent implements OnInit {
       next: (data) => {
         this.prestataires = data;
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: (err) => {
         this.loading = false;
         this.showBanner('Erreur lors du chargement des prestataires.', 'danger');
+        setTimeout(() => this.aos.refresh(), 0);
       }
     });
   }
@@ -136,6 +140,7 @@ export class PrestatairesPageComponent implements OnInit {
   toggleForm(): void {
     this.showForm = !this.showForm;
     if (!this.showForm) this.resetForm();
+    else setTimeout(() => this.aos.refresh(), 0);
   }
 
   closeForm(): void {
