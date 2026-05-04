@@ -104,7 +104,7 @@
       </div>
 
       <div class="dash-hero-right">
-        <div class="dash-widget dash-pipeline-top" data-aos="fade-left" data-aos-delay="80">
+        <div class="dash-widget dash-pipeline-top">
           <div class="dash-widget-head">
             <div class="dash-widget-title">Pipeline</div>
             <span class="dash-widget-pill">{{ pipelineTotal() }}</span>
@@ -121,7 +121,7 @@
           </div>
         </div>
 
-        <div class="dash-widget dash-urgences" data-aos="fade-left" data-aos-delay="160">
+        <div class="dash-widget dash-urgences">
             <div class="dash-widget-head">
               <div class="dash-widget-title"><i class="feather icon-alert-triangle text-danger me-1"></i> Urgences (48h)</div>
               <span class="dash-widget-pill">{{ urgences.length }}</span>
@@ -165,7 +165,7 @@
 
       <div class="col-12 col-xl-6">
         <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
-          <div class="dash-panel" data-aos="fade-up" data-aos-delay="80">
+          <div class="dash-panel">
             <div class="dash-panel-head">
               <div class="dash-panel-title"><i class="feather icon-trending-up me-2 text-success"></i> Évolution (6 mois)</div>
               <div class="dash-panel-sub">Montants récupérés (tendance).</div>
@@ -188,7 +188,7 @@
 
       <div class="col-12">
         <app-card [hidHeader]="true" [options]="false" cardClass="dash-card">
-          <div class="dash-panel" data-aos="fade-up" data-aos-delay="160">
+          <div class="dash-panel">
             <div class="dash-panel-head dash-panel-head-row">
               <div>
                 <div class="dash-panel-title">Derniers dossiers</div>
@@ -203,7 +203,7 @@
                 </div>
                 <div class="dash-search">
                   <i class="feather icon-search"></i>
-                  <input type="text" [(ngModel)]="search" placeholder="Rechercher (réf, débiteur, compte…)" />
+                  <input type="text" [(ngModel)]="search" (ngModelChange)="computeLatestRows()" placeholder="Rechercher (réf, débiteur, compte…)" />
                 </div>
               </div>
             </div>
@@ -222,9 +222,9 @@
                 </thead>
                 <tbody>
                   <tr *ngIf="loading">
-                    <td colspan="5" class="text-center">Chargement...</td>
+                    <td colspan="6" class="text-center">Chargement...</td>
                   </tr>
-                  <tr *ngFor="let d of filteredLatest()">
+                  <tr *ngFor="let d of latestRows">
                     <td class="dash-link">
                       <a [routerLink]="['/contentieux']">{{ d.reference }}</a>
                     </td>
@@ -245,8 +245,8 @@
                       </div>
                     </td>
                   </tr>
-                  <tr *ngIf="!loading && filteredLatest().length === 0">
-                    <td colspan="5">
+                  <tr *ngIf="!loading && latestRows.length === 0">
+                    <td colspan="6">
                       <div class="dash-empty">Aucun dossier trouvé.</div>
                     </td>
                   </tr>

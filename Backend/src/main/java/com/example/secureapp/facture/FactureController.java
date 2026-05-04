@@ -38,7 +38,7 @@ public class FactureController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','CHARGE_DOSSIER','RESPONSABLE_CONTENTIEUX','PRESTATAIRE','AVOCAT','HUISSIER','EXPERT') or hasAnyAuthority('ROLE_ADMIN','ROLE_CHARGE_DOSSIER','ROLE_RESPONSABLE_CONTENTIEUX')")
-    public ResponseEntity<FactureDto> getFactureById(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<FactureDto> getFactureById(@PathVariable("id") Long id, Authentication authentication) {
         FactureDto dto = factureService.getById(id);
         if (!factureService.isInternal(authentication)) {
             Long pid = factureService.currentPrestataireId(authentication);
@@ -87,13 +87,13 @@ public class FactureController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX')")
-    public ResponseEntity<FactureDto> updateFacture(@PathVariable Long id, @RequestBody FactureDto dto, Authentication authentication) {
+    public ResponseEntity<FactureDto> updateFacture(@PathVariable("id") Long id, @RequestBody FactureDto dto, Authentication authentication) {
         return ResponseEntity.ok(factureService.update(id, dto, authentication));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE_CONTENTIEUX') or hasAnyAuthority('ADMIN', 'RESPONSABLE_CONTENTIEUX', 'ROLE_ADMIN', 'ROLE_RESPONSABLE_CONTENTIEUX')")
-    public ResponseEntity<Void> deleteFacture(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteFacture(@PathVariable("id") Long id) {
         factureService.delete(id);
         return ResponseEntity.ok().build();
     }

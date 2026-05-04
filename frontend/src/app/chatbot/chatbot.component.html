@@ -1,0 +1,57 @@
+<div class="chatbot-launcher">
+  <button type="button" class="chatbot-fab" (click)="toggle()" [attr.aria-expanded]="open">
+    Chat
+  </button>
+</div>
+
+<div class="chatbot-panel" *ngIf="open">
+  <div class="chatbot-header">
+    <div class="chatbot-title">Assistant</div>
+    <button type="button" class="chatbot-close" (click)="close()">×</button>
+  </div>
+
+  <div class="chatbot-body">
+    <div class="chatbot-msg" *ngFor="let m of messages; trackBy: trackByIndex" [class.user]="m.role === 'user'" [class.bot]="m.role === 'bot'">
+      <div class="bubble">
+        <div class="text">{{ m.text }}</div>
+        <ng-container *ngIf="m.role === 'bot' && m.items && m.items.length">
+          <div class="items">
+            <div class="item" *ngFor="let it of m.items">
+              <div class="item-title">{{ it.title }}</div>
+              <div class="item-sub" *ngIf="it.subtitle">{{ it.subtitle }}</div>
+              <div class="item-meta">
+                <span *ngIf="it.status">{{ it.status }}</span>
+                <span *ngIf="it.date"> • {{ it.date }}</span>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="m.role === 'bot' && m.actions && m.actions.length">
+          <div class="actions">
+            <button type="button" class="action-btn" *ngFor="let a of m.actions" (click)="handleAction(a)">
+              {{ a.label || a.route }}
+            </button>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <div class="chatbot-msg bot" *ngIf="loading">
+      <div class="bubble">
+        <div class="text">...</div>
+      </div>
+    </div>
+  </div>
+
+  <form class="chatbot-input" (ngSubmit)="send()">
+    <input
+      type="text"
+      name="chatInput"
+      [(ngModel)]="input"
+      placeholder="Écrivez votre demande…"
+      autocomplete="off"
+    />
+    <button type="submit" [disabled]="loading || !input.trim()">Envoyer</button>
+  </form>
+</div>

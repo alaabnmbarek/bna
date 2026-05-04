@@ -58,6 +58,11 @@ export class FacturesComponent implements OnInit {
     private aos: AosService
   ) {}
 
+  get canDeleteFacture(): boolean {
+    const r = this.auth.role();
+    return ['ROLE_ADMIN', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ADMIN', 'RESPONSABLE_CONTENTIEUX'].includes(r || '');
+  }
+
   ngOnInit() {
     this.loadFactures();
     this.loadNotesOptions();
@@ -562,13 +567,33 @@ export class FacturesComponent implements OnInit {
   }
 
   deleteFacture(id: number) {
+    if (!id || !Number.isFinite(Number(id))) {
+      this.showBanner('danger', 'Impossible de supprimer: identifiant facture invalide');
+      return;
+    }
     if (confirm('Voulez-vous vraiment supprimer cette facture ?')) {
       this.facturesService.delete(id).subscribe({
         next: () => {
           this.showBanner('success', 'Facture supprimée');
           this.loadFactures();
         },
-        error: () => this.showBanner('danger', 'Erreur lors de la suppression')
+        error: (err) => {
+          const status = err?.status;
+          const apiMsg = err?.error?.message || err?.error?.error;
+          if (status === 0) {
+            this.showBanner('danger', 'Impossible de joindre le serveur');
+          } else if (status === 401) {
+            this.showBanner('danger', 'Session expirée (401). Veuillez vous reconnecter.');
+          } else if (status === 403) {
+            this.showBanner('danger', 'Accès refusé (403)');
+          } else if (status === 404) {
+            this.showBanner('danger', 'Facture introuvable (404)');
+          } else if (status === 409) {
+            this.showBanner('danger', apiMsg ? `Suppression impossible: ${apiMsg}` : 'Suppression impossible (409)');
+          } else {
+            this.showBanner('danger', apiMsg ? `Erreur (${status}): ${apiMsg}` : 'Erreur lors de la suppression');
+          }
+        }
       });
     }
   }

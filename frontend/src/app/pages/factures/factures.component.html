@@ -111,7 +111,7 @@
                     <button class="btn btn-icon btn-sm btn-light-primary" (click)="openModal(f)" title="Modifier" *ngIf="f.statut === 'EN_COURS'">
                       <i class="feather icon-edit"></i>
                     </button>
-                    <button class="btn btn-icon btn-sm btn-light-danger" (click)="deleteFacture(f.id!)" title="Supprimer" *ngIf="auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
+                    <button class="btn btn-icon btn-sm btn-light-danger" (click)="deleteFacture(f.id!)" title="Supprimer" *ngIf="canDeleteFacture && f.id">
                       <i class="feather icon-trash-2"></i>
                     </button>
                   </div>

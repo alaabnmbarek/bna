@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -191,7 +193,18 @@ public class FactureService {
 
     @org.springframework.transaction.annotation.Transactional
     public void delete(Long id) {
-        factureRepository.deleteById(id);
+        FactureEntity entity = factureRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Facture non trouvée"));
+
+        String storedName = entity.getFichierJustificatif();
+        factureRepository.delete(entity);
+
+        if (storedName != null && !storedName.isBlank()) {
+            try {
+                Files.deleteIfExists(uploadDir.resolve(storedName));
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     public FactureImportResponse importFromFile(MultipartFile file, Authentication authentication) {

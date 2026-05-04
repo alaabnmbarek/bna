@@ -23,6 +23,7 @@ export class DashboardPageComponent implements OnInit {
   loading = false;
   search = '';
   quickFilter: 'ALL' | 'URGENT_48H' | 'EN_RETARD' | 'CE_MOIS' = 'ALL';
+  latestRows: DossierContentieux[] = [];
   profileImage: string | undefined = 'assets/images/user/avatar-4.jpg';
 
   banner: { kind: 'success' | 'info' | 'danger'; message: string } | null = null;
@@ -70,20 +71,28 @@ export class DashboardPageComponent implements OnInit {
     this.contentieux.list().subscribe({
       next: (rows) => {
         this.dossiers = rows || [];
+        this.computeLatestRows();
         this.loading = false;
         this.rebuildCharts();
         this.loadWidgets();
         this.rebuildZones();
-        setTimeout(() => this.aos.refresh(), 0);
+        setTimeout(() => {
+          this.aos.refreshHard();
+          window.dispatchEvent(new Event('scroll'));
+        }, 0);
       },
       error: () => {
         this.loading = false;
         this.dossiers = [];
+        this.computeLatestRows();
         this.rebuildCharts();
         this.loadWidgets();
         this.rebuildZones();
         this.showBanner('Impossible de charger les dossiers contentieux.', 'danger');
-        setTimeout(() => this.aos.refresh(), 0);
+        setTimeout(() => {
+          this.aos.refreshHard();
+          window.dispatchEvent(new Event('scroll'));
+        }, 0);
       }
     });
   }
@@ -123,8 +132,8 @@ export class DashboardPageComponent implements OnInit {
     return sorted.slice(0, 8);
   }
 
-  filteredLatest(): DossierContentieux[] {
-    const q = this.search.trim().toLowerCase();
+  computeLatestRows(): void {
+    const q = (this.search || '').trim().toLowerCase();
     let rows = this.latestDossiers();
 
     if (this.quickFilter === 'CE_MOIS') {
@@ -135,8 +144,12 @@ export class DashboardPageComponent implements OnInit {
       rows = rows.filter((d) => this.isOverdueDossier(d));
     }
 
-    if (!q) return rows;
-    return rows.filter((d) =>
+    if (!q) {
+      this.latestRows = rows;
+      return;
+    }
+
+    this.latestRows = rows.filter((d) =>
       [
         d.reference,
         d.statut,
@@ -175,6 +188,7 @@ export class DashboardPageComponent implements OnInit {
 
   setQuickFilter(filter: 'ALL' | 'URGENT_48H' | 'EN_RETARD' | 'CE_MOIS'): void {
     this.quickFilter = filter;
+    this.computeLatestRows();
   }
 
   private isOverdueDossier(d: DossierContentieux): boolean {

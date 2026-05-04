@@ -1,10 +1,11 @@
 .dash-wrap {
   padding: 12px;
+  color: var(--app-text, #0f172a);
 }
 
 .dash-shell {
   border-radius: 18px;
-  border: 1px solid var(--app-border);
+  border: 1px solid var(--app-border, rgba(15, 23, 42, 0.12));
   box-shadow: var(--app-shadow-sm);
 }
 
@@ -20,12 +21,12 @@
 .dash-title {
   font-weight: 1000;
   font-size: 18px;
-  color: var(--app-text);
+  color: var(--app-text, #0f172a);
 }
 
 .dash-subtitle {
   margin-top: 4px;
-  color: var(--app-text-muted);
+  color: var(--app-text-muted, rgba(15, 23, 42, 0.66));
   font-weight: 700;
   font-size: 13px;
 }
@@ -411,6 +412,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  color: var(--app-text, #0f172a);
 }
 
 .dash-panel-head {
@@ -428,12 +430,12 @@
 .dash-panel-title {
   font-weight: 1000;
   font-size: 16px;
-  color: var(--app-text);
+  color: var(--app-text, #0f172a);
 }
 
 .dash-panel-sub {
   margin-top: 4px;
-  color: var(--app-text-muted);
+  color: var(--app-text-muted, rgba(15, 23, 42, 0.66));
   font-weight: 700;
   font-size: 13px;
 }
@@ -505,15 +507,23 @@
 .dash-table thead th {
   font-size: 12px;
   text-transform: none;
-  color: var(--app-text-muted);
+  color: var(--app-text-muted, rgba(15, 23, 42, 0.66));
   font-weight: 900;
   border-top: 0;
 }
 
 .dash-table tbody td {
   font-size: 13px;
-  color: var(--app-text);
+  color: var(--app-text, #0f172a);
   vertical-align: middle;
+}
+
+.dash-table th,
+.dash-table td,
+.dash-table .dash-empty,
+.dash-panel-title,
+.dash-panel-sub {
+  color: #0f172a !important;
 }
 
 .dash-link a {
@@ -534,7 +544,7 @@
 .dash-empty {
   padding: 14px;
   font-weight: 800;
-  color: var(--app-text-muted);
+  color: var(--app-text-muted, rgba(15, 23, 42, 0.66));
 }
 
 .dash-pipeline {
