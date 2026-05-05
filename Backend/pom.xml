@@ -9,6 +9,7 @@
     <java.version>17</java.version>
     <spring.boot.version>3.2.5</spring.boot.version>
     <jjwt.version>0.11.5</jjwt.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -117,6 +118,7 @@
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
+          <encoding>${project.build.sourceEncoding}</encoding>
         </configuration>
       </plugin>
     </plugins>

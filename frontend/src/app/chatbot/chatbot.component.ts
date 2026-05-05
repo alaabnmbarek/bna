@@ -20,27 +20,48 @@ export class ChatbotComponent {
   open = false;
   input = '';
   loading = false;
-  messages: UiMessage[] = [
-    {
-      role: 'bot',
-      text: 'Bonjour. Dites par exemple : "dossiers ouverts", "mes missions en retard", "factures payées", "audiences cette semaine", "mes alertes".'
-    }
-  ];
+  messages: UiMessage[] = [];
+  private greeted = false;
 
   constructor(private api: ChatbotService, private router: Router) {}
 
   toggle(): void {
     this.open = !this.open;
+    if (this.open) {
+      this.ensureGreeting();
+    }
   }
 
   close(): void {
     this.open = false;
   }
 
+  private ensureGreeting(): void {
+    if (this.greeted) return;
+    this.greeted = true;
+    this.messages = [
+      ...this.messages,
+      {
+        role: 'bot',
+        text: "Bonjour 👋 Que souhaitez-vous consulter ?\nCliquez une suggestion ou écrivez une demande similaire.",
+        actions: [
+          { type: 'PROMPT', label: '📂 Dossiers ouverts', route: 'dossiers ouverts' },
+          { type: 'PROMPT', label: '📋 Missions en retard', route: 'missions en retard' },
+          { type: 'PROMPT', label: '💰 Factures payées', route: 'factures payées' },
+          { type: 'PROMPT', label: '⚖️ Audiences cette semaine', route: 'audiences cette semaine' },
+          { type: 'PROMPT', label: '🔔 Mes alertes', route: 'mes alertes' }
+        ]
+      }
+    ];
+  }
+
   send(): void {
     const text = (this.input || '').trim();
     if (!text || this.loading) return;
+    this.submit(text);
+  }
 
+  private submit(text: string): void {
     this.messages = [...this.messages, { role: 'user', text }];
     this.input = '';
     this.loading = true;
@@ -73,9 +94,17 @@ export class ChatbotComponent {
   }
 
   handleAction(a: ChatbotAction): void {
-    const route = (a?.route || '').trim();
-    if (!route) return;
-    this.router.navigateByUrl(route).then(() => this.close());
+    const type = (a?.type || '').trim().toUpperCase();
+    const value = (a?.route || '').trim();
+    if (!value) return;
+
+    if (type === 'PROMPT') {
+      if (this.loading) return;
+      this.submit(value);
+      return;
+    }
+
+    this.router.navigateByUrl(value).then(() => this.close());
   }
 
   trackByIndex(i: number): number {

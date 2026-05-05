@@ -17,7 +17,7 @@
         <ng-container *ngIf="m.role === 'bot' && m.items && m.items.length">
           <div class="items">
             <div class="item" *ngFor="let it of m.items">
-              <div class="item-title">{{ it.title }}</div>
+              <div class="item-title">#{{ it.id }} — {{ it.title }}</div>
               <div class="item-sub" *ngIf="it.subtitle">{{ it.subtitle }}</div>
               <div class="item-meta">
                 <span *ngIf="it.status">{{ it.status }}</span>

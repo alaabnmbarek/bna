@@ -41,6 +41,7 @@ import java.util.*;
 public class ChatbotService {
     private static final DateTimeFormatter DATE = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private static final String NO_RESULT = "Aucun résultat trouvé pour cette demande.";
 
     private final DossierContentieuxRepository dossierRepository;
     private final MissionRepository missionRepository;
@@ -154,11 +155,20 @@ public class ChatbotService {
         };
         if (query.overdue) label = "en retard";
 
+        String answer = items.isEmpty() ? NO_RESULT : "Dossiers " + label + ".";
+
         return new ChatbotDtos.ChatResponse(
-                "Voici les dossiers " + label + " (max " + maxResults + ").",
+                answer,
                 "DOSSIERS",
                 items,
-                List.of(new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Contentieux", "/contentieux"))
+                List.of(
+                        new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Contentieux", "/contentieux"),
+                        new ChatbotDtos.ChatAction("PROMPT", "📂 Dossiers ouverts", "dossiers ouverts"),
+                        new ChatbotDtos.ChatAction("PROMPT", "📋 Missions en retard", "missions en retard"),
+                        new ChatbotDtos.ChatAction("PROMPT", "💰 Factures payées", "factures payées"),
+                        new ChatbotDtos.ChatAction("PROMPT", "⚖️ Audiences cette semaine", "audiences cette semaine"),
+                        new ChatbotDtos.ChatAction("PROMPT", "🔔 Mes alertes", "mes alertes")
+                )
         );
     }
 
@@ -224,11 +234,20 @@ public class ChatbotService {
         else if (query.statusFilter == StatusFilter.OPEN) label = label + " en cours";
         else if (query.statusFilter == StatusFilter.CLOSED) label = label + " terminées";
 
+        String answer = items.isEmpty() ? NO_RESULT : "Missions : " + label + ".";
+
         return new ChatbotDtos.ChatResponse(
-                "Voici " + label + " (max " + maxResults + ").",
+                answer,
                 "MISSIONS",
                 items,
-                List.of(new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Missions", "/missions"))
+                List.of(
+                        new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Missions", "/missions"),
+                        new ChatbotDtos.ChatAction("PROMPT", "📂 Dossiers ouverts", "dossiers ouverts"),
+                        new ChatbotDtos.ChatAction("PROMPT", "📋 Missions en retard", "missions en retard"),
+                        new ChatbotDtos.ChatAction("PROMPT", "💰 Factures payées", "factures payées"),
+                        new ChatbotDtos.ChatAction("PROMPT", "⚖️ Audiences cette semaine", "audiences cette semaine"),
+                        new ChatbotDtos.ChatAction("PROMPT", "🔔 Mes alertes", "mes alertes")
+                )
         );
     }
 
@@ -287,11 +306,20 @@ public class ChatbotService {
         String label = internal ? "les factures" : "vos factures";
         if (query.factureStatus != null) label = label + " " + query.factureStatus.name().toLowerCase();
 
+        String answer = items.isEmpty() ? NO_RESULT : "Factures : " + label + ".";
+
         return new ChatbotDtos.ChatResponse(
-                "Voici " + label + " (max " + maxResults + ").",
+                answer,
                 "FACTURES",
                 items,
-                List.of(new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Factures", "/factures"))
+                List.of(
+                        new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Factures", "/factures"),
+                        new ChatbotDtos.ChatAction("PROMPT", "📂 Dossiers ouverts", "dossiers ouverts"),
+                        new ChatbotDtos.ChatAction("PROMPT", "📋 Missions en retard", "missions en retard"),
+                        new ChatbotDtos.ChatAction("PROMPT", "💰 Factures payées", "factures payées"),
+                        new ChatbotDtos.ChatAction("PROMPT", "⚖️ Audiences cette semaine", "audiences cette semaine"),
+                        new ChatbotDtos.ChatAction("PROMPT", "🔔 Mes alertes", "mes alertes")
+                )
         );
     }
 
@@ -317,11 +345,17 @@ public class ChatbotService {
                     a.statut() != null ? a.statut().name() : null,
                     a.dateOuverture() != null ? a.dateOuverture().format(DATE) : null
             )).toList();
+
+            String answer = items.isEmpty() ? NO_RESULT : "Affaires judiciaires.";
             return new ChatbotDtos.ChatResponse(
-                    "Voici les affaires judiciaires (max " + maxResults + ").",
+                    answer,
                     "AFFAIRES",
                     items,
-                    List.of(new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Suivi judiciaire", "/suivi-judiciaire"))
+                    List.of(
+                            new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Suivi judiciaire", "/suivi-judiciaire"),
+                            new ChatbotDtos.ChatAction("PROMPT", "⚖️ Audiences cette semaine", "audiences cette semaine"),
+                            new ChatbotDtos.ChatAction("PROMPT", "🔔 Mes alertes", "mes alertes")
+                    )
             );
         }
 
@@ -339,11 +373,16 @@ public class ChatbotService {
                 a.dateAudience() != null ? a.dateAudience().format(DATE_TIME) : null
         )).toList();
 
+        String answer = items.isEmpty() ? NO_RESULT : "Audiences cette période.";
         return new ChatbotDtos.ChatResponse(
-                "Voici les audiences à venir (" + days + " jours, max " + maxResults + ").",
+                answer,
                 "AUDIENCES",
                 items,
-                List.of(new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Suivi judiciaire", "/suivi-judiciaire"))
+                List.of(
+                        new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Suivi judiciaire", "/suivi-judiciaire"),
+                        new ChatbotDtos.ChatAction("PROMPT", "⚖️ Audiences cette semaine", "audiences cette semaine"),
+                        new ChatbotDtos.ChatAction("PROMPT", "🔔 Mes alertes", "mes alertes")
+                )
         );
     }
 
@@ -361,35 +400,46 @@ public class ChatbotService {
                 n.getCreatedAt() != null ? n.getCreatedAt().format(DATE_TIME) : null
         )).toList();
 
-        String answer = items.isEmpty() ? "Aucune alerte non lue." : "Voici vos alertes non lues (max " + maxResults + ").";
+        String answer = items.isEmpty() ? NO_RESULT : "Alertes non lues.";
         return new ChatbotDtos.ChatResponse(
                 answer,
                 "ALERTES",
                 items,
-                List.of(new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Notifications", "/admin"))
+                List.of(
+                        new ChatbotDtos.ChatAction("NAVIGATE", "Ouvrir Notifications", "/admin"),
+                        new ChatbotDtos.ChatAction("PROMPT", "📂 Dossiers ouverts", "dossiers ouverts"),
+                        new ChatbotDtos.ChatAction("PROMPT", "📋 Missions en retard", "missions en retard"),
+                        new ChatbotDtos.ChatAction("PROMPT", "💰 Factures payées", "factures payées"),
+                        new ChatbotDtos.ChatAction("PROMPT", "⚖️ Audiences cette semaine", "audiences cette semaine")
+                )
         );
     }
 
     private ChatbotDtos.ChatResponse help() {
         return new ChatbotDtos.ChatResponse(
-                "Je peux rechercher des dossiers, missions, factures, audiences, et afficher vos alertes. Exemples : \"dossiers ouverts\", \"mes missions en retard\", \"factures payées\", \"audiences cette semaine\", \"mes alertes\".",
+                "Vous pouvez cliquer une suggestion ou écrire une demande similaire.",
                 "HELP",
                 List.of(),
                 List.of(
-                        new ChatbotDtos.ChatAction("NAVIGATE", "Contentieux", "/contentieux"),
-                        new ChatbotDtos.ChatAction("NAVIGATE", "Missions", "/missions"),
-                        new ChatbotDtos.ChatAction("NAVIGATE", "Factures", "/factures"),
-                        new ChatbotDtos.ChatAction("NAVIGATE", "Suivi judiciaire", "/suivi-judiciaire")
+                        new ChatbotDtos.ChatAction("PROMPT", "📂 Dossiers ouverts", "dossiers ouverts"),
+                        new ChatbotDtos.ChatAction("PROMPT", "📋 Missions en retard", "missions en retard"),
+                        new ChatbotDtos.ChatAction("PROMPT", "💰 Factures payées", "factures payées"),
+                        new ChatbotDtos.ChatAction("PROMPT", "⚖️ Audiences cette semaine", "audiences cette semaine"),
+                        new ChatbotDtos.ChatAction("PROMPT", "🔔 Mes alertes", "mes alertes")
                 )
         );
     }
 
     private ChatbotDtos.ChatResponse unknown() {
         return new ChatbotDtos.ChatResponse(
-                "Je n’ai pas compris. Essayez par exemple : \"dossiers ouverts\", \"mes missions\", \"factures\", \"audiences\".",
+                "Demande non claire. Essayez une suggestion :",
                 "UNKNOWN",
                 List.of(),
-                List.of()
+                List.of(
+                        new ChatbotDtos.ChatAction("PROMPT", "💰 Factures payées", "factures payées"),
+                        new ChatbotDtos.ChatAction("PROMPT", "❌ Factures refusées", "factures refusées"),
+                        new ChatbotDtos.ChatAction("PROMPT", "📂 Dossiers ouverts", "dossiers ouverts")
+                )
         );
     }
 
@@ -431,6 +481,8 @@ public class ChatbotService {
         if (containsAny(m, "facture", "factures")) {
             FactureStatus fs = null;
             if (containsAny(m, "payee", "payée", "payees", "payées")) fs = FactureStatus.PAYEE;
+            else if (containsAny(m, "refusee", "refusée", "refusees", "refusées", "refuse", "refus")) fs = FactureStatus.REFUSEE;
+            else if (containsAny(m, "en attente", "attente")) fs = FactureStatus.EN_ATTENTE;
             else if (containsAny(m, "validee", "validée", "validees", "validées")) fs = FactureStatus.VALIDEE;
             else if (containsAny(m, "en cours")) fs = FactureStatus.EN_COURS;
             Scope scope = containsAny(m, "toutes", "tous") ? Scope.ALL : Scope.MY;
@@ -449,7 +501,7 @@ public class ChatbotService {
         if (containsAny(m, "dossier", "dossiers", "contentieux")) {
             boolean overdue = containsAny(m, "retard", "en retard", "overdue");
             StatusFilter status = StatusFilter.ANY;
-            if (containsAny(m, "cloture", "clôture", "clotures", "clôturés", "cloturés", "clôturées", "cloturées")) status = StatusFilter.CLOSED;
+            if (containsAny(m, "ferme", "fermé", "fermée", "fermes", "fermés", "fermées", "cloture", "clôture", "clotures", "clôturés", "cloturés", "clôturées", "cloturées")) status = StatusFilter.CLOSED;
             else if (containsAny(m, "a valider", "à valider", "validation")) status = StatusFilter.TO_VALIDATE;
             else if (containsAny(m, "ouvert", "ouverts", "en cours")) status = StatusFilter.OPEN;
             Scope scope = containsAny(m, "tous", "toutes") ? Scope.ALL : Scope.MY;

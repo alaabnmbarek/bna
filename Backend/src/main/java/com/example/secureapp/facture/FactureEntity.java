@@ -78,7 +78,7 @@ public class FactureEntity {
         if (montantTtc != null) {
             if (montantPaye == null) montantPaye = 0.0;
             resteAPayer = montantTtc - montantPaye;
-            if (resteAPayer <= 0 && statut != FactureStatus.VALIDEE) {
+            if (resteAPayer <= 0 && statut != FactureStatus.VALIDEE && statut != FactureStatus.REFUSEE) {
                 statut = FactureStatus.PAYEE;
             }
         }

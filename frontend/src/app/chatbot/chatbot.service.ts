@@ -8,6 +8,6 @@ export class ChatbotService {
   constructor(private http: HttpClient) {}
 
   message(req: ChatbotRequest): Observable<ChatbotResponse> {
-    return this.http.post<ChatbotResponse>('/api/chatbot/message', req);
+    return this.http.post<ChatbotResponse>('/api/chat', req);
   }
 }

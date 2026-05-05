@@ -18,7 +18,7 @@ export interface Facture {
   montantTtc: number;
   montantPaye: number;
   resteAPayer: number;
-  statut: 'EN_COURS' | 'VALIDEE' | 'PAYEE';
+  statut: 'EN_COURS' | 'EN_ATTENTE' | 'VALIDEE' | 'PAYEE' | 'REFUSEE';
   dateFacture: string;
   typeLien: 'DOSSIER' | 'AFFAIRE' | 'MISSION';
   referenceLien: string;
