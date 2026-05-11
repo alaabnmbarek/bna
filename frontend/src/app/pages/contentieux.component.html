@@ -166,20 +166,16 @@
   </app-card>
 </div>
 
-<div *ngIf="showForm" class="modal fade show app-modal" (click)="closeForm()">
-  <div class="modal-dialog modal-xl modal-dialog-scrollable" (click)="$event.stopPropagation()">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">
-          <i class="feather icon-folder me-2"></i>
-          {{ editingId ? 'Modifier dossier' : 'Nouveau dossier' }}
-        </h5>
-        <button type="button" class="btn-close" (click)="closeForm()"></button>
-      </div>
+<div *ngIf="showForm" class="admin-overlay admin-overlay-animate" (click)="closeForm()">
+  <div class="admin-modal dossier-modal" (click)="$event.stopPropagation()">
+    <div class="admin-modal-head">
+      <div class="admin-modal-title">{{ editingId ? 'Modifier dossier' : 'Nouveau dossier' }}</div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeForm()">Fermer</button>
+    </div>
 
-      <form (ngSubmit)="submit()" class="d-flex flex-column h-100">
-        <div class="modal-body flex-grow-1 overflow-auto">
-          <div class="row g-4">
+    <form class="dossier-modal-form" (ngSubmit)="submit()">
+      <div class="dossier-modal-body">
+        <div class="row g-4">
             <div class="col-12">
               <div class="contentieux-card">
                 <div class="contentieux-card-title">Informations générales</div>
@@ -373,18 +369,14 @@
                 </div>
               </div>
             </div>
-          </div>
         </div>
+      </div>
 
-        <div class="modal-footer">
-          <button class="btn btn-outline-secondary" type="button" (click)="closeForm()">Annuler</button>
-          <button class="btn btn-success" type="submit">
-            <i class="feather icon-check-circle me-2"></i>
-            {{ editingId ? 'Enregistrer' : 'Créer' }}
-          </button>
-        </div>
-      </form>
-    </div>
+      <div class="admin-modal-footer">
+        <button class="btn btn-outline-secondary" type="button" (click)="closeForm()">Annuler</button>
+        <button class="btn btn-primary" type="submit">{{ editingId ? 'Mettre à jour' : 'Créer' }}</button>
+      </div>
+    </form>
   </div>
 </div>
 
