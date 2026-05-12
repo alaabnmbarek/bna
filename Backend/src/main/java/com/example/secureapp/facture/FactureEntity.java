@@ -53,6 +53,19 @@ public class FactureEntity {
 
     private String modePaiement;
 
+    @Column(unique = true)
+    private String chequeNumero;
+
+    private String chequeBanqueEmettrice;
+
+    private LocalDate chequeDate;
+
+    private Double chequeMontant;
+
+    private String chequeBeneficiaire;
+
+    private String chequeSigneFichier;
+
     private Long noteHonoraireId;
 
     @OneToMany(mappedBy = "facture", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -78,7 +91,10 @@ public class FactureEntity {
         if (montantTtc != null) {
             if (montantPaye == null) montantPaye = 0.0;
             resteAPayer = montantTtc - montantPaye;
-            if (resteAPayer <= 0 && statut != FactureStatus.VALIDEE && statut != FactureStatus.REFUSEE) {
+            if (resteAPayer <= 0
+                    && statut != FactureStatus.VALIDEE
+                    && statut != FactureStatus.REFUSEE
+                    && statut != FactureStatus.CHEQUE_BCT_EN_COURS) {
                 statut = FactureStatus.PAYEE;
             }
         }

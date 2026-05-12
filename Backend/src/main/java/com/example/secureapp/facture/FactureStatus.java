@@ -5,5 +5,6 @@ public enum FactureStatus {
     EN_ATTENTE,
     VALIDEE,
     PAYEE,
-    REFUSEE
+    REFUSEE,
+    CHEQUE_BCT_EN_COURS
 }

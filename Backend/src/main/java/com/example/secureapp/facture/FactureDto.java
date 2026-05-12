@@ -22,6 +22,12 @@ public class FactureDto {
     private String remarques;
     private String conditionsPaiement;
     private String modePaiement;
+    private String chequeNumero;
+    private String chequeBanqueEmettrice;
+    private LocalDate chequeDate;
+    private Double chequeMontant;
+    private String chequeBeneficiaire;
+    private String chequeSigneFichier;
     private Long noteHonoraireId;
     private java.util.List<PrestationDto> prestations;
     private LocalDateTime createdAt;

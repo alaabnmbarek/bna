@@ -18,7 +18,7 @@ export interface Facture {
   montantTtc: number;
   montantPaye: number;
   resteAPayer: number;
-  statut: 'EN_COURS' | 'EN_ATTENTE' | 'VALIDEE' | 'PAYEE' | 'REFUSEE';
+  statut: 'EN_COURS' | 'EN_ATTENTE' | 'VALIDEE' | 'PAYEE' | 'REFUSEE' | 'CHEQUE_BCT_EN_COURS';
   dateFacture: string;
   typeLien: 'DOSSIER' | 'AFFAIRE' | 'MISSION';
   referenceLien: string;
@@ -27,6 +27,12 @@ export interface Facture {
   remarques?: string;
   conditionsPaiement?: string;
   modePaiement?: string;
+  chequeNumero?: string;
+  chequeBanqueEmettrice?: string;
+  chequeDate?: string;
+  chequeMontant?: number;
+  chequeBeneficiaire?: string;
+  chequeSigneFichier?: string;
   noteHonoraireId?: number;
   prestations?: FacturePrestation[];
   createdAt?: string;
@@ -89,5 +95,15 @@ export class FacturesService {
     const form = new FormData();
     form.append('file', file);
     return this.http.post<Facture>(`${this.apiUrl}/${id}/file`, form);
+  }
+
+  uploadChequeSigne(id: number, file: File): Observable<Facture> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<Facture>(`${this.apiUrl}/${id}/cheque-signe`, form);
+  }
+
+  downloadChequeSigne(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/cheque-signe`, { responseType: 'blob' });
   }
 }

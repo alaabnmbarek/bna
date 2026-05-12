@@ -124,6 +124,8 @@ public class FactureService {
         System.out.println("[DEBUG] FactureService.create - Numero: " + dto.getNumero() + ", Prestataire: " + dto.getPrestataireId());
         FactureEntity entity = new FactureEntity();
         BeanUtils.copyProperties(dto, entity, "id", "createdAt", "updatedAt", "prestations");
+
+        normalizeAndValidateChequeBct(entity, null);
         
         if (dto.getPrestations() != null) {
             System.out.println("[DEBUG] Ajout de " + dto.getPrestations().size() + " prestations à l'entité");
@@ -161,6 +163,8 @@ public class FactureService {
 
         FactureStatus previousStatus = entity.getStatut();
         BeanUtils.copyProperties(dto, entity, "id", "createdAt", "updatedAt", "prestations");
+
+        normalizeAndValidateChequeBct(entity, id);
         
         entity.getPrestations().clear();
         if (dto.getPrestations() != null) {
@@ -187,6 +191,39 @@ public class FactureService {
         }
 
         entity.calculateReste();
+        entity = factureRepository.save(entity);
+        return mapToDto(entity);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public FactureDto attachChequeSigne(Long factureId, MultipartFile file, Authentication authentication) {
+        if (file == null || file.isEmpty()) throw new RuntimeException("Fichier invalide");
+        FactureEntity entity = factureRepository.findById(factureId)
+                .orElseThrow(() -> new RuntimeException("Facture non trouvée"));
+        if (!isInternal(authentication)) {
+            Long pid = currentPrestataireId(authentication);
+            if (entity.getPrestataireId() == null || !entity.getPrestataireId().equals(pid)) {
+                throw new AccessDeniedException("Accès refusé");
+            }
+        }
+
+        String ct = file.getContentType() != null ? file.getContentType().toLowerCase(Locale.ROOT) : "";
+        String original = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase(Locale.ROOT) : "";
+        boolean okType = ct.contains("pdf") || ct.contains("jpeg") || ct.contains("jpg") || ct.contains("png")
+                || original.endsWith(".pdf") || original.endsWith(".jpg") || original.endsWith(".jpeg") || original.endsWith(".png");
+        if (!okType) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Format fichier non supporté (PDF/JPG/PNG)");
+        }
+
+        if (!isChequeBctMode(entity.getModePaiement())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mode de paiement différent de Chèque BCT");
+        }
+        ensureChequeFields(entity);
+
+        ensureUploadDir();
+        String stored = storeFile(file, "cheque-signe_");
+        entity.setChequeSigneFichier(stored);
+        entity.setStatut(FactureStatus.CHEQUE_BCT_EN_COURS);
         entity = factureRepository.save(entity);
         return mapToDto(entity);
     }
@@ -304,6 +341,17 @@ public class FactureService {
         return new FileSystemResource(p);
     }
 
+    public Resource loadChequeSigneFile(Long factureId) {
+        FactureEntity entity = factureRepository.findById(factureId)
+                .orElseThrow(() -> new RuntimeException("Facture non trouvée"));
+        if (entity.getChequeSigneFichier() == null || entity.getChequeSigneFichier().isBlank()) {
+            throw new RuntimeException("Aucun chèque signé associé");
+        }
+        Path p = uploadDir.resolve(entity.getChequeSigneFichier());
+        if (!Files.exists(p)) throw new RuntimeException("Fichier introuvable");
+        return new FileSystemResource(p);
+    }
+
     @org.springframework.transaction.annotation.Transactional
     public FactureDto attachFile(Long factureId, MultipartFile file, Authentication authentication) {
         if (file == null || file.isEmpty()) throw new RuntimeException("Fichier invalide");
@@ -333,6 +381,70 @@ public class FactureService {
             }).collect(Collectors.toList()));
         }
         return dto;
+    }
+
+    private void normalizeAndValidateChequeBct(FactureEntity entity, Long currentId) {
+        if (entity == null) return;
+        if (!isChequeBctMode(entity.getModePaiement())) {
+            entity.setChequeNumero(null);
+            entity.setChequeBanqueEmettrice(null);
+            entity.setChequeDate(null);
+            entity.setChequeMontant(null);
+            entity.setChequeBeneficiaire(null);
+            return;
+        }
+
+        if (entity.getChequeMontant() == null && entity.getMontantTtc() != null) {
+            entity.setChequeMontant(entity.getMontantTtc());
+        }
+
+        String chequeNumero = entity.getChequeNumero() != null ? entity.getChequeNumero().trim() : null;
+        entity.setChequeNumero(chequeNumero != null && !chequeNumero.isBlank() ? chequeNumero : null);
+
+        if (entity.getChequeNumero() != null) {
+            boolean exists = (currentId == null)
+                    ? factureRepository.existsByChequeNumeroIgnoreCase(entity.getChequeNumero())
+                    : factureRepository.existsByChequeNumeroIgnoreCaseAndIdNot(entity.getChequeNumero(), currentId);
+            if (exists) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Numéro de chèque déjà utilisé");
+            }
+        }
+
+        FactureStatus s = entity.getStatut();
+        if (s == FactureStatus.CHEQUE_BCT_EN_COURS) {
+            ensureChequeFields(entity);
+        } else {
+            if (hasAnyChequeField(entity)) {
+                ensureChequeFields(entity);
+                if (s != FactureStatus.PAYEE && s != FactureStatus.REFUSEE && s != FactureStatus.VALIDEE) {
+                    entity.setStatut(FactureStatus.CHEQUE_BCT_EN_COURS);
+                }
+            }
+        }
+    }
+
+    private boolean hasAnyChequeField(FactureEntity e) {
+        return (e.getChequeNumero() != null && !e.getChequeNumero().isBlank())
+                || (e.getChequeBanqueEmettrice() != null && !e.getChequeBanqueEmettrice().isBlank())
+                || e.getChequeDate() != null
+                || e.getChequeMontant() != null
+                || (e.getChequeBeneficiaire() != null && !e.getChequeBeneficiaire().isBlank());
+    }
+
+    private void ensureChequeFields(FactureEntity e) {
+        if (e.getChequeNumero() == null || e.getChequeNumero().isBlank()
+                || e.getChequeBanqueEmettrice() == null || e.getChequeBanqueEmettrice().isBlank()
+                || e.getChequeDate() == null
+                || e.getChequeMontant() == null
+                || e.getChequeBeneficiaire() == null || e.getChequeBeneficiaire().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tous les champs du chèque sont obligatoires");
+        }
+    }
+
+    private boolean isChequeBctMode(String modePaiement) {
+        if (modePaiement == null) return false;
+        String m = modePaiement.trim().toLowerCase(Locale.ROOT);
+        return m.equals("cheque bct") || m.equals("chèque bct") || m.equals("cheque_bct") || m.equals("chèque_bct");
     }
 
     private PrestataireEntity resolvePrestataire(Authentication authentication) {
@@ -440,6 +552,19 @@ public class FactureService {
     private String storeFile(MultipartFile file) {
         String clean = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "facture");
         String name = UUID.randomUUID() + "_" + clean.replaceAll("[\\\\/]+", "_");
+        try {
+            Files.copy(file.getInputStream(), uploadDir.resolve(name));
+        } catch (IOException e) {
+            throw new RuntimeException("Upload échoué", e);
+        }
+        return name;
+    }
+
+    private String storeFile(MultipartFile file, String prefix) {
+        String clean = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "file");
+        String safe = clean.replaceAll("[\\\\/]+", "_");
+        String p = prefix != null ? prefix : "";
+        String name = p + UUID.randomUUID() + "_" + safe;
         try {
             Files.copy(file.getInputStream(), uploadDir.resolve(name));
         } catch (IOException e) {

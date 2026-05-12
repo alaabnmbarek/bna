@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface FactureRepository extends JpaRepository<FactureEntity, Long> {
     boolean existsByNumero(String numero);
+    boolean existsByChequeNumeroIgnoreCase(String chequeNumero);
+    boolean existsByChequeNumeroIgnoreCaseAndIdNot(String chequeNumero, Long id);
 
     List<FactureEntity> findByPrestataireIdOrderByDateFactureDesc(Long prestataireId);
     List<FactureEntity> findByPrestataireIdOrderByDateFactureDesc(Long prestataireId, Pageable pageable);

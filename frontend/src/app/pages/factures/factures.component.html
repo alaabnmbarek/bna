@@ -13,11 +13,17 @@
             <button type="button" class="factures-tab" [class.active]="activeTab === 'NOTES_HONORAIRES'" (click)="setTab('NOTES_HONORAIRES')">
               <i class="feather icon-clipboard me-1"></i> Notes d'Honoraires
             </button>
+            <button type="button" class="factures-tab" [class.active]="activeTab === 'FACTURE_FACULTATIF'" (click)="setTab('FACTURE_FACULTATIF')">
+              <i class="feather icon-file me-1"></i> Facture Facultatif
+            </button>
           </div>
         </div>
         <div class="factures-actions">
           <button class="btn btn-primary btn-sm" (click)="openModal()" *ngIf="activeTab === 'FACTURES'">
             <i class="feather icon-plus me-1"></i> Nouvelle Facture
+          </button>
+          <button class="btn btn-outline-primary btn-sm" (click)="resetOptionalFacture()" *ngIf="activeTab === 'FACTURE_FACULTATIF'">
+            <i class="feather icon-rotate-ccw me-1"></i> Réinitialiser
           </button>
         </div>
       </div>
@@ -39,8 +45,11 @@
           <select class="form-select filter-select" [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()">
             <option value="ALL">Tous les statuts</option>
             <option value="EN_COURS">En cours</option>
+            <option value="EN_ATTENTE">En attente</option>
             <option value="VALIDEE">Validée</option>
             <option value="PAYEE">Payée</option>
+            <option value="REFUSEE">Refusée</option>
+            <option value="CHEQUE_BCT_EN_COURS">Chèque BCT (en cours)</option>
           </select>
 
           <select class="form-select filter-select" [(ngModel)]="filterType" (ngModelChange)="applyFilters()">
@@ -82,20 +91,10 @@
                   </span>
                 </td>
                 <td class="text-center">
-                <span class="app-status-badge"
-                      [ngClass]="{
-                        'app-status-badge--warning': f.statut === 'EN_COURS',
-                        'app-status-badge--info': f.statut === 'VALIDEE',
-                        'app-status-badge--success': f.statut === 'PAYEE'
-                      }">
-                  <i class="feather"
-                     [ngClass]="{
-                       'icon-clock': f.statut === 'EN_COURS',
-                       'icon-check-circle': f.statut === 'VALIDEE',
-                       'icon-dollar-sign': f.statut === 'PAYEE'
-                     }"></i>
-                  {{ f.statut === 'EN_COURS' ? 'En cours' : f.statut === 'VALIDEE' ? 'Validée' : 'Payée' }}
-                </span>
+                  <span class="app-status-badge" [ngClass]="statusBadgeClass(f.statut)">
+                    <i class="feather" [ngClass]="statusIconClass(f.statut)"></i>
+                    {{ statusLabel(f.statut) }}
+                  </span>
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-icon btn-light" *ngIf="f.fichierJustificatif" (click)="downloadJustificatif(f)" title="Télécharger">
@@ -136,6 +135,209 @@
 
       <div *ngIf="activeTab === 'NOTES_HONORAIRES'" class="factures-notes-wrap">
         <app-notes-honoraires (factureGenerated)="onFactureGeneratedFromNote()"></app-notes-honoraires>
+      </div>
+
+      <div *ngIf="activeTab === 'FACTURE_FACULTATIF'" class="optional-facture-wrap">
+        <div class="row g-3">
+          <div class="col-12 col-xl-8">
+            <div class="border rounded-3 p-3" style="background: rgba(248, 250, 252, 0.55);">
+              <div class="fw-bold mb-2">Informations facture</div>
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Numéro facture</label>
+                  <input class="form-control" [(ngModel)]="optionalFacture.numero" name="optNumero">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Date</label>
+                  <input type="date" class="form-control" [(ngModel)]="optionalFacture.date" name="optDate">
+                </div>
+              </div>
+            </div>
+
+            <div class="border rounded-3 p-3 mt-3" style="background: rgba(248, 250, 252, 0.55);">
+              <div class="fw-bold mb-2">Prestataire</div>
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Prestataire</label>
+                  <select class="form-select" [(ngModel)]="optionalFacture.prestataireId" name="optPrestataireId" (ngModelChange)="onOptionalPrestataireSelected()">
+                    <option [ngValue]="null" disabled>{{ prestatairesListLoading ? 'Chargement...' : 'Sélectionner un prestataire...' }}</option>
+                    <option *ngFor="let p of prestatairesList" [ngValue]="p.id">
+                      {{ p.nom }} {{ p.prenom || '' }}{{ p.cabinet ? (' — ' + p.cabinet) : '' }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Adresse</label>
+                  <input class="form-control" [(ngModel)]="optionalFacture.clientAdresse" name="optClientAdresse" readonly>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Téléphone</label>
+                  <input class="form-control" [(ngModel)]="optionalFacture.clientTelephone" name="optClientTel" readonly>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Email</label>
+                  <input class="form-control" [(ngModel)]="optionalFacture.clientEmail" name="optClientEmail" readonly>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Matricule fiscal</label>
+                  <input class="form-control" [(ngModel)]="optionalFacture.clientMatriculeFiscal" name="optClientMf" readonly>
+                </div>
+              </div>
+            </div>
+
+            <div class="border rounded-3 p-3 mt-3" style="background: rgba(248, 250, 252, 0.55);">
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <div class="fw-bold">Liste des services</div>
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="addOptionalServiceLine()">
+                  <i class="feather icon-plus me-1"></i> Ajouter
+                </button>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-bordered mb-0">
+                  <thead>
+                    <tr>
+                      <th style="width: 180px;">Service</th>
+                      <th>Description</th>
+                      <th class="text-center" style="width: 90px;">Qté</th>
+                      <th class="text-end" style="width: 160px;">Prix Unit. HT</th>
+                      <th class="text-end" style="width: 160px;">Total HT</th>
+                      <th class="text-center" style="width: 56px;"> </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let l of optionalFacture.services; let i = index">
+                      <td><input class="form-control" [(ngModel)]="l.service" name="optService{{i}}"></td>
+                      <td><input class="form-control" [(ngModel)]="l.description" name="optDesc{{i}}"></td>
+                      <td><input type="number" class="form-control text-center" [(ngModel)]="l.quantite" name="optQty{{i}}" min="0" step="1"></td>
+                      <td><input type="number" class="form-control text-end" [(ngModel)]="l.prixUnitaire" name="optPu{{i}}" min="0" step="0.001"></td>
+                      <td class="text-end fw-bold">{{ optionalLineTotal(l) | number:'1.3-3' }}</td>
+                      <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-light-danger" (click)="removeOptionalServiceLine(i)" [disabled]="optionalFacture.services.length <= 1">
+                          <i class="feather icon-trash-2"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-xl-4">
+            <div class="border rounded-3 p-3" style="background: rgba(255, 255, 255, 0.92);">
+              <div class="fw-bold mb-2">Totaux</div>
+              <div class="row g-3">
+                <div class="col-12 col-md-6 col-xl-12">
+                  <label class="form-label">TVA (%)</label>
+                  <input type="number" class="form-control text-end" [(ngModel)]="optionalFacture.tva" name="optTva" min="0" step="0.1">
+                </div>
+                <div class="col-12 col-md-6 col-xl-12">
+                  <label class="form-label">Remise (%)</label>
+                  <input type="number" class="form-control text-end" [(ngModel)]="optionalFacture.remise" name="optRemise" min="0" step="0.1">
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted">Total HT</span>
+                  <span class="fw-bold">{{ optionalTotalHt() | number:'1.3-3' }} DT</span>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                  <span class="text-muted">Après remise</span>
+                  <span class="fw-bold">{{ optionalTotalAfterRemise() | number:'1.3-3' }} DT</span>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                  <span class="text-muted">TVA</span>
+                  <span class="fw-bold">{{ optionalTvaAmount() | number:'1.3-3' }} DT</span>
+                </div>
+                <div class="d-flex justify-content-between mt-2 pt-2 border-top">
+                  <span class="fw-bold">Total TTC</span>
+                  <span class="fw-bold text-primary">{{ optionalTotalTtc() | number:'1.3-3' }} DT</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="border rounded-3 p-3 mt-3" style="background: rgba(255, 255, 255, 0.92);">
+              <div class="fw-bold mb-2">Paiement</div>
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Mode de paiement</label>
+                  <select class="form-select" [(ngModel)]="optionalFacture.modePaiement" name="optMode" (ngModelChange)="onOptionalModePaiementChange()">
+                    <option value="Especes">Espèces</option>
+                    <option value="Virement">Virement</option>
+                    <option value="Carte bancaire">Carte bancaire</option>
+                    <option value="Cheque BCT">Chèque BCT</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Statut paiement</label>
+                  <input class="form-control" [(ngModel)]="optionalFacture.statutPaiement" name="optStatutPaiement">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Signature</label>
+                  <input class="form-control" [(ngModel)]="optionalFacture.signature" name="optSignature">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Cachet</label>
+                  <input class="form-control" [(ngModel)]="optionalFacture.cachet" name="optCachet">
+                </div>
+              </div>
+            </div>
+
+            <div class="border rounded-3 p-3 mt-3" style="background: rgba(248, 250, 252, 0.55);" *ngIf="optionalFacture.modePaiement === 'Cheque BCT'">
+              <div class="fw-bold mb-2">Chèque BCT</div>
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Numéro chèque</label>
+                  <input class="form-control" [(ngModel)]="optionalFacture.chequeNumero" name="optChequeNumero">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Banque</label>
+                  <input class="form-control" [(ngModel)]="optionalFacture.chequeBanqueEmettrice" name="optChequeBanque">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Date chèque</label>
+                  <input type="date" class="form-control" [(ngModel)]="optionalFacture.chequeDate" name="optChequeDate">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Montant</label>
+                  <input type="number" class="form-control text-end" [(ngModel)]="optionalFacture.chequeMontant" name="optChequeMontant" min="0" step="0.001">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Bénéficiaire</label>
+                  <input class="form-control" [(ngModel)]="optionalFacture.chequeBeneficiaire" name="optChequeBeneficiaire">
+                </div>
+                <div class="col-12 d-flex flex-wrap gap-2">
+                  <button type="button" class="btn btn-outline-primary" (click)="generateChequeFromOptionalFacture()" [disabled]="chequeGenerating">
+                    <i class="feather icon-file me-1"></i> Générer chèque
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" (click)="showChequePreview = true" [disabled]="!chequePreviewUrl">
+                    <i class="feather icon-eye me-1"></i> Aperçu chèque
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" (click)="downloadCheque()" [disabled]="!chequePreviewUrl">
+                    <i class="feather icon-download me-1"></i> Télécharger chèque
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-3">
+              <button type="button" class="btn btn-primary" (click)="generateOptionalFacture()">
+                <i class="feather icon-file-text me-1"></i> Générer facture
+              </button>
+              <button type="button" class="btn btn-outline-secondary" (click)="showOptionalFacturePreview = true" [disabled]="!optionalFacturePreviewUrl">
+                <i class="feather icon-eye me-1"></i> Aperçu
+              </button>
+              <button type="button" class="btn btn-outline-secondary" (click)="downloadOptionalFacture()" [disabled]="!optionalFacturePreviewUrl">
+                <i class="feather icon-download me-1"></i> Télécharger
+              </button>
+              <button type="button" class="btn btn-outline-secondary" (click)="printOptionalFacture()" [disabled]="!optionalFacturePreviewImageUrl">
+                <i class="feather icon-printer me-1"></i> Imprimer
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </app-card>
   </div>
@@ -189,68 +391,64 @@
               <input type="number" class="form-control text-end bg-light fw-bold" name="montantTtc" [ngModel]="currentFacture.montantTtc" readonly disabled>
             </div>
 
-            <!-- Nouveau: Détail des prestations -->
-            <div class="col-12 mt-3">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <label class="form-label mb-0 fw-bold">Détail des prestations</label>
-                <button type="button" class="btn btn-sm btn-outline-primary" (click)="addPrestation()" *ngIf="editMode && currentFacture.statut === 'EN_COURS'">
-                  <i class="feather icon-plus me-1"></i> Ajouter
-                </button>
-              </div>
-              <div class="table-responsive">
-                <table class="table table-sm table-bordered">
-                  <thead class="bg-light">
-                    <tr>
-                      <th>Type</th>
-                      <th>Description</th>
-                      <th style="width: 80px;">Qté</th>
-                      <th style="width: 120px;">P.U HT</th>
-                      <th style="width: 120px;">Total HT</th>
-                      <th style="width: 40px;" *ngIf="editMode && currentFacture.statut === 'EN_COURS'"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let p of currentFacture.prestations; let i = index">
-                      <td>
-                        <select class="form-select form-select-sm" [(ngModel)]="p.type" [name]="'p_type_' + i" [disabled]="!editMode || currentFacture.statut !== 'EN_COURS'">
-                          <option value="HONORAIRES">Honoraires</option>
-                          <option value="FRAIS">Frais</option>
-                          <option value="DEPLACEMENT">Déplacement</option>
-                          <option value="AUTRE">Autre</option>
-                        </select>
-                      </td>
-                      <td>
-                        <input class="form-control form-control-sm" [(ngModel)]="p.description" [name]="'p_desc_' + i" [readonly]="!editMode || currentFacture.statut !== 'EN_COURS'">
-                      </td>
-                      <td>
-                        <input type="number" class="form-control form-control-sm text-center" [(ngModel)]="p.quantite" [name]="'p_qty_' + i" (input)="recalcPrestation(i)" [readonly]="!editMode || currentFacture.statut !== 'EN_COURS'">
-                      </td>
-                      <td>
-                        <input type="number" class="form-control form-control-sm text-end" [(ngModel)]="p.prixUnitaire" [name]="'p_pu_' + i" (input)="recalcPrestation(i)" [readonly]="!editMode || currentFacture.statut !== 'EN_COURS'">
-                      </td>
-                      <td class="text-end align-middle fw-bold">{{ p.montant | number:'1.2-2' }}</td>
-                      <td *ngIf="editMode && currentFacture.statut === 'EN_COURS'">
-                        <button type="button" class="btn btn-link text-danger p-0" (click)="removePrestation(i)">
-                          <i class="feather icon-trash-2"></i>
-                        </button>
-                      </td>
-                    </tr>
-                    <tr *ngIf="!currentFacture.prestations?.length">
-                      <td colspan="6" class="text-center text-muted py-3">Aucune prestation définie.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
             <!-- Nouveau: Informations complémentaires -->
             <div class="col-md-6 mt-2">
               <label class="form-label">Mode de Paiement</label>
-              <select class="form-select" name="modePaiement" [(ngModel)]="currentFacture.modePaiement">
+              <select class="form-select" name="modePaiement" [(ngModel)]="currentFacture.modePaiement" (ngModelChange)="onEditModePaiementChange()">
                 <option value="Virement">Virement Bancaire</option>
                 <option value="Cheque">Chèque</option>
+                <option value="Cheque BCT">Chèque BCT</option>
                 <option value="Especes">Espèces</option>
               </select>
+            </div>
+
+            <div class="col-12" *ngIf="currentFacture && isChequeBct(currentFacture.modePaiement)">
+              <div class="border rounded-3 p-3" style="background: rgba(248, 250, 252, 0.55);">
+                <div class="fw-bold mb-2">Chèque BCT</div>
+                <div class="row g-3">
+                  <div class="col-12 col-md-4">
+                    <label class="form-label">Numéro du chèque</label>
+                    <input class="form-control" [(ngModel)]="currentFacture.chequeNumero" name="editChequeNumero">
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label">Banque émettrice</label>
+                    <input class="form-control" [(ngModel)]="currentFacture.chequeBanqueEmettrice" name="editChequeBanque">
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label">Date du chèque</label>
+                    <input type="date" class="form-control" [(ngModel)]="currentFacture.chequeDate" name="editChequeDate">
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label">Montant du chèque</label>
+                    <input type="number" class="form-control text-end" [(ngModel)]="currentFacture.chequeMontant" name="editChequeMontant" min="0" step="0.001">
+                  </div>
+                  <div class="col-12 col-md-8">
+                    <label class="form-label">Nom du bénéficiaire</label>
+                    <input class="form-control" [(ngModel)]="currentFacture.chequeBeneficiaire" name="editChequeBeneficiaire">
+                  </div>
+                  <div class="col-12 d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-primary" (click)="generateChequeFromEdit()" [disabled]="chequeGenerating || chequeUploading">
+                      <i class="feather icon-file me-1"></i> Générer chèque
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" (click)="showChequePreview = true" [disabled]="!chequePreviewUrl">
+                      <i class="feather icon-eye me-1"></i> Aperçu
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" (click)="downloadCheque()" [disabled]="!chequePreviewUrl">
+                      <i class="feather icon-download me-1"></i> Télécharger chèque
+                    </button>
+                    <label class="btn btn-outline-primary mb-0">
+                      <i class="feather icon-upload me-1"></i> Uploader chèque signé
+                      <input type="file" hidden accept=".pdf,.jpg,.jpeg,.png" (change)="onChequeSigneSelectedFromEdit($event)" />
+                    </label>
+                    <button type="button" class="btn btn-outline-secondary" (click)="downloadChequeSigne()" *ngIf="currentFacture.chequeSigneFichier">
+                      <i class="feather icon-download me-1"></i> Télécharger chèque signé
+                    </button>
+                  </div>
+                  <div class="col-12 text-muted small" *ngIf="!currentFacture.id">
+                    Enregistrez la facture pour activer la génération et l’upload du chèque.
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="col-md-6 mt-2">
               <label class="form-label">Conditions de Paiement</label>
@@ -365,7 +563,7 @@
 <div class="modal-backdrop fade show" *ngIf="showImportModal"></div>
 
 <!-- Modal Facture Detail (View) -->
-<div class="modal fade" [class.show]="showFactureDetail" [style.display]="showFactureDetail ? 'block' : 'none'" tabindex="-1">
+<div class="modal fade" *ngIf="showFactureDetail && selectedFactureDetail" [class.show]="showFactureDetail" [style.display]="showFactureDetail ? 'block' : 'none'" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content facture-view-modal">
       <div class="modal-header border-bottom-0 no-print">
@@ -513,15 +711,127 @@
           </div>
         </div>
       </div>
-      <div class="modal-footer border-top-0 no-print">
-        <button type="button" class="btn btn-outline-secondary" (click)="closeFactureDetail()">Fermer</button>
-        <button type="button" class="btn btn-primary" (click)="validateFacture(selectedFactureDetail!.id!)" *ngIf="selectedFactureDetail?.statut === 'EN_COURS' && auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
-          <i class="feather icon-check-circle me-1"></i> Valider la facture
-        </button>
-        <button type="button" class="btn btn-success" (click)="markAsPaid(selectedFactureDetail!.id!)" *ngIf="selectedFactureDetail?.statut === 'VALIDEE' && auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
-          <i class="feather icon-dollar-sign me-1"></i> Marquer comme payée
+      <div class="modal-footer border-top-0 no-print d-block">
+        <div class="w-100 border rounded-3 p-3 mb-3" style="background: rgba(255, 255, 255, 0.92);">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="fw-bold">Mode de paiement</div>
+            <span class="badge bg-light text-dark" *ngIf="selectedFactureDetail?.statut">
+              {{ selectedFactureDetail?.statut }}
+            </span>
+          </div>
+
+          <div class="row g-3 mt-1">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Choix</label>
+              <select class="form-select" [(ngModel)]="selectedFactureDetail!.modePaiement" name="detailModePaiement" (ngModelChange)="onDetailModePaiementChange()">
+                <option value="Virement">Virement Bancaire</option>
+                <option value="Cheque">Chèque</option>
+                <option value="Cheque BCT">Chèque BCT</option>
+                <option value="Especes">Espèces</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mt-1" *ngIf="selectedFactureDetail && isChequeBct(selectedFactureDetail.modePaiement)">
+            <div class="col-12 col-md-4">
+              <label class="form-label">Numéro du chèque</label>
+              <input class="form-control" [(ngModel)]="selectedFactureDetail.chequeNumero" name="chequeNumero">
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Banque émettrice</label>
+              <input class="form-control" [(ngModel)]="selectedFactureDetail.chequeBanqueEmettrice" name="chequeBanque">
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Date du chèque</label>
+              <input type="date" class="form-control" [(ngModel)]="selectedFactureDetail.chequeDate" name="chequeDate">
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Montant du chèque</label>
+              <input type="number" class="form-control text-end" [(ngModel)]="selectedFactureDetail.chequeMontant" name="chequeMontant" min="0" step="0.001">
+            </div>
+            <div class="col-12 col-md-8">
+              <label class="form-label">Nom du bénéficiaire</label>
+              <input class="form-control" [(ngModel)]="selectedFactureDetail.chequeBeneficiaire" name="chequeBeneficiaire">
+            </div>
+
+            <div class="col-12 d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-outline-primary" (click)="generateCheque()" [disabled]="chequeGenerating || chequeUploading">
+                <i class="feather icon-file me-1"></i> Générer chèque
+              </button>
+              <button type="button" class="btn btn-outline-secondary" (click)="showChequePreview = true" [disabled]="!chequePreviewUrl">
+                <i class="feather icon-eye me-1"></i> Aperçu
+              </button>
+              <button type="button" class="btn btn-outline-secondary" (click)="downloadCheque()" [disabled]="!chequePreviewUrl">
+                <i class="feather icon-download me-1"></i> Télécharger chèque
+              </button>
+
+              <label class="btn btn-outline-primary mb-0">
+                <i class="feather icon-upload me-1"></i> Uploader chèque signé
+                <input type="file" hidden accept=".pdf,.jpg,.jpeg,.png" (change)="onChequeSigneSelected($event)" />
+              </label>
+
+              <button type="button" class="btn btn-outline-secondary" (click)="downloadChequeSigne()" *ngIf="selectedFactureDetail.chequeSigneFichier">
+                <i class="feather icon-download me-1"></i> Télécharger chèque signé
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 flex-wrap">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeFactureDetail()">Fermer</button>
+          <button type="button" class="btn btn-primary" (click)="validateFacture(selectedFactureDetail!.id!)" *ngIf="selectedFactureDetail?.statut === 'EN_COURS' && auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
+            <i class="feather icon-check-circle me-1"></i> Valider la facture
+          </button>
+          <button type="button" class="btn btn-success" (click)="markAsPaid(selectedFactureDetail!.id!)" *ngIf="selectedFactureDetail?.statut === 'VALIDEE' && auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
+            <i class="feather icon-dollar-sign me-1"></i> Marquer comme payée
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" [class.show]="showChequePreview" [style.display]="showChequePreview ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content factures-modal">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title">Aperçu du chèque</h5>
+        <button type="button" class="btn-close" (click)="closeChequePreview()"></button>
+      </div>
+      <div class="modal-body">
+        <img *ngIf="chequePreviewImageUrl" [src]="chequePreviewImageUrl" class="w-100" style="max-height: 520px; object-fit: contain; border-radius: 12px; border: 1px solid rgba(15,23,42,0.06);" />
+      </div>
+      <div class="modal-footer border-top-0 px-0 pb-0 mt-2">
+        <button type="button" class="btn btn-light" (click)="closeChequePreview()">Fermer</button>
+        <button type="button" class="btn btn-outline-secondary" (click)="downloadCheque()" [disabled]="!chequePreviewUrl">
+          <i class="feather icon-download me-1"></i> Télécharger
         </button>
       </div>
     </div>
   </div>
 </div>
+<div class="modal-backdrop fade show" *ngIf="showChequePreview"></div>
+
+<div class="modal fade" [class.show]="showOptionalFacturePreview" [style.display]="showOptionalFacturePreview ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content factures-modal">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title">Aperçu facture facultative</h5>
+        <button type="button" class="btn-close" (click)="closeOptionalFacturePreview()"></button>
+      </div>
+      <div class="modal-body">
+        <img *ngIf="optionalFacturePreviewImageUrl" [src]="optionalFacturePreviewImageUrl" class="w-100" style="max-height: 620px; object-fit: contain; border-radius: 12px; border: 1px solid rgba(15,23,42,0.06);" />
+      </div>
+      <div class="modal-footer border-top-0 px-0 pb-0 mt-2">
+        <button type="button" class="btn btn-light" (click)="closeOptionalFacturePreview()">Fermer</button>
+        <button type="button" class="btn btn-outline-secondary" (click)="printOptionalFacture()" [disabled]="!optionalFacturePreviewImageUrl">
+          <i class="feather icon-printer me-1"></i> Imprimer
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="downloadOptionalFacture()" [disabled]="!optionalFacturePreviewUrl">
+          <i class="feather icon-download me-1"></i> Télécharger
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showOptionalFacturePreview"></div>

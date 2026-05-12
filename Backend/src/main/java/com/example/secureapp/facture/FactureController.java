@@ -85,6 +85,30 @@ public class FactureController {
         return ResponseEntity.ok(factureService.attachFile(id, file, authentication));
     }
 
+    @GetMapping("/{id}/cheque-signe")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX', 'PRESTATAIRE', 'AVOCAT', 'HUISSIER', 'EXPERT') or hasAnyAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Resource> downloadChequeSigne(@PathVariable("id") Long id, Authentication authentication) {
+        FactureDto dto = factureService.getById(id);
+        if (!factureService.isInternal(authentication)) {
+            Long pid = factureService.currentPrestataireId(authentication);
+            if (dto.getPrestataireId() == null || !dto.getPrestataireId().equals(pid)) {
+                throw new AccessDeniedException("Accès refusé");
+            }
+        }
+        Resource res = factureService.loadChequeSigneFile(id);
+        String name = res.getFilename() != null ? res.getFilename() : "cheque-signe";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + name + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(res);
+    }
+
+    @PostMapping(value = "/{id}/cheque-signe", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX', 'PRESTATAIRE', 'AVOCAT', 'HUISSIER', 'EXPERT') or hasAnyAuthority('ROLE_ADMIN')")
+    public ResponseEntity<FactureDto> uploadChequeSigne(@PathVariable("id") Long id, @RequestPart("file") MultipartFile file, Authentication authentication) {
+        return ResponseEntity.ok(factureService.attachChequeSigne(id, file, authentication));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX')")
     public ResponseEntity<FactureDto> updateFacture(@PathVariable("id") Long id, @RequestBody FactureDto dto, Authentication authentication) {
