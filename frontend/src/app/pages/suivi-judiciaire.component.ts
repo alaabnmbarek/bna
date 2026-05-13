@@ -87,6 +87,44 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     this.setBodyScrollLocked(false);
   }
 
+  private closeAllPopups(): void {
+    this.showAffaireForm = false;
+    this.showAudienceForm = false;
+    this.showJugementForm = false;
+    this.showAssignationPopup = false;
+    this.showDossierDetails = false;
+    this.dossierDetailsLoading = false;
+    this.dossierDetails = null;
+  }
+
+  private syncBodyScrollLock(): void {
+    const anyOpen =
+      this.showAffaireForm ||
+      this.showAudienceForm ||
+      this.showJugementForm ||
+      this.showAssignationPopup ||
+      this.showDossierDetails;
+    this.setBodyScrollLocked(anyOpen);
+  }
+
+  closeAffaireForm(): void {
+    this.showAffaireForm = false;
+    this.showAssignationPopup = false;
+    this.syncBodyScrollLock();
+  }
+
+  closeAudienceForm(): void {
+    this.showAudienceForm = false;
+    this.selectedAffaire = null;
+    this.syncBodyScrollLock();
+  }
+
+  closeJugementForm(): void {
+    this.showJugementForm = false;
+    this.selectedAffaire = null;
+    this.syncBodyScrollLock();
+  }
+
   loadAffaires(): void {
     this.loading = true;
     this.suiviService.getAllAffaires().subscribe({
@@ -153,18 +191,21 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   }
 
   openAffaireForm(): void {
+    this.closeAllPopups();
     this.newAffaire = this.blankAffaire();
     this.dossierAffaires = [];
     this.selectedNumeroAffaire = '';
     this.showAffaireForm = true;
+    this.syncBodyScrollLock();
     setTimeout(() => this.aos.refresh(), 0);
   }
 
   openDossierDetails(dossierId: number): void {
     const id = Number(dossierId);
     if (!id || !Number.isFinite(id)) return;
+    this.closeAllPopups();
     this.showDossierDetails = true;
-    this.setBodyScrollLocked(true);
+    this.syncBodyScrollLock();
     this.dossierDetailsLoading = true;
     this.dossierDetails = null;
     this.contentieuxService.getDossierDetails(id).subscribe({
@@ -184,7 +225,7 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     this.showDossierDetails = false;
     this.dossierDetailsLoading = false;
     this.dossierDetails = null;
-    this.setBodyScrollLocked(false);
+    this.syncBodyScrollLock();
   }
 
   private setBodyScrollLocked(locked: boolean): void {
@@ -239,11 +280,16 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     if (!this.newAffaire.dateTransmission) {
       this.newAffaire.dateTransmission = new Date().toISOString().split('T')[0];
     }
+    this.showAudienceForm = false;
+    this.showJugementForm = false;
+    this.showDossierDetails = false;
     this.showAssignationPopup = true;
+    this.syncBodyScrollLock();
   }
 
   closeAssignationPopup(): void {
     this.showAssignationPopup = false;
+    this.syncBodyScrollLock();
   }
 
   saveAffaire(): void {
@@ -287,8 +333,7 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     if (this.newAffaire.id) {
       this.suiviService.updateAffaire(this.newAffaire.id, this.newAffaire).subscribe({
         next: () => {
-          this.showAffaireForm = false;
-          this.showAssignationPopup = false;
+          this.closeAffaireForm();
           this.loadAffaires();
         },
         error: (err) => console.error(err)
@@ -296,8 +341,7 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     } else {
       this.suiviService.createAffaire(this.newAffaire).subscribe({
         next: () => {
-          this.showAffaireForm = false;
-          this.showAssignationPopup = false;
+          this.closeAffaireForm();
           this.loadAffaires();
         },
         error: (err) => console.error(err)
@@ -327,8 +371,10 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
       return;
     }
     
+    this.closeAllPopups();
     this.selectedAffaire = affaire;
     this.showAudienceForm = true; // Ouvrir le modal immédiatement
+    this.syncBodyScrollLock();
     this.audiences = []; // Vider la liste actuelle
     this.loading = true; // On peut réutiliser la variable loading ou en créer une spécifique
 
@@ -389,16 +435,19 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   }
 
   openJugementForm(affaire: AffaireJudiciaire): void {
+    this.closeAllPopups();
     this.selectedAffaire = affaire;
     this.newJugement = this.blankJugement();
     this.newJugement.affaireId = affaire.id!;
     this.showJugementForm = true;
+    this.syncBodyScrollLock();
   }
 
   openEditAffaire(affaire: AffaireJudiciaire): void {
+    this.closeAllPopups();
     this.newAffaire = { ...affaire };
     this.showAffaireForm = true;
-    this.setBodyScrollLocked(true);
+    this.syncBodyScrollLock();
   }
 
   deleteAffaire(affaire: AffaireJudiciaire): void {
@@ -416,7 +465,7 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
 
   saveJugement(): void {
     this.suiviService.recordJugement(this.newJugement).subscribe(() => {
-      this.showJugementForm = false;
+      this.closeJugementForm();
       this.loadAffaires();
     });
   }

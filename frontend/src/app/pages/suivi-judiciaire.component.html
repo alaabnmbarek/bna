@@ -217,12 +217,12 @@
 </div>
 
 <!-- Modal Affaire -->
-<div *ngIf="showAffaireForm" class="modal fade show app-modal">
+<div *ngIf="showAffaireForm && !showAssignationPopup" class="modal fade show app-modal">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Déclenchement d'une procédure judiciaire</h5>
-        <button type="button" class="btn-close" (click)="showAffaireForm = false"></button>
+        <button type="button" class="btn-close" (click)="closeAffaireForm()"></button>
       </div>
       <div class="modal-body">
         <div class="row">
@@ -270,7 +270,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="showAffaireForm = false">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeAffaireForm()">Annuler</button>
         <button type="button" class="btn btn-primary" (click)="saveAffaire()">Enregistrer</button>
       </div>
     </div>
@@ -371,74 +371,78 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Calendrier des Audiences - {{ selectedAffaire?.referenceTribunal }}</h5>
-        <button type="button" class="btn-close" (click)="showAudienceForm = false"></button>
+        <button type="button" class="btn-close" (click)="closeAudienceForm()"></button>
       </div>
       <div class="modal-body">
-        <div class="row">
-          <div class="col-md-4">
-            <div class="card p-3 bg-light">
-              <h6>Nouvelle Audience / Report</h6>
-              <div class="mb-2">
-                <label class="form-label">Référence audience</label>
-                <input type="text" class="form-control" [(ngModel)]="newAudience.referenceAudience">
-              </div>
-              <div class="row g-2 mb-2">
-                <div class="col-7">
-                  <label class="form-label">Date de l'audience</label>
-                  <input type="date" class="form-control" [(ngModel)]="newAudienceDate">
-                </div>
-                <div class="col-5">
-                  <label class="form-label">Heure</label>
-                  <input type="time" class="form-control" [(ngModel)]="newAudienceTime">
-                </div>
-              </div>
-              <div class="mb-2">
-                <label class="form-label">Tribunal</label>
-                <input type="text" class="form-control" [(ngModel)]="newAudience.tribunal">
-              </div>
-              <div class="mb-2">
-                <label class="form-label">Salle</label>
-                <input type="text" class="form-control" [(ngModel)]="newAudience.salle">
-              </div>
-              <div class="mb-2">
-                <label class="form-label">Objet / Motif</label>
-                <input type="text" class="form-control" [(ngModel)]="newAudience.objet">
-              </div>
-              <button class="btn btn-primary w-100" (click)="saveAudience()">Programmer</button>
+        <div class="audience-grid">
+          <div class="audience-left card p-3 bg-light">
+            <h6 class="audience-panel-title">Nouvelle Audience / Report</h6>
+            <div class="mb-2">
+              <label class="form-label">Référence audience</label>
+              <input type="text" class="form-control" [(ngModel)]="newAudience.referenceAudience">
             </div>
+            <div class="row g-2 mb-2">
+              <div class="col-7">
+                <label class="form-label">Date de l'audience</label>
+                <input type="date" class="form-control" [(ngModel)]="newAudienceDate">
+              </div>
+              <div class="col-5">
+                <label class="form-label">Heure</label>
+                <input type="time" class="form-control" [(ngModel)]="newAudienceTime">
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Tribunal</label>
+              <input type="text" class="form-control" [(ngModel)]="newAudience.tribunal">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Salle</label>
+              <input type="text" class="form-control" [(ngModel)]="newAudience.salle">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Objet / Motif</label>
+              <input type="text" class="form-control" [(ngModel)]="newAudience.objet">
+            </div>
+            <button class="btn btn-primary w-100" (click)="saveAudience()">Programmer</button>
           </div>
-          <div class="col-md-8">
-            <div class="table-responsive">
-              <table class="table table-sm">
-                <thead>
-                  <tr>
-                    <th>Référence</th>
-                    <th>Date</th>
-                    <th>Tribunal</th>
-                    <th>Salle</th>
-                    <th>Objet</th>
-                    <th>Statut</th>
-                    <th>Compte Rendu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let aud of audiences">
-                    <td>{{ aud.referenceAudience || '-' }}</td>
-                    <td>{{ aud.dateAudience | date:'dd/MM/yyyy HH:mm' }}</td>
-                    <td>{{ aud.tribunal || '-' }}</td>
-                    <td>{{ aud.salle || '-' }}</td>
-                    <td>{{ aud.objet }}</td>
-                    <td>
-                      <select class="form-select form-select-sm" [(ngModel)]="aud.statut" (change)="suiviService.updateAudience(aud.id!, aud).subscribe()">
-                        <option *ngFor="let s of audienceStatuses" [value]="s">{{ s }}</option>
-                      </select>
-                    </td>
-                    <td>
-                      <textarea class="form-control form-control-sm" rows="1" [(ngModel)]="aud.compteRendu" (blur)="suiviService.updateAudience(aud.id!, aud).subscribe()" placeholder="Saisir compte rendu..."></textarea>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+
+          <div class="audience-right">
+            <div class="card p-0 audience-table-card">
+              <div class="table-responsive audience-table-responsive">
+                <table class="table table-sm mb-0">
+                  <thead>
+                    <tr>
+                      <th>Référence</th>
+                      <th>Date</th>
+                      <th>Tribunal</th>
+                      <th>Salle</th>
+                      <th>Objet</th>
+                      <th>Statut</th>
+                      <th>Compte Rendu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let aud of audiences">
+                      <td>{{ aud.referenceAudience || '-' }}</td>
+                      <td>{{ aud.dateAudience | date:'dd/MM/yyyy HH:mm' }}</td>
+                      <td>{{ aud.tribunal || '-' }}</td>
+                      <td>{{ aud.salle || '-' }}</td>
+                      <td>{{ aud.objet }}</td>
+                      <td>
+                        <select class="form-select form-select-sm" [(ngModel)]="aud.statut" (change)="suiviService.updateAudience(aud.id!, aud).subscribe()">
+                          <option *ngFor="let s of audienceStatuses" [value]="s">{{ s }}</option>
+                        </select>
+                      </td>
+                      <td>
+                        <textarea class="form-control form-control-sm" rows="1" [(ngModel)]="aud.compteRendu" (blur)="suiviService.updateAudience(aud.id!, aud).subscribe()" placeholder="Saisir compte rendu..."></textarea>
+                      </td>
+                    </tr>
+                    <tr *ngIf="audiences.length === 0">
+                      <td colspan="7" class="text-center text-muted py-4">Aucune audience</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -453,7 +457,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Enregistrement de la décision de justice</h5>
-        <button type="button" class="btn-close" (click)="showJugementForm = false"></button>
+        <button type="button" class="btn-close" (click)="closeJugementForm()"></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
@@ -476,7 +480,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="showJugementForm = false">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeJugementForm()">Annuler</button>
         <button type="button" class="btn btn-success" (click)="saveJugement()">Enregistrer le Jugement</button>
       </div>
     </div>

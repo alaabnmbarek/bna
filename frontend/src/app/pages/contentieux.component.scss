@@ -317,9 +317,9 @@
   background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(8px);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: calc(var(--app-header-height) + 16px) 16px 16px;
+  padding: 16px;
   overflow: auto;
   z-index: 12000;
 }
@@ -331,7 +331,7 @@
 
 .contentieux-modal {
   width: min(1200px, 100%);
-  max-height: calc(100vh - var(--app-header-height) - 32px);
+  max-height: calc(100vh - 32px);
   background: var(--app-surface);
   border-radius: 18px;
   box-shadow: var(--app-shadow);
@@ -344,7 +344,7 @@
 
 .contentieux-dialog {
   width: min(760px, 100%);
-  max-height: calc(100vh - var(--app-header-height) - 32px);
+  max-height: calc(100vh - 32px);
   background: var(--app-surface);
   border-radius: 18px;
   box-shadow: var(--app-shadow);
@@ -352,6 +352,10 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.relances-dialog {
+  width: min(1100px, 100%);
 }
 
 .contentieux-modal-head {

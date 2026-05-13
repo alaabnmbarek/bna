@@ -1,0 +1,39 @@
+.audience-grid {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 992px) {
+  .audience-grid {
+    grid-template-columns: 360px minmax(0, 1fr);
+  }
+}
+
+.audience-left,
+.audience-right {
+  min-width: 0;
+}
+
+.audience-panel-title {
+  margin: 0 0 10px;
+  font-weight: 800;
+}
+
+.audience-table-card {
+  overflow: hidden;
+}
+
+.audience-table-responsive {
+  min-width: 0;
+  overflow: auto;
+}
+
+.audience-table-responsive thead th {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.audience-table-responsive tbody td {
+  vertical-align: middle;
+}

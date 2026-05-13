@@ -15,7 +15,6 @@ type EngagementPayload = {
   taux: string;
   echeance: string;
   montantRestant: string;
-  numRisque: string;
 };
 
 @Component({
@@ -44,8 +43,7 @@ export class RisqueEngagementPageComponent implements OnInit {
     interetType: '' as '' | 'IC' | 'IR',
     taux: '' as string,
     echeance: '',
-    montantRestant: '' as string,
-    numRisque: ''
+    montantRestant: '' as string
   };
 
   engagements: Array<RisqueItem<EngagementPayload>> = [];
@@ -83,7 +81,41 @@ export class RisqueEngagementPageComponent implements OnInit {
   onDossierChange(): void {
     this.editingId = null;
     this.reset();
+    this.fillFromSelectedDossier();
     this.loadEngagements();
+  }
+
+  private fillFromSelectedDossier(): void {
+    if (!this.dossierId) return;
+    const d = this.dossiers.find(x => x.id === this.dossierId) || null;
+    if (!d) return;
+
+    const compte = (d.compteActuel ?? '').trim();
+    const titre = (d.objet ?? '').trim();
+    const dateContrat = this.toDateOnly(d.dateOuverture);
+
+    let montantRestant = '';
+    const engage = d.montantEngage;
+    const recup = d.montantRecupere;
+    if (typeof engage === 'number') {
+      const reste = typeof recup === 'number' ? (engage - recup) : engage;
+      montantRestant = Number.isFinite(reste) ? String(reste.toFixed(2)) : '';
+    }
+
+    this.form = {
+      ...this.form,
+      numeroCompte: compte || this.form.numeroCompte,
+      titreCreance: titre || this.form.titreCreance,
+      dateContrat: dateContrat || this.form.dateContrat,
+      montantRestant: montantRestant || this.form.montantRestant
+    };
+  }
+
+  private toDateOnly(v: string | null | undefined): string {
+    if (!v) return '';
+    const s = String(v);
+    if (s.length >= 10) return s.slice(0, 10);
+    return '';
   }
 
   private loadDossiers(): void {
@@ -120,9 +152,9 @@ export class RisqueEngagementPageComponent implements OnInit {
       this.showBanner('Veuillez sélectionner un dossier.', 'danger');
       return;
     }
-    const requiredOk = this.form.numeroCompte.trim() && this.form.titreCreance.trim() && this.form.numRisque.trim();
+    const requiredOk = this.form.numeroCompte.trim() && this.form.titreCreance.trim();
     if (!requiredOk) {
-      this.showBanner('Veuillez renseigner : N° compte, Titre créance et Num risque.', 'danger');
+      this.showBanner('Veuillez renseigner : N° compte et Titre créance.', 'danger');
       return;
     }
     const payload: EngagementPayload = {
@@ -132,8 +164,7 @@ export class RisqueEngagementPageComponent implements OnInit {
       interetType: this.form.interetType,
       taux: this.form.taux || '',
       echeance: this.form.echeance || '',
-      montantRestant: this.form.montantRestant || '',
-      numRisque: this.form.numRisque.trim()
+      montantRestant: this.form.montantRestant || ''
     };
 
     this.loading = true;
@@ -178,8 +209,7 @@ export class RisqueEngagementPageComponent implements OnInit {
       interetType: (row.payload?.interetType ?? '') as any,
       taux: row.payload?.taux ?? '',
       echeance: row.payload?.echeance ?? '',
-      montantRestant: row.payload?.montantRestant ?? '',
-      numRisque: row.payload?.numRisque ?? ''
+      montantRestant: row.payload?.montantRestant ?? ''
     };
   }
 
@@ -213,8 +243,7 @@ export class RisqueEngagementPageComponent implements OnInit {
       interetType: '',
       taux: '',
       echeance: '',
-      montantRestant: '',
-      numRisque: ''
+      montantRestant: ''
     };
   }
 
@@ -230,8 +259,7 @@ export class RisqueEngagementPageComponent implements OnInit {
       const p = e.payload || ({} as EngagementPayload);
       return (
         (p.numeroCompte || '').toLowerCase().includes(q) ||
-        (p.titreCreance || '').toLowerCase().includes(q) ||
-        (p.numRisque || '').toLowerCase().includes(q)
+        (p.titreCreance || '').toLowerCase().includes(q)
       );
     });
   }

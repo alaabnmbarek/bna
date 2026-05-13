@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { ProfileService } from '../auth/profile.service';
-import { AffaireContentieux, AffaireStatut, ChargeDossierOption, ContentieuxService, ContentieuxStatus, CreateAffaireRequest, DossierContentieux, DossierDetailsResponse } from '../contentieux/contentieux.service';
+import { AffaireContentieux, AffaireStatut, ChargeDossierOption, ContentieuxService, ContentieuxStatus, CreateAffaireRequest, DossierContentieux, DossierDetailsResponse, RelanceDto, RelanceRequest, RelanceStatut, RelanceType } from '../contentieux/contentieux.service';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { DossierRisqueService, RisqueCategory, RisqueItem } from '../risque/dossier-risque.service';
 import { AosService } from '../aos/aos.service';
 
-type ActionDialogType = 'assign' | 'changeAccount' | 'close' | 'reject' | 'details';
+type ActionDialogType = 'assign' | 'changeAccount' | 'close' | 'reject' | 'details' | 'relances';
 
 type EngagementPayload = {
   numeroCompte: string;
@@ -108,6 +108,10 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     return this.auth.hasRole('ROLE_RESPONSABLE_CONTENTIEUX');
   }
 
+  canEditRelances(): boolean {
+    return this.auth.hasRole('ROLE_RESPONSABLE_CONTENTIEUX') || this.auth.hasRole('ROLE_CHARGE_DOSSIER') || this.auth.hasRole('ROLE_ADMIN');
+  }
+
   dossiers: DossierContentieux[] = [];
 
   showForm = false;
@@ -123,6 +127,26 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
   affaireSaving = false;
   dossierDetails: DossierDetailsResponse | null = null;
   dossierDetailsLoading = false;
+  relances: RelanceDto[] = [];
+  relancesLoading = false;
+  relanceSaving = false;
+  relanceEditingId: number | null = null;
+  relanceForm: RelanceRequest = {
+    dateRelance: '',
+    typeRelance: 'EMAIL',
+    statut: 'ENVOYEE'
+  };
+  relanceTypeOptions: Array<{ value: RelanceType; label: string }> = [
+    { value: 'EMAIL', label: 'Email' },
+    { value: 'TELEPHONE', label: 'Téléphone' },
+    { value: 'COURRIER', label: 'Courrier' },
+    { value: 'AUTRE', label: 'Autre' }
+  ];
+  relanceStatutOptions: Array<{ value: RelanceStatut; label: string }> = [
+    { value: 'ENVOYEE', label: 'Envoyée' },
+    { value: 'EN_ATTENTE', label: 'En attente' },
+    { value: 'REPONSE_RECUE', label: 'Réponse reçue' }
+  ];
   detailRisqueLoading = false;
   detailRisqueSaving = false;
   detailRisqueSelection: {
@@ -377,10 +401,16 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     else body.classList.remove(cls);
   }
 
+  private syncBodyScrollLock(): void {
+    const locked = this.showForm || this.showActionDialog || this.showAffaireDialog || this.showRisqueDialog;
+    this.setBodyScrollLocked(locked);
+  }
+
   openDetails(dossier: DossierContentieux): void {
     this.selected = dossier;
     this.actionDialogType = 'details';
     this.showActionDialog = true;
+    this.syncBodyScrollLock();
     this.loadDossierDetails();
   }
 
@@ -394,6 +424,7 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     this.assignToId = dossier.chargeDossierId ?? null;
     this.actionDialogType = 'assign';
     this.showActionDialog = true;
+    this.syncBodyScrollLock();
   }
 
   openRisqueDialog(): void {
@@ -402,6 +433,7 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     this.risqueDossierId = this.selected.id;
     this.risqueSelection = { ...this.detailRisqueSelection };
     this.resetRisqueEditorState();
+    this.syncBodyScrollLock();
   }
 
   onRisqueDossierChange(): void {
@@ -423,6 +455,7 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
       this.showActionDialog = true;
       this.loadAffaires();
     }
+    this.syncBodyScrollLock();
   }
 
   canCreateAffaire(): boolean {
@@ -453,11 +486,13 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
       dateCreation: this.today()
     };
     this.showAffaireDialog = true;
+    this.syncBodyScrollLock();
   }
 
   closeAffaireDialog(): void {
     this.showAffaireDialog = false;
     this.affaireSaving = false;
+    this.syncBodyScrollLock();
   }
 
   submitAffaire(): void {
@@ -1298,6 +1333,8 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     this.dossierDetailsLoading = true;
     this.dossierDetails = null;
     this.affairesLoading = true;
+    this.relances = [];
+    this.relancesLoading = true;
     this.contentieux.getDossierDetails(this.selected.id).subscribe({
       next: (data) => {
         this.dossierDetails = data;
@@ -1305,12 +1342,102 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
         this.affairesLoading = false;
         this.dossierDetailsLoading = false;
         this.loadDetailRisqueSummary(this.selected!.id);
+        this.loadRelances();
       },
       error: () => {
         this.affairesLoading = false;
         this.dossierDetailsLoading = false;
         this.detailRisqueLoading = false;
+        this.relancesLoading = false;
         this.showBanner('Erreur lors du chargement des détails du dossier.', 'danger');
+      }
+    });
+  }
+
+  loadRelances(): void {
+    if (!this.selected) return;
+    this.relancesLoading = true;
+    this.contentieux.listRelances(this.selected.id).subscribe({
+      next: (rows) => {
+        this.relances = rows || [];
+        this.relancesLoading = false;
+      },
+      error: () => {
+        this.relancesLoading = false;
+      }
+    });
+  }
+
+  openRelancesDialog(): void {
+    if (!this.selected) return;
+    this.actionDialogType = 'relances';
+    this.relanceEditingId = null;
+    this.relanceForm = {
+      dateRelance: this.today(0),
+      typeRelance: 'EMAIL',
+      statut: 'ENVOYEE'
+    };
+    if (!this.relancesLoading && this.relances.length === 0) {
+      this.loadRelances();
+    }
+    setTimeout(() => this.aos.refresh(), 0);
+  }
+
+  closeRelancesDialog(): void {
+    this.actionDialogType = 'details';
+    this.relanceSaving = false;
+    this.relanceEditingId = null;
+    setTimeout(() => this.aos.refresh(), 0);
+  }
+
+  startNewRelance(): void {
+    this.relanceEditingId = null;
+    this.relanceForm = {
+      dateRelance: this.today(0),
+      typeRelance: 'EMAIL',
+      statut: 'ENVOYEE'
+    };
+  }
+
+  editRelance(r: RelanceDto): void {
+    this.relanceEditingId = r.id;
+    this.relanceForm = {
+      dateRelance: r.dateRelance,
+      typeRelance: r.typeRelance,
+      statut: r.statut
+    };
+  }
+
+  saveRelance(): void {
+    if (!this.selected || !this.canEditRelances() || this.relanceSaving) return;
+    const payload: RelanceRequest = {
+      dateRelance: (this.relanceForm.dateRelance || '').trim(),
+      typeRelance: this.relanceForm.typeRelance,
+      statut: this.relanceForm.statut
+    };
+    if (!payload.dateRelance) {
+      this.showBanner('Veuillez renseigner la date de relance.', 'danger');
+      return;
+    }
+
+    this.relanceSaving = true;
+    const dossierId = this.selected.id;
+    const obs = this.relanceEditingId
+      ? this.contentieux.updateRelance(dossierId, this.relanceEditingId, payload)
+      : this.contentieux.createRelance(dossierId, payload);
+
+    obs.subscribe({
+      next: (saved) => {
+        const idx = this.relances.findIndex(x => x.id === saved.id);
+        if (idx !== -1) this.relances = this.relances.map(x => (x.id === saved.id ? saved : x));
+        else this.relances = [saved, ...this.relances];
+        this.relanceSaving = false;
+        this.showBanner('Relance enregistrée.', 'success');
+        this.startNewRelance();
+      },
+      error: () => {
+        this.relanceSaving = false;
+        this.showBanner('Erreur lors de l’enregistrement de la relance.', 'danger');
       }
     });
   }
@@ -1325,6 +1452,10 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     this.affaireSaving = false;
     this.dossierDetails = null;
     this.dossierDetailsLoading = false;
+    this.relances = [];
+    this.relancesLoading = false;
+    this.relanceSaving = false;
+    this.relanceEditingId = null;
     this.detailRisqueLoading = false;
     this.detailRisqueSaving = false;
     this.detailRisqueSelection = {
@@ -1343,6 +1474,7 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     };
     this.rejectMotif = '';
     this.rejectSaving = false;
+    this.syncBodyScrollLock();
   }
 
   filteredDossiers(): DossierContentieux[] {

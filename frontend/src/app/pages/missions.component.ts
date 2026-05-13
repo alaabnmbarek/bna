@@ -103,6 +103,18 @@ export class MissionsPageComponent implements OnInit {
     private aos: AosService
   ) {}
 
+  private setBodyScrollLocked(locked: boolean): void {
+    const cls = 'app-lock-scroll';
+    const body = document?.body;
+    if (!body) return;
+    if (locked) body.classList.add(cls);
+    else body.classList.remove(cls);
+  }
+
+  private syncBodyScrollLock(): void {
+    this.setBodyScrollLocked(this.showResultModal || this.showMissionModal);
+  }
+
   get canAssignMission(): boolean {
     const r = this.auth.role();
     return ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ADMIN', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX'].includes(r || '');
@@ -140,8 +152,10 @@ export class MissionsPageComponent implements OnInit {
   }
 
   openResultModal(): void {
+    this.showMissionModal = false;
     this.showResultModal = true;
     this.formResult = this.blankResultForm();
+    this.syncBodyScrollLock();
   }
 
   closeResultModal(): void {
@@ -149,6 +163,7 @@ export class MissionsPageComponent implements OnInit {
     this.savingResult = false;
     this.uploadingProof = false;
     this.formResult = this.blankResultForm();
+    this.syncBodyScrollLock();
   }
 
   cancelAssignForm(): void {
@@ -432,6 +447,7 @@ export class MissionsPageComponent implements OnInit {
   }
 
   openMissionModal(m: Mission): void {
+    this.showResultModal = false;
     this.selectedMission = m;
     this.selectedMissionResult = null;
     this.selectedProcedureFallback = null;
@@ -456,6 +472,7 @@ export class MissionsPageComponent implements OnInit {
       this.selectedProcedureFallback = picked;
     }
     this.showMissionModal = true;
+    this.syncBodyScrollLock();
     this.missionModalLoading = true;
     this.prestatairesService.getMissionResult(m.id).subscribe({
       next: (r) => {
@@ -474,6 +491,7 @@ export class MissionsPageComponent implements OnInit {
     this.selectedMission = null;
     this.selectedMissionResult = null;
     this.selectedProcedureFallback = null;
+    this.syncBodyScrollLock();
   }
 
   prestataireNameById(id?: number | null): string {

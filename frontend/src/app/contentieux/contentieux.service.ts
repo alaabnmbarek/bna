@@ -127,6 +127,23 @@ export interface DossierDetailsResponse {
   documents: string[];
 }
 
+export type RelanceType = 'EMAIL' | 'TELEPHONE' | 'COURRIER' | 'AUTRE';
+export type RelanceStatut = 'ENVOYEE' | 'EN_ATTENTE' | 'REPONSE_RECUE';
+
+export interface RelanceDto {
+  id: number;
+  dateRelance: string;
+  typeRelance: RelanceType;
+  statut: RelanceStatut;
+  dossier?: string | null;
+}
+
+export interface RelanceRequest {
+  dateRelance: string;
+  typeRelance: RelanceType;
+  statut: RelanceStatut;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContentieuxService {
   private url = '/api/contentieux/dossiers';
@@ -187,5 +204,17 @@ export class ContentieuxService {
 
   getDossierDetails(dossierId: number): Observable<DossierDetailsResponse> {
     return this.http.get<DossierDetailsResponse>(`/api/dossiers/${dossierId}/details`);
+  }
+
+  listRelances(dossierId: number): Observable<RelanceDto[]> {
+    return this.http.get<RelanceDto[]>(`/api/dossiers/${dossierId}/relances`);
+  }
+
+  createRelance(dossierId: number, payload: RelanceRequest): Observable<RelanceDto> {
+    return this.http.post<RelanceDto>(`/api/dossiers/${dossierId}/relances`, payload);
+  }
+
+  updateRelance(dossierId: number, relanceId: number, payload: RelanceRequest): Observable<RelanceDto> {
+    return this.http.put<RelanceDto>(`/api/dossiers/${dossierId}/relances/${relanceId}`, payload);
   }
 }

@@ -37,10 +37,6 @@
             <label class="form-label">N° compte</label>
             <input class="form-control" type="text" name="numeroCompte" [(ngModel)]="form.numeroCompte" placeholder="Ex: 000123456789" [disabled]="!dossierId" required>
           </div>
-          <div class="col-12 col-md-6">
-            <label class="form-label">Num risque</label>
-            <input class="form-control" type="text" name="numRisque" [(ngModel)]="form.numRisque" placeholder="Ex: RSK-2026-001" [disabled]="!dossierId" required>
-          </div>
 
           <div class="col-12 col-md-6">
             <label class="form-label">Titre créance</label>
@@ -91,7 +87,7 @@
         <div class="risque-table-tools">
           <div class="risque-search">
             <i class="feather icon-search"></i>
-            <input class="form-control" type="text" [(ngModel)]="search" name="search" placeholder="Rechercher (compte, titre, risque…)">
+            <input class="form-control" type="text" [(ngModel)]="search" name="search" placeholder="Rechercher (compte, titre…)">
           </div>
         </div>
       </div>
@@ -107,7 +103,6 @@
               <th class="col-hide-md">Taux</th>
               <th class="col-hide-lg">Échéance</th>
               <th>Montant restant</th>
-              <th class="col-hide-md">Num risque</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
@@ -123,7 +118,6 @@
               <td class="col-hide-md">{{ e.payload?.taux || '—' }}</td>
               <td class="risque-cell-muted col-hide-lg">{{ e.payload?.echeance || '—' }}</td>
               <td class="risque-mono">{{ e.payload?.montantRestant || '—' }}</td>
-              <td class="col-hide-md risque-mono">{{ e.payload?.numRisque || '—' }}</td>
               <td class="text-end">
                 <div class="risque-actions-row">
                   <button class="btn btn-sm btn-outline-secondary risque-action-btn" type="button" (click)="openEdit(e)">
@@ -136,7 +130,7 @@
               </td>
             </tr>
             <tr *ngIf="filteredEngagements().length === 0">
-              <td colspan="9">
+              <td colspan="8">
                 <div class="risque-empty">{{ dossierId ? 'Aucun engagement pour ce dossier.' : 'Veuillez sélectionner un dossier.' }}</div>
               </td>
             </tr>

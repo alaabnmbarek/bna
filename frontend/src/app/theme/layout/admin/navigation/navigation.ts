@@ -44,16 +44,16 @@ export const NavigationItems: NavigationItem[] = [
     children: [
       {
         id: 'risk-area',
-        title: 'Risque',
+        title: 'Gestion des Garanties et Patrimoines',
         type: 'collapse',
-        icon: 'feather icon-alert-triangle',
+        icon: 'feather icon-shield',
         classes: 'nav-gray',
         breadcrumbs: false,
         role: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'],
         children: [
           {
             id: 'risque-engagement',
-            title: 'Risque Engagements',
+            title: 'Engagements',
             type: 'item',
             url: '/risque/engagement',
             icon: 'feather icon-trending-up',
@@ -63,7 +63,7 @@ export const NavigationItems: NavigationItem[] = [
           },
           {
             id: 'risque-patrimoines',
-            title: 'Risque Patrimoines',
+            title: 'Patrimoines',
             type: 'item',
             url: '/risque/patrimoines',
             icon: 'feather icon-home',
