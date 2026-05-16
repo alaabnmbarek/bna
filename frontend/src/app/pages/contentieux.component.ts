@@ -3,8 +3,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
+import { AffaireContentieux, AffaireStatut, ChargeDossierOption, ContentieuxService, ContentieuxStatus, CreateAffaireRequest, DossierContentieux, DossierDetailsResponse, RelanceDto, RelanceRequest, RelanceStatut, RelanceType, UrgencePredictionResponse } from '../contentieux/contentieux.service';
 import { ProfileService } from '../auth/profile.service';
-import { AffaireContentieux, AffaireStatut, ChargeDossierOption, ContentieuxService, ContentieuxStatus, CreateAffaireRequest, DossierContentieux, DossierDetailsResponse, RelanceDto, RelanceRequest, RelanceStatut, RelanceType } from '../contentieux/contentieux.service';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { DossierRisqueService, RisqueCategory, RisqueItem } from '../risque/dossier-risque.service';
 import { AosService } from '../aos/aos.service';
@@ -127,6 +127,8 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
   affaireSaving = false;
   dossierDetails: DossierDetailsResponse | null = null;
   dossierDetailsLoading = false;
+  urgencePrediction: UrgencePredictionResponse | null = null;
+  urgencePredictionLoading = false;
   relances: RelanceDto[] = [];
   relancesLoading = false;
   relanceSaving = false;
@@ -1332,6 +1334,8 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     if (!this.selected) return;
     this.dossierDetailsLoading = true;
     this.dossierDetails = null;
+    this.urgencePrediction = null;
+    this.urgencePredictionLoading = false;
     this.affairesLoading = true;
     this.relances = [];
     this.relancesLoading = true;
@@ -1343,13 +1347,30 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
         this.dossierDetailsLoading = false;
         this.loadDetailRisqueSummary(this.selected!.id);
         this.loadRelances();
+        this.loadUrgencePrediction();
       },
       error: () => {
         this.affairesLoading = false;
         this.dossierDetailsLoading = false;
         this.detailRisqueLoading = false;
         this.relancesLoading = false;
+        this.urgencePredictionLoading = false;
         this.showBanner('Erreur lors du chargement des détails du dossier.', 'danger');
+      }
+    });
+  }
+
+  loadUrgencePrediction(): void {
+    if (!this.selected) return;
+    if (this.urgencePredictionLoading) return;
+    this.urgencePredictionLoading = true;
+    this.contentieux.predictUrgence(this.selected.id).subscribe({
+      next: (pred) => {
+        this.urgencePrediction = pred;
+        this.urgencePredictionLoading = false;
+      },
+      error: () => {
+        this.urgencePredictionLoading = false;
       }
     });
   }
@@ -1452,6 +1473,8 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     this.affaireSaving = false;
     this.dossierDetails = null;
     this.dossierDetailsLoading = false;
+    this.urgencePrediction = null;
+    this.urgencePredictionLoading = false;
     this.relances = [];
     this.relancesLoading = false;
     this.relanceSaving = false;

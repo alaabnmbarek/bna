@@ -43,7 +43,7 @@ public class DossierContentieuxEntity {
 
     private LocalDate dateOuverture;
 
-    @Column(precision = 19, scale = 2)
+    @Column(name = "montant_engagement_total", precision = 19, scale = 2)
     private BigDecimal montantEngage;
 
     @Column(precision = 19, scale = 2)

@@ -47,6 +47,12 @@ public class DossierContentieuxController {
         return ResponseEntity.ok(service.list(authentication));
     }
 
+    @GetMapping("/{id}/urgence-prediction")
+    @PreAuthorize("hasAuthority('CONTENTIOUS_READ')")
+    public ResponseEntity<ContentieuxDtos.UrgencePredictionResponse> predictUrgence(@PathVariable("id") Long id, Authentication authentication) {
+        return ResponseEntity.ok(service.predictUrgence(id, authentication));
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('CONTENTIOUS_CREATE')")
     public ResponseEntity<ContentieuxDtos.DossierResponse> create(@RequestBody ContentieuxDtos.CreateDossierRequest request, Authentication authentication) {

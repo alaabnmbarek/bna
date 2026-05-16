@@ -62,3 +62,9 @@ chatbot:
     timeout-ms: ${CHATBOT_AI_TIMEOUT_MS:8000}
   rules:
     dossier-overdue-days: ${CHATBOT_DOSSIER_OVERDUE_DAYS:30}
+
+ml:
+  urgency:
+    enabled: ${URGENCY_ML_ENABLED:false}
+    base-url: ${URGENCY_ML_BASE_URL:}
+    timeout-ms: ${URGENCY_ML_TIMEOUT_MS:3000}

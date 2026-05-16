@@ -6,15 +6,24 @@ import com.example.secureapp.notification.NotificationService;
 import com.example.secureapp.notification.NotificationType;
 import com.example.secureapp.user.UserEntity;
 import com.example.secureapp.user.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,11 +34,27 @@ public class DossierContentieuxService {
     private final DossierContentieuxRepository repository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final RelanceRepository relanceRepository;
+    private final boolean mlUrgencyEnabled;
+    private final String mlUrgencyBaseUrl;
+    private final int mlUrgencyTimeoutMs;
 
-    public DossierContentieuxService(DossierContentieuxRepository repository, UserRepository userRepository, NotificationService notificationService) {
+    public DossierContentieuxService(
+            DossierContentieuxRepository repository,
+            UserRepository userRepository,
+            NotificationService notificationService,
+            RelanceRepository relanceRepository,
+            @Value("${ml.urgency.enabled:false}") boolean mlUrgencyEnabled,
+            @Value("${ml.urgency.base-url:}") String mlUrgencyBaseUrl,
+            @Value("${ml.urgency.timeout-ms:3000}") int mlUrgencyTimeoutMs
+    ) {
         this.repository = repository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.relanceRepository = relanceRepository;
+        this.mlUrgencyEnabled = mlUrgencyEnabled;
+        this.mlUrgencyBaseUrl = mlUrgencyBaseUrl;
+        this.mlUrgencyTimeoutMs = mlUrgencyTimeoutMs;
     }
 
     @Transactional(readOnly = true)
@@ -104,6 +129,65 @@ public class DossierContentieuxService {
         dossier.setValidatedAt(LocalDateTime.now());
         dossier.setValidatedByCtx(true);
         return toResponse(repository.save(dossier));
+    }
+
+    @Transactional(readOnly = true)
+    public ContentieuxDtos.UrgencePredictionResponse predictUrgence(Long id, Authentication authentication) {
+        DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
+        if (!mlUrgencyEnabled) return new ContentieuxDtos.UrgencePredictionResponse(false, null, "DISABLED");
+        if (mlUrgencyBaseUrl == null || mlUrgencyBaseUrl.isBlank()) return new ContentieuxDtos.UrgencePredictionResponse(false, null, "NO_BASE_URL");
+
+        try {
+            Map<String, Object> features = buildUrgenceFeatures(dossier);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            Map<String, Object> body = Map.of("features", features);
+
+            RestTemplate rest = restTemplate(mlUrgencyTimeoutMs);
+            String url = mlUrgencyBaseUrl.endsWith("/") ? mlUrgencyBaseUrl.substring(0, mlUrgencyBaseUrl.length() - 1) : mlUrgencyBaseUrl;
+            ResponseEntity<MlUrgencePredictResponse> resp = rest.exchange(
+                    url + "/predict",
+                    HttpMethod.POST,
+                    new HttpEntity<>(body, headers),
+                    MlUrgencePredictResponse.class
+            );
+            MlUrgencePredictResponse out = resp.getBody();
+            if (out == null) return new ContentieuxDtos.UrgencePredictionResponse(false, null, "ML_EMPTY");
+            return new ContentieuxDtos.UrgencePredictionResponse(Boolean.TRUE.equals(out.urgent), out.probability, "ML");
+        } catch (Exception e) {
+            return new ContentieuxDtos.UrgencePredictionResponse(false, null, "ML_ERROR");
+        }
+    }
+
+    private Map<String, Object> buildUrgenceFeatures(DossierContentieuxEntity d) {
+        Map<String, Object> m = new HashMap<>();
+        long retardJours = 0;
+        if (d.getDateOuverture() != null) {
+            retardJours = ChronoUnit.DAYS.between(d.getDateOuverture(), LocalDate.now());
+            if (retardJours < 0) retardJours = 0;
+        }
+
+        long nbRelances = 0;
+        if (d.getId() != null) {
+            nbRelances = relanceRepository.countByDossierId(d.getId());
+        }
+
+        m.put("retard_jours", retardJours);
+        m.put("montant", d.getMontantEngage());
+        m.put("nb_relances", nbRelances);
+        return m;
+    }
+
+    private RestTemplate restTemplate(int timeoutMs) {
+        SimpleClientHttpRequestFactory f = new SimpleClientHttpRequestFactory();
+        f.setConnectTimeout(timeoutMs);
+        f.setReadTimeout(timeoutMs);
+        return new RestTemplate(f);
+    }
+
+    private static class MlUrgencePredictResponse {
+        public Boolean urgent;
+        public Double probability;
     }
 
     @Transactional

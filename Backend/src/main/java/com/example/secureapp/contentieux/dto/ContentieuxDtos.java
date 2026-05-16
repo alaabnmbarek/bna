@@ -58,4 +58,10 @@ public class ContentieuxDtos {
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {}
+
+    public record UrgencePredictionResponse(
+            boolean urgent,
+            Double probability,
+            String source
+    ) {}
 }

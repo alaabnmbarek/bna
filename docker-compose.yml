@@ -45,6 +45,9 @@ services:
       MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-false}
       MAIL_SMTP_STARTTLS_REQUIRED: ${MAIL_SMTP_STARTTLS_REQUIRED:-false}
       MAIL_SMTP_SSL_TRUST: ${MAIL_SMTP_SSL_TRUST:-}
+      URGENCY_ML_ENABLED: ${URGENCY_ML_ENABLED:-true}
+      URGENCY_ML_BASE_URL: ${URGENCY_ML_BASE_URL:-http://ml-urgency:8000}
+      URGENCY_ML_TIMEOUT_MS: ${URGENCY_ML_TIMEOUT_MS:-3000}
     ports:
       - "8080:8080"
     depends_on:
@@ -52,6 +55,19 @@ services:
         condition: service_healthy
       mailhog:
         condition: service_started
+      ml-urgency:
+        condition: service_started
+
+  ml-urgency:
+    build: ./ml-urgency
+    container_name: ml-urgency
+    environment:
+      MODEL_PATH: ${URGENCY_ML_MODEL_PATH:-/models/random_forest.pkl}
+      THRESHOLD: ${URGENCY_ML_THRESHOLD:-0.5}
+    volumes:
+      - ./ml-urgency/ml-models:/models
+    ports:
+      - "8001:8000"
 
   frontend:
     build: ./frontend

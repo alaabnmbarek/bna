@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface RelanceRepository extends JpaRepository<RelanceEntity, Long> {
     List<RelanceEntity> findByDossierIdOrderByDateRelanceDesc(Long dossierId);
+    long countByDossierId(Long dossierId);
 }
-

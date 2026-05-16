@@ -585,6 +585,30 @@
             </div>
           </div>
 
+          <div class="card p-3 mt-3">
+            <div class="d-flex align-items-center justify-content-between gap-2">
+              <div class="fw-bold">Prédiction IA (urgence)</div>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="loadUrgencePrediction()" [disabled]="!selected || urgencePredictionLoading">
+                <span *ngIf="urgencePredictionLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                Rafraîchir
+              </button>
+            </div>
+
+            <div class="mt-2" *ngIf="urgencePredictionLoading">
+              Chargement...
+            </div>
+
+            <div class="mt-2" *ngIf="!urgencePredictionLoading">
+              <span class="badge rounded-pill me-2" [ngClass]="urgencePrediction?.urgent ? 'bg-danger' : 'bg-success'" *ngIf="urgencePrediction">
+                {{ urgencePrediction.urgent ? 'Urgent' : 'Non urgent' }}
+              </span>
+              <span class="text-muted" *ngIf="!urgencePrediction">Non disponible.</span>
+              <div class="text-muted small mt-1" *ngIf="urgencePrediction">
+                Source: {{ urgencePrediction.source }}<span *ngIf="urgencePrediction.probability !== null"> — Proba: {{ urgencePrediction.probability | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+
           <div class="alert alert-warning mt-3" *ngIf="((dossierDetails?.dossier?.statut || selected?.statut) === 'REJETE') && (dossierDetails?.dossier?.motifRejet || selected?.motifRejet)">
             <div class="fw-bold mb-1"><i class="feather icon-alert-triangle me-2"></i>Motif de rejet</div>
             <div>{{ dossierDetails?.dossier?.motifRejet || selected?.motifRejet }}</div>

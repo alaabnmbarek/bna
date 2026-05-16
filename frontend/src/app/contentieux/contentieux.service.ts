@@ -127,6 +127,12 @@ export interface DossierDetailsResponse {
   documents: string[];
 }
 
+export interface UrgencePredictionResponse {
+  urgent: boolean;
+  probability: number | null;
+  source: string;
+}
+
 export type RelanceType = 'EMAIL' | 'TELEPHONE' | 'COURRIER' | 'AUTRE';
 export type RelanceStatut = 'ENVOYEE' | 'EN_ATTENTE' | 'REPONSE_RECUE';
 
@@ -204,6 +210,10 @@ export class ContentieuxService {
 
   getDossierDetails(dossierId: number): Observable<DossierDetailsResponse> {
     return this.http.get<DossierDetailsResponse>(`/api/dossiers/${dossierId}/details`);
+  }
+
+  predictUrgence(dossierId: number): Observable<UrgencePredictionResponse> {
+    return this.http.get<UrgencePredictionResponse>(`${this.url}/${dossierId}/urgence-prediction`);
   }
 
   listRelances(dossierId: number): Observable<RelanceDto[]> {

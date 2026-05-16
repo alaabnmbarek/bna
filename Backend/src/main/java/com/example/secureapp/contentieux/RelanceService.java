@@ -3,6 +3,7 @@ package com.example.secureapp.contentieux;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public class RelanceService {
         this.dossierService = dossierService;
     }
 
+    @Transactional(readOnly = true)
     public List<RelanceDtos.RelanceDto> list(Long dossierId, Authentication authentication) {
         DossierContentieuxEntity dossier = dossierService.getAccessibleEntity(dossierId, authentication);
         return repo.findByDossierIdOrderByDateRelanceDesc(dossier.getId()).stream()
@@ -24,6 +26,7 @@ public class RelanceService {
                 .toList();
     }
 
+    @Transactional
     public RelanceDtos.RelanceDto create(Long dossierId, RelanceDtos.RelanceRequest req, Authentication authentication) {
         DossierContentieuxEntity dossier = dossierService.getAccessibleEntity(dossierId, authentication);
         validate(req);
@@ -37,6 +40,7 @@ public class RelanceService {
         return toDto(e);
     }
 
+    @Transactional
     public RelanceDtos.RelanceDto update(Long dossierId, Long relanceId, RelanceDtos.RelanceRequest req, Authentication authentication) {
         DossierContentieuxEntity dossier = dossierService.getAccessibleEntity(dossierId, authentication);
         validate(req);
@@ -66,4 +70,3 @@ public class RelanceService {
         return new RelanceDtos.RelanceDto(e.getId(), e.getDateRelance(), e.getTypeRelance(), e.getStatut(), ref);
     }
 }
-
