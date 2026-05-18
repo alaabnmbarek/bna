@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY app.py /app/app.py
 
-ENV MODEL_PATH=/models/random_forest.pkl
+ENV MODEL_PATH=/models/logistic_regression.pkl
 ENV THRESHOLD=0.5
 
 EXPOSE 8000

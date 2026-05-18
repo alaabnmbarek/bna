@@ -53,6 +53,19 @@ public class DossierContentieuxController {
         return ResponseEntity.ok(service.predictUrgence(id, authentication));
     }
 
+    @PostMapping("/{id}/urgence-prediction/refresh")
+    @PreAuthorize("hasAuthority('CONTENTIOUS_READ')")
+    public ResponseEntity<ContentieuxDtos.UrgencePredictionResponse> refreshUrgencePrediction(@PathVariable("id") Long id, Authentication authentication) {
+        return ResponseEntity.ok(service.refreshUrgencePrediction(id, authentication));
+    }
+
+    @PostMapping("/urgence-prediction")
+    @PreAuthorize("hasAuthority('CONTENTIOUS_READ')")
+    public ResponseEntity<ContentieuxDtos.UrgencePredictionResponse> predictUrgenceFromFeatures(@RequestBody ContentieuxDtos.UrgencePredictionRequest request,
+                                                                                               Authentication authentication) {
+        return ResponseEntity.ok(service.predictUrgenceFromFeatures(request, authentication));
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('CONTENTIOUS_CREATE')")
     public ResponseEntity<ContentieuxDtos.DossierResponse> create(@RequestBody ContentieuxDtos.CreateDossierRequest request, Authentication authentication) {

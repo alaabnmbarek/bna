@@ -56,7 +56,11 @@ public class DossierDetailsController {
                 dossier.getChargeDossier(),
                 dossier.getMotifRejet(),
                 dossier.getMontantEngage(),
-                dossier.getMontantRecupere()
+                dossier.getMontantRecupere(),
+                dossier.getUrgentPrediction(),
+                dossier.getUrgentProbability(),
+                dossier.getUrgentSource(),
+                dossier.getUrgentPredictedAt()
         );
 
         var affaires = affaireContentieuxService.listByDossier(id, authentication);

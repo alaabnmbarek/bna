@@ -585,26 +585,42 @@
             </div>
           </div>
 
-          <div class="card p-3 mt-3">
-            <div class="d-flex align-items-center justify-content-between gap-2">
-              <div class="fw-bold">Prédiction IA (urgence)</div>
-              <button type="button" class="btn btn-sm btn-outline-primary" (click)="loadUrgencePrediction()" [disabled]="!selected || urgencePredictionLoading">
-                <span *ngIf="urgencePredictionLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                Rafraîchir
-              </button>
-            </div>
+          <div class="ml-predict-section mt-3">
+            <div class="ml-predict-grid">
+              <div class="ml-card">
+                <div class="ml-card-head">
+                  <div>
+                    <div class="ml-card-title">Prédiction ML</div>
+                    <div class="ml-card-subtitle">Cliquer pour prédire automatiquement l’urgence à partir des informations du dossier.</div>
+                  </div>
+                </div>
 
-            <div class="mt-2" *ngIf="urgencePredictionLoading">
-              Chargement...
-            </div>
+                <button type="button" class="btn btn-primary w-100 ml-predict-btn" (click)="predictMl()" [disabled]="mlPredictLoading">
+                  <span *ngIf="mlPredictLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Prédire
+                </button>
+              </div>
 
-            <div class="mt-2" *ngIf="!urgencePredictionLoading">
-              <span class="badge rounded-pill me-2" [ngClass]="urgencePrediction?.urgent ? 'bg-danger' : 'bg-success'" *ngIf="urgencePrediction">
-                {{ urgencePrediction.urgent ? 'Urgent' : 'Non urgent' }}
-              </span>
-              <span class="text-muted" *ngIf="!urgencePrediction">Non disponible.</span>
-              <div class="text-muted small mt-1" *ngIf="urgencePrediction">
-                Source: {{ urgencePrediction.source }}<span *ngIf="urgencePrediction.probability !== null"> — Proba: {{ urgencePrediction.probability | number:'1.2-2' }}</span>
+              <div *ngIf="mlPrediction as p" class="ml-result-card" [class.ml-result-card--urgent]="p.urgent" [class.ml-result-card--safe]="!p.urgent">
+                <div class="ml-result-head">
+                  <div class="ml-result-title">Résultat</div>
+                  <div class="ml-result-pill" [class.ml-result-pill--urgent]="p.urgent" [class.ml-result-pill--safe]="!p.urgent">
+                    {{ p.urgent ? 'URGENT' : 'NON URGENT' }}
+                  </div>
+                </div>
+                <div class="ml-result-meta">
+                  <div class="ml-result-alert" *ngIf="p.source !== 'ML'">
+                    Prédiction indisponible ({{ p.source }}).
+                  </div>
+                  <div class="ml-result-row">
+                    <div class="ml-result-k">Source</div>
+                    <div class="ml-result-v">{{ p.source }}</div>
+                  </div>
+                  <div class="ml-result-row" *ngIf="p.probability !== null">
+                    <div class="ml-result-k">Probabilité</div>
+                    <div class="ml-result-v">{{ p.probability | number:'1.2-2' }}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

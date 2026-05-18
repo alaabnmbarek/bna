@@ -62,7 +62,7 @@ services:
     build: ./ml-urgency
     container_name: ml-urgency
     environment:
-      MODEL_PATH: ${URGENCY_ML_MODEL_PATH:-/models/random_forest.pkl}
+      MODEL_PATH: ${URGENCY_ML_MODEL_PATH:-/models/logistic_regression.pkl}
       THRESHOLD: ${URGENCY_ML_THRESHOLD:-0.5}
     volumes:
       - ./ml-urgency/ml-models:/models

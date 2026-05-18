@@ -56,12 +56,22 @@ public class ContentieuxDtos {
             String validatedBy,
             LocalDateTime validatedAt,
             LocalDateTime createdAt,
-            LocalDateTime updatedAt
+            LocalDateTime updatedAt,
+            Boolean urgentPrediction,
+            Double urgentProbability,
+            String urgentSource,
+            LocalDateTime urgentPredictedAt
     ) {}
 
     public record UrgencePredictionResponse(
             boolean urgent,
             Double probability,
             String source
+    ) {}
+
+    public record UrgencePredictionRequest(
+            long retardJours,
+            BigDecimal montant,
+            long nbRelances
     ) {}
 }

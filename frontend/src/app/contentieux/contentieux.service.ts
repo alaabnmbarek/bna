@@ -32,6 +32,10 @@ export interface DossierContentieux {
   validatedAt?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  urgentPrediction?: boolean | null;
+  urgentProbability?: number | null;
+  urgentSource?: string | null;
+  urgentPredictedAt?: string | null;
 }
 
 export interface CreateDossierRequest {
@@ -90,6 +94,10 @@ export interface DossierDetailsResponse {
     motifRejet?: string | null;
     montantEngage?: number | null;
     montantRecupere?: number | null;
+    urgentPrediction?: boolean | null;
+    urgentProbability?: number | null;
+    urgentSource?: string | null;
+    urgentPredictedAt?: string | null;
   };
   affaires: AffaireContentieux[];
   procedures: Array<{
@@ -131,6 +139,12 @@ export interface UrgencePredictionResponse {
   urgent: boolean;
   probability: number | null;
   source: string;
+}
+
+export interface UrgencePredictionRequest {
+  retardJours: number;
+  montant: number | null;
+  nbRelances: number;
 }
 
 export type RelanceType = 'EMAIL' | 'TELEPHONE' | 'COURRIER' | 'AUTRE';
@@ -214,6 +228,14 @@ export class ContentieuxService {
 
   predictUrgence(dossierId: number): Observable<UrgencePredictionResponse> {
     return this.http.get<UrgencePredictionResponse>(`${this.url}/${dossierId}/urgence-prediction`);
+  }
+
+  refreshUrgencePrediction(dossierId: number): Observable<UrgencePredictionResponse> {
+    return this.http.post<UrgencePredictionResponse>(`${this.url}/${dossierId}/urgence-prediction/refresh`, {});
+  }
+
+  predictUrgenceFromFeatures(payload: UrgencePredictionRequest): Observable<UrgencePredictionResponse> {
+    return this.http.post<UrgencePredictionResponse>(`${this.url}/urgence-prediction`, payload);
   }
 
   listRelances(dossierId: number): Observable<RelanceDto[]> {

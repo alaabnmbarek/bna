@@ -108,6 +108,8 @@ public class DossierContentieuxService {
             dossier.setValidatedAt(LocalDateTime.now());
         }
         DossierContentieuxEntity saved = repository.save(dossier);
+        applyAndPersistUrgencePrediction(saved);
+        saved = repository.save(saved);
         if (saved.getChargeDossierId() != null) {
             notificationService.notifyUser(
                     saved.getChargeDossierId(),
@@ -134,11 +136,48 @@ public class DossierContentieuxService {
     @Transactional(readOnly = true)
     public ContentieuxDtos.UrgencePredictionResponse predictUrgence(Long id, Authentication authentication) {
         DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
+        Map<String, Object> features = buildUrgenceFeatures(dossier);
+        return callUrgenceModel(features);
+    }
+
+    @Transactional
+    public ContentieuxDtos.UrgencePredictionResponse refreshUrgencePrediction(Long id, Authentication authentication) {
+        DossierContentieuxEntity dossier = requireAccessibleDossier(id, authentication);
+        ContentieuxDtos.UrgencePredictionResponse pred = callUrgenceModel(buildUrgenceFeatures(dossier));
+        dossier.setUrgentSource(pred.source());
+        dossier.setUrgentPredictedAt(LocalDateTime.now());
+        if ("ML".equals(pred.source())) {
+            dossier.setUrgentPrediction(pred.urgent());
+            dossier.setUrgentProbability(pred.probability());
+        } else {
+            dossier.setUrgentPrediction(null);
+            dossier.setUrgentProbability(null);
+        }
+        repository.save(dossier);
+        return pred;
+    }
+
+    @Transactional(readOnly = true)
+    public ContentieuxDtos.UrgencePredictionResponse predictUrgenceFromFeatures(ContentieuxDtos.UrgencePredictionRequest request, Authentication authentication) {
+        if (request == null) {
+            return new ContentieuxDtos.UrgencePredictionResponse(false, null, "BAD_REQUEST");
+        }
+        Map<String, Object> features = new HashMap<>();
+        long r = request.retardJours();
+        long nr = request.nbRelances();
+        if (r < 0) r = 0;
+        if (nr < 0) nr = 0;
+        features.put("retard_jours", r);
+        features.put("montant", request.montant() != null ? request.montant() : BigDecimal.ZERO);
+        features.put("nb_relances", nr);
+        return callUrgenceModel(features);
+    }
+
+    private ContentieuxDtos.UrgencePredictionResponse callUrgenceModel(Map<String, Object> features) {
         if (!mlUrgencyEnabled) return new ContentieuxDtos.UrgencePredictionResponse(false, null, "DISABLED");
         if (mlUrgencyBaseUrl == null || mlUrgencyBaseUrl.isBlank()) return new ContentieuxDtos.UrgencePredictionResponse(false, null, "NO_BASE_URL");
 
         try {
-            Map<String, Object> features = buildUrgenceFeatures(dossier);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, Object> body = Map.of("features", features);
@@ -173,7 +212,7 @@ public class DossierContentieuxService {
         }
 
         m.put("retard_jours", retardJours);
-        m.put("montant", d.getMontantEngage());
+        m.put("montant", d.getMontantEngage() != null ? d.getMontantEngage() : BigDecimal.ZERO);
         m.put("nb_relances", nbRelances);
         return m;
     }
@@ -188,6 +227,8 @@ public class DossierContentieuxService {
     private static class MlUrgencePredictResponse {
         public Boolean urgent;
         public Double probability;
+        public Double threshold;
+        public String model;
     }
 
     @Transactional
@@ -210,6 +251,8 @@ public class DossierContentieuxService {
             if (request.dateOuverture() != null) dossier.setDateOuverture(request.dateOuverture());
         }
         DossierContentieuxEntity saved = repository.save(dossier);
+        applyAndPersistUrgencePrediction(saved);
+        saved = repository.save(saved);
         if (saved.getChargeDossierId() != null && !Objects.equals(oldChargeId, saved.getChargeDossierId())) {
             notificationService.notifyUser(
                     saved.getChargeDossierId(),
@@ -221,6 +264,19 @@ public class DossierContentieuxService {
             );
         }
         return toResponse(saved);
+    }
+
+    private void applyAndPersistUrgencePrediction(DossierContentieuxEntity dossier) {
+        ContentieuxDtos.UrgencePredictionResponse pred = callUrgenceModel(buildUrgenceFeatures(dossier));
+        dossier.setUrgentSource(pred.source());
+        dossier.setUrgentPredictedAt(LocalDateTime.now());
+        if ("ML".equals(pred.source())) {
+            dossier.setUrgentPrediction(pred.urgent());
+            dossier.setUrgentProbability(pred.probability());
+        } else {
+            dossier.setUrgentPrediction(null);
+            dossier.setUrgentProbability(null);
+        }
     }
 
     @Transactional
@@ -349,7 +405,11 @@ public class DossierContentieuxService {
                 d.getValidatedBy(),
                 d.getValidatedAt(),
                 d.getCreatedAt(),
-                d.getUpdatedAt()
+                d.getUpdatedAt(),
+                d.getUrgentPrediction(),
+                d.getUrgentProbability(),
+                d.getUrgentSource(),
+                d.getUrgentPredictedAt()
         );
     }
 
@@ -388,7 +448,11 @@ public class DossierContentieuxService {
                 d.getValidatedBy(),
                 d.getValidatedAt(),
                 d.getCreatedAt(),
-                d.getUpdatedAt()
+                d.getUpdatedAt(),
+                d.getUrgentPrediction(),
+                d.getUrgentProbability(),
+                d.getUrgentSource(),
+                d.getUrgentPredictedAt()
         );
     }
 

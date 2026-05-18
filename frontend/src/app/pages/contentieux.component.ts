@@ -127,8 +127,14 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
   affaireSaving = false;
   dossierDetails: DossierDetailsResponse | null = null;
   dossierDetailsLoading = false;
-  urgencePrediction: UrgencePredictionResponse | null = null;
-  urgencePredictionLoading = false;
+  mlForm: { retardJours: number | null; montant: string; nbRelances: number | null } = {
+    retardJours: null,
+    montant: '',
+    nbRelances: null
+  };
+  mlFormTouched = false;
+  mlPrediction: UrgencePredictionResponse | null = null;
+  mlPredictLoading = false;
   relances: RelanceDto[] = [];
   relancesLoading = false;
   relanceSaving = false;
@@ -356,6 +362,18 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
   }
 
   submit(): void {
+    const montantEngage = this.toDecimalStringOrUndefined(this.form.montantEngage);
+    const montantRecupere = this.toDecimalStringOrUndefined(this.form.montantRecupere);
+
+    if ((this.form.montantEngage ?? '').trim() && montantEngage === undefined) {
+      this.showBanner('Montant total engagé invalide. Exemple: 400000 ou 400000.00 ou 400000,00', 'danger');
+      return;
+    }
+    if ((this.form.montantRecupere ?? '').trim() && montantRecupere === undefined) {
+      this.showBanner('Montant récupéré invalide. Exemple: 10000 ou 10000.00 ou 10000,00', 'danger');
+      return;
+    }
+
     const payload = {
       objet: this.form.objet,
       nomDebiteur: this.form.nomDebiteur,
@@ -363,8 +381,8 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
       agence: this.form.agence,
       chargeDossierId: this.form.chargeDossierId ?? undefined,
       dateOuverture: this.form.dateOuverture || undefined,
-      montantEngage: this.toDecimalStringOrUndefined(this.form.montantEngage),
-      montantRecupere: this.toDecimalStringOrUndefined(this.form.montantRecupere)
+      montantEngage,
+      montantRecupere
     };
 
     if (this.editingId) {
@@ -1334,45 +1352,102 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     if (!this.selected) return;
     this.dossierDetailsLoading = true;
     this.dossierDetails = null;
-    this.urgencePrediction = null;
-    this.urgencePredictionLoading = false;
+    this.mlPrediction = null;
+    this.mlPredictLoading = false;
+    this.mlFormTouched = false;
     this.affairesLoading = true;
     this.relances = [];
     this.relancesLoading = true;
     this.contentieux.getDossierDetails(this.selected.id).subscribe({
       next: (data) => {
         this.dossierDetails = data;
+        const storedUrgent = data?.dossier?.urgentPrediction;
+        if (storedUrgent !== null && storedUrgent !== undefined) {
+          this.mlPrediction = {
+            urgent: !!storedUrgent,
+            probability: data.dossier.urgentProbability ?? null,
+            source: data.dossier.urgentSource || 'ML'
+          };
+        } else {
+          this.mlPrediction = null;
+        }
         this.affaires = data.affaires || [];
         this.affairesLoading = false;
         this.dossierDetailsLoading = false;
         this.loadDetailRisqueSummary(this.selected!.id);
         this.loadRelances();
-        this.loadUrgencePrediction();
+        this.initMlFormDefaults(true);
       },
       error: () => {
         this.affairesLoading = false;
         this.dossierDetailsLoading = false;
         this.detailRisqueLoading = false;
         this.relancesLoading = false;
-        this.urgencePredictionLoading = false;
+        this.mlPredictLoading = false;
         this.showBanner('Erreur lors du chargement des détails du dossier.', 'danger');
       }
     });
   }
 
-  loadUrgencePrediction(): void {
+  onMlFormChange(): void {
+    this.mlFormTouched = true;
+  }
+
+  predictMl(): void {
     if (!this.selected) return;
-    if (this.urgencePredictionLoading) return;
-    this.urgencePredictionLoading = true;
-    this.contentieux.predictUrgence(this.selected.id).subscribe({
+    if (this.mlPredictLoading) return;
+
+    this.initMlFormDefaults(true);
+    this.mlPredictLoading = true;
+    this.mlPrediction = null;
+    this.contentieux.refreshUrgencePrediction(this.selected.id).subscribe({
       next: (pred) => {
-        this.urgencePrediction = pred;
-        this.urgencePredictionLoading = false;
+        this.mlPrediction = pred;
+        if (this.dossierDetails?.dossier) {
+          if (pred.source === 'ML') {
+            this.dossierDetails.dossier.urgentPrediction = pred.urgent;
+            this.dossierDetails.dossier.urgentProbability = pred.probability ?? null;
+            this.dossierDetails.dossier.urgentSource = pred.source;
+            this.dossierDetails.dossier.urgentPredictedAt = new Date().toISOString();
+          } else {
+            this.dossierDetails.dossier.urgentPrediction = null;
+            this.dossierDetails.dossier.urgentProbability = null;
+            this.dossierDetails.dossier.urgentSource = pred.source;
+            this.dossierDetails.dossier.urgentPredictedAt = new Date().toISOString();
+          }
+        }
+        this.mlPredictLoading = false;
       },
       error: () => {
-        this.urgencePredictionLoading = false;
+        this.mlPredictLoading = false;
       }
     });
+  }
+
+  private initMlFormDefaults(force = false): void {
+    if (!this.selected) return;
+    if (!force && this.mlFormTouched) return;
+
+    const dateStr = this.dossierDetails?.dossier?.createdAt || null;
+    const dateOuverture = this.selected.dateOuverture || null;
+    const baseDate = dateOuverture || (dateStr ? dateStr.slice(0, 10) : null);
+    let retardJours: number | null = null;
+    if (baseDate) {
+      const d0 = new Date(baseDate);
+      if (!isNaN(d0.getTime())) {
+        const diff = Math.floor((Date.now() - d0.getTime()) / (24 * 60 * 60 * 1000));
+        retardJours = Math.max(0, diff);
+      }
+    }
+
+    const montantValue = this.dossierDetails?.dossier?.montantEngage ?? this.selected.montantEngage ?? null;
+    const nbRelances = this.relances.length;
+
+    this.mlForm = {
+      retardJours,
+      montant: montantValue != null ? String(montantValue) : '',
+      nbRelances
+    };
   }
 
   loadRelances(): void {
@@ -1382,6 +1457,7 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
       next: (rows) => {
         this.relances = rows || [];
         this.relancesLoading = false;
+        this.initMlFormDefaults(false);
       },
       error: () => {
         this.relancesLoading = false;
@@ -1473,8 +1549,9 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     this.affaireSaving = false;
     this.dossierDetails = null;
     this.dossierDetailsLoading = false;
-    this.urgencePrediction = null;
-    this.urgencePredictionLoading = false;
+    this.mlPrediction = null;
+    this.mlPredictLoading = false;
+    this.mlFormTouched = false;
     this.relances = [];
     this.relancesLoading = false;
     this.relanceSaving = false;
@@ -1576,15 +1653,64 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     v = v.replace(/\u00A0/g, ' ').replace(/\s+/g, '');
     v = v.replace(/[^\d,.\-]/g, '');
 
+    if (v.endsWith('.') || v.endsWith(',')) {
+      v = v.slice(0, -1);
+    }
+    if (!v) return undefined;
+
+    const firstMinus = v.indexOf('-');
+    if (firstMinus > 0) return undefined;
+    if (firstMinus === 0) {
+      v = '-' + v.slice(1).replace(/-/g, '');
+    }
+
+    const dotCount = (v.match(/\./g) || []).length;
+    const commaCount = (v.match(/,/g) || []).length;
+
     const lastDot = v.lastIndexOf('.');
     const lastComma = v.lastIndexOf(',');
-    if (lastDot !== -1 && lastComma !== -1) {
+
+    if (dotCount > 0 && commaCount > 0) {
       const decimalSep = lastDot > lastComma ? '.' : ',';
       const thousandsSep = decimalSep === '.' ? ',' : '.';
       v = v.split(thousandsSep).join('');
       v = decimalSep === ',' ? v.replace(',', '.') : v;
-    } else if (lastComma !== -1) {
-      v = v.replace(',', '.');
+    } else if (commaCount > 0) {
+      if (commaCount === 1) {
+        const parts = v.split(',');
+        if (parts.length === 2 && parts[1].length === 3 && parts[0].length >= 1) {
+          v = parts[0] + parts[1];
+        } else {
+          v = v.replace(',', '.');
+        }
+      } else {
+        const idx = lastComma;
+        const raw = v.replace(/,/g, '');
+        const decimals = v.length - idx - 1;
+        if (decimals > 0) {
+          const insertAt = raw.length - decimals;
+          v = raw.slice(0, insertAt) + '.' + raw.slice(insertAt);
+        } else {
+          v = raw;
+        }
+      }
+    } else if (dotCount > 0) {
+      if (dotCount === 1) {
+        const parts = v.split('.');
+        if (parts.length === 2 && parts[1].length === 3 && parts[0].length >= 1) {
+          v = parts[0] + parts[1];
+        }
+      } else {
+        const idx = lastDot;
+        const raw = v.replace(/\./g, '');
+        const decimals = v.length - idx - 1;
+        if (decimals > 0) {
+          const insertAt = raw.length - decimals;
+          v = raw.slice(0, insertAt) + '.' + raw.slice(insertAt);
+        } else {
+          v = raw;
+        }
+      }
     }
 
     if (!/^-?\d+(\.\d+)?$/.test(v)) return undefined;

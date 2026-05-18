@@ -43,11 +43,23 @@ public class DossierContentieuxEntity {
 
     private LocalDate dateOuverture;
 
-    @Column(name = "montant_engagement_total", precision = 19, scale = 2)
+    @Column(name = "montant_engage", precision = 19, scale = 2)
     private BigDecimal montantEngage;
 
     @Column(precision = 19, scale = 2)
     private BigDecimal montantRecupere;
+
+    @Column(name = "urgent_prediction")
+    private Boolean urgentPrediction;
+
+    @Column(name = "urgent_probability")
+    private Double urgentProbability;
+
+    @Column(name = "urgent_source", length = 40)
+    private String urgentSource;
+
+    @Column(name = "urgent_predicted_at")
+    private LocalDateTime urgentPredictedAt;
 
     @Column(precision = 12, scale = 3)
     private BigDecimal montantHonoraires;
@@ -204,6 +216,38 @@ public class DossierContentieuxEntity {
 
     public void setMontantRecupere(BigDecimal montantRecupere) {
         this.montantRecupere = montantRecupere;
+    }
+
+    public Boolean getUrgentPrediction() {
+        return urgentPrediction;
+    }
+
+    public void setUrgentPrediction(Boolean urgentPrediction) {
+        this.urgentPrediction = urgentPrediction;
+    }
+
+    public Double getUrgentProbability() {
+        return urgentProbability;
+    }
+
+    public void setUrgentProbability(Double urgentProbability) {
+        this.urgentProbability = urgentProbability;
+    }
+
+    public String getUrgentSource() {
+        return urgentSource;
+    }
+
+    public void setUrgentSource(String urgentSource) {
+        this.urgentSource = urgentSource;
+    }
+
+    public LocalDateTime getUrgentPredictedAt() {
+        return urgentPredictedAt;
+    }
+
+    public void setUrgentPredictedAt(LocalDateTime urgentPredictedAt) {
+        this.urgentPredictedAt = urgentPredictedAt;
     }
 
     public BigDecimal getMontantHonoraires() {

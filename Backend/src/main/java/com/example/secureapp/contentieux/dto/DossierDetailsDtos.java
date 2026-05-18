@@ -24,7 +24,11 @@ public class DossierDetailsDtos {
             String chargeDossier,
             String motifRejet,
             BigDecimal montantEngage,
-            BigDecimal montantRecupere
+            BigDecimal montantRecupere,
+            Boolean urgentPrediction,
+            Double urgentProbability,
+            String urgentSource,
+            LocalDateTime urgentPredictedAt
     ) {}
 
     public record ProcedureInfo(
