@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export type ContentieuxStatus = 'A_VALIDER' | 'OUVERT' | 'AFFECTE' | 'CHANGEMENT_COMPTE' | 'REJETE' | 'CLOTURE' | 'REOUVERT';
 
@@ -139,6 +140,15 @@ export interface UrgencePredictionResponse {
   urgent: boolean;
   probability: number | null;
   source: string;
+  level?: string;
+  model?: string;
+}
+
+export interface MlUrgencyPredictResponse {
+  urgent: boolean;
+  probability: number | null;
+  level: string;
+  model: string;
 }
 
 export interface UrgencePredictionRequest {
@@ -232,6 +242,12 @@ export class ContentieuxService {
 
   refreshUrgencePrediction(dossierId: number): Observable<UrgencePredictionResponse> {
     return this.http.post<UrgencePredictionResponse>(`${this.url}/${dossierId}/urgence-prediction/refresh`, {});
+  }
+
+  predictUrgenceMlDirect(features: Record<string, any>): Observable<UrgencePredictionResponse> {
+    return this.http
+      .post<MlUrgencyPredictResponse>(`${environment.mlUrgencyBaseUrl}/predict`, { features })
+      .pipe(map((r) => ({ urgent: r.urgent, probability: r.probability ?? null, source: 'ML', level: r.level, model: r.model })));
   }
 
   predictUrgenceFromFeatures(payload: UrgencePredictionRequest): Observable<UrgencePredictionResponse> {

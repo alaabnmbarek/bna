@@ -1145,6 +1145,12 @@
   animation: mlFadeUp 260ms ease-out both, mlGlowGreen 1.8s ease-in-out infinite;
 }
 
+.ml-result-card--medium {
+  border-color: rgba(245, 158, 11, 0.32);
+  box-shadow: 0 18px 55px rgba(245, 158, 11, 0.16);
+  animation: mlFadeUp 260ms ease-out both;
+}
+
 .ml-result-head {
   position: relative;
   display: flex;
@@ -1184,6 +1190,12 @@
   color: rgba(0, 104, 71, 1);
   background: rgba(0, 104, 71, 0.12);
   border-color: rgba(0, 104, 71, 0.22);
+}
+
+.ml-result-pill--medium {
+  color: rgba(180, 83, 9, 1);
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.26);
 }
 
 .ml-result-meta {

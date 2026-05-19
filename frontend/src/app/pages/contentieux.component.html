@@ -601,11 +601,20 @@
                 </button>
               </div>
 
-              <div *ngIf="mlPrediction as p" class="ml-result-card" [class.ml-result-card--urgent]="p.urgent" [class.ml-result-card--safe]="!p.urgent">
+              <div
+                *ngIf="mlPrediction as p"
+                class="ml-result-card"
+                [class.ml-result-card--urgent]="mlLevel(p) === 'URGENT'"
+                [class.ml-result-card--medium]="mlLevel(p) === 'MOYEN'"
+                [class.ml-result-card--safe]="mlLevel(p) === 'NON URGENT'">
                 <div class="ml-result-head">
                   <div class="ml-result-title">Résultat</div>
-                  <div class="ml-result-pill" [class.ml-result-pill--urgent]="p.urgent" [class.ml-result-pill--safe]="!p.urgent">
-                    {{ p.urgent ? 'URGENT' : 'NON URGENT' }}
+                  <div
+                    class="ml-result-pill"
+                    [class.ml-result-pill--urgent]="mlLevel(p) === 'URGENT'"
+                    [class.ml-result-pill--medium]="mlLevel(p) === 'MOYEN'"
+                    [class.ml-result-pill--safe]="mlLevel(p) === 'NON URGENT'">
+                    {{ mlLevel(p) }}
                   </div>
                 </div>
                 <div class="ml-result-meta">

@@ -1393,6 +1393,18 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     this.mlFormTouched = true;
   }
 
+  mlLevel(p: UrgencePredictionResponse): 'NON URGENT' | 'MOYEN' | 'URGENT' {
+    const lvl = (p as any)?.level;
+    if (typeof lvl === 'string' && (lvl === 'NON URGENT' || lvl === 'MOYEN' || lvl === 'URGENT')) return lvl;
+    const prob = p.probability;
+    if (typeof prob === 'number' && Number.isFinite(prob)) {
+      if (prob < 0.4) return 'NON URGENT';
+      if (prob < 0.7) return 'MOYEN';
+      return 'URGENT';
+    }
+    return p.urgent ? 'URGENT' : 'NON URGENT';
+  }
+
   predictMl(): void {
     if (!this.selected) return;
     if (this.mlPredictLoading) return;
@@ -1400,26 +1412,52 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     this.initMlFormDefaults(true);
     this.mlPredictLoading = true;
     this.mlPrediction = null;
-    this.contentieux.refreshUrgencePrediction(this.selected.id).subscribe({
+
+    const montantStr = this.toDecimalStringOrUndefined(this.mlForm.montant);
+    const montantNum = montantStr ? Number(montantStr) : 0;
+    const typeAffaire = (this.affaires?.[0]?.typeAffaire || '').trim();
+    const features: Record<string, any> = {
+      retard_jours: Math.max(0, this.mlForm.retardJours ?? 0),
+      montant: Number.isFinite(montantNum) ? montantNum : 0,
+      nb_relance: Math.max(0, this.mlForm.nbRelances ?? 0),
+      type_affaire: typeAffaire || undefined
+    };
+
+    this.contentieux.predictUrgenceMlDirect(features).subscribe({
       next: (pred) => {
         this.mlPrediction = pred;
         if (this.dossierDetails?.dossier) {
-          if (pred.source === 'ML') {
-            this.dossierDetails.dossier.urgentPrediction = pred.urgent;
-            this.dossierDetails.dossier.urgentProbability = pred.probability ?? null;
-            this.dossierDetails.dossier.urgentSource = pred.source;
-            this.dossierDetails.dossier.urgentPredictedAt = new Date().toISOString();
-          } else {
-            this.dossierDetails.dossier.urgentPrediction = null;
-            this.dossierDetails.dossier.urgentProbability = null;
-            this.dossierDetails.dossier.urgentSource = pred.source;
-            this.dossierDetails.dossier.urgentPredictedAt = new Date().toISOString();
-          }
+          this.dossierDetails.dossier.urgentPrediction = pred.urgent;
+          this.dossierDetails.dossier.urgentProbability = pred.probability ?? null;
+          this.dossierDetails.dossier.urgentSource = pred.source;
+          this.dossierDetails.dossier.urgentPredictedAt = new Date().toISOString();
         }
         this.mlPredictLoading = false;
       },
       error: () => {
-        this.mlPredictLoading = false;
+        this.contentieux.refreshUrgencePrediction(this.selected!.id).subscribe({
+          next: (pred) => {
+            this.mlPrediction = pred;
+            if (this.dossierDetails?.dossier) {
+              if (pred.source === 'ML') {
+                this.dossierDetails.dossier.urgentPrediction = pred.urgent;
+                this.dossierDetails.dossier.urgentProbability = pred.probability ?? null;
+                this.dossierDetails.dossier.urgentSource = pred.source;
+                this.dossierDetails.dossier.urgentPredictedAt = new Date().toISOString();
+              } else {
+                this.dossierDetails.dossier.urgentPrediction = null;
+                this.dossierDetails.dossier.urgentProbability = null;
+                this.dossierDetails.dossier.urgentSource = pred.source;
+                this.dossierDetails.dossier.urgentPredictedAt = new Date().toISOString();
+              }
+            }
+            this.mlPredictLoading = false;
+          },
+          error: () => {
+            this.mlPredictLoading = false;
+            this.showBanner('Erreur lors de la prédiction ML.', 'danger');
+          }
+        });
       }
     });
   }

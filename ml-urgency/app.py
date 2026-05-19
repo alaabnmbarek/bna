@@ -1,10 +1,12 @@
 import os
 import pickle
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 
@@ -64,28 +66,58 @@ def _resolve_artifact_path(configured_path: str, fallback_name: str) -> str:
 
 
 def _resolve_model_path(configured_path: str) -> str:
-    candidates: list[Path] = []
+    def is_model_candidate(p: Path) -> bool:
+        name = p.name.lower()
+        if not name.endswith(".pkl"):
+            return False
+        if "scaler" in name:
+            return False
+        if "feature_columns" in name or "feature-columns" in name:
+            return False
+        return True
+
+    def priority(p: Path) -> int:
+        name = p.name.lower()
+        if "logistic_regression" in name:
+            return 0
+        if "random_forest" in name or "randomforest" in name:
+            return 1
+        return 2
 
     if configured_path:
-        candidates.append(Path(configured_path))
-
-    here = Path(__file__).resolve().parent
-    candidates.append(here / "ml-models" / "logistic_regression.pkl")
-    candidates.append(here / "ml-models" / "random_forest.pkl")
-
-    for folder in (Path("/models"), here / "ml-models"):
         try:
-            if folder.exists() and folder.is_dir():
-                candidates.extend(sorted(folder.glob("*.pkl")))
+            cp = Path(configured_path)
+            if cp.exists() and cp.is_file():
+                return str(cp)
         except Exception:
             pass
 
-    for p in candidates:
+    here = Path(__file__).resolve().parent
+
+    preferred: list[Path] = [
+        here / "ml-models" / "logistic_regression.pkl",
+        Path("/models") / "logistic_regression.pkl",
+    ]
+    for p in preferred:
         try:
             if p.exists() and p.is_file():
                 return str(p)
         except Exception:
-            continue
+            pass
+
+    found: list[Path] = []
+    for folder in (Path("/models"), here / "ml-models"):
+        try:
+            if folder.exists() and folder.is_dir():
+                for p in folder.glob("*.pkl"):
+                    if is_model_candidate(p):
+                        found.append(p)
+        except Exception:
+            pass
+
+    if found:
+        found.sort(key=lambda p: (priority(p), p.name.lower()))
+        return str(found[0])
 
     return configured_path
 
@@ -94,8 +126,20 @@ MODEL_PATH = os.getenv("MODEL_PATH", "/models/logistic_regression.pkl")
 SCALER_PATH = os.getenv("SCALER_PATH", "/models/scaler.pkl")
 FEATURE_COLUMNS_PATH = os.getenv("FEATURE_COLUMNS_PATH", "/models/feature_columns.pkl")
 STRICT_ARTIFACTS = _truthy_env("STRICT_ARTIFACTS", False)
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:4200,http://127.0.0.1:4200")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(levelname)s %(message)s")
+logger = logging.getLogger("ml-urgency")
 
 app = FastAPI(title="Urgency Predictor", version="1.0.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[o.strip() for o in CORS_ORIGINS.split(",") if o.strip()],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 model = None
 scaler = None
@@ -129,6 +173,7 @@ try:
 except Exception as e:
     model = None
     model_error = str(e)
+    logger.exception("Model loading failed")
 
 
 @app.get("/health")
@@ -177,6 +222,60 @@ def _as_feature_list(obj: Any) -> Optional[list[str]]:
         return None
 
 
+def _normalize_token(s: str) -> str:
+    out = []
+    for ch in (s or "").strip().lower():
+        if ch.isalnum():
+            out.append(ch)
+        else:
+            out.append("_")
+    return "_".join(filter(None, "".join(out).split("_")))
+
+
+def _apply_type_affaire_encoding(features: Dict[str, Any], cols: list[str]) -> Optional[str]:
+    raw = None
+    for k in ("type_affaire", "typeAffaire", "TypeAffaire", "type"):
+        if k in features:
+            raw = features.pop(k)
+            break
+
+    if raw is None:
+        return None
+
+    if not isinstance(raw, str):
+        raw = str(raw)
+
+    token = _normalize_token(raw)
+    if not token:
+        return None
+
+    candidates = []
+    for prefix in ("Type_Affaire_", "type_affaire_", "typeAffaire_", "TYPE_AFFAIRE_"):
+        candidates.append(prefix + raw)
+        candidates.append(prefix + token)
+
+    normalized_cols: Dict[str, str] = {}
+    for c in cols:
+        normalized_cols[_normalize_token(c)] = c
+
+    chosen = None
+    for cand in candidates:
+        key = _normalize_token(cand)
+        if key in normalized_cols:
+            chosen = normalized_cols[key]
+            break
+
+    if chosen is None:
+        for c in cols:
+            if _normalize_token(c).endswith(token) and ("type_affaire" in _normalize_token(c) or "type_affaire" in c.lower()):
+                chosen = c
+                break
+
+    if chosen is not None:
+        features[chosen] = 1
+    return chosen
+
+
 @app.post("/predict", response_model=PredictResponse)
 def predict(req: PredictRequest):
     if model is None:
@@ -202,6 +301,13 @@ def predict(req: PredictRequest):
     if cols is None:
         cols = sorted({str(k) for k in features.keys()})
 
+    raw_type_affaire = None
+    for k in ("type_affaire", "typeAffaire", "TypeAffaire", "type"):
+        if k in features:
+            raw_type_affaire = features.get(k)
+            break
+    encoded_col = _apply_type_affaire_encoding(features, cols)
+
     df = pd.DataFrame([features]).reindex(columns=cols, fill_value=0)
     df = df.apply(pd.to_numeric, errors="coerce").fillna(0.0)
 
@@ -216,6 +322,7 @@ def predict(req: PredictRequest):
             raise HTTPException(status_code=400, detail="Model does not support predict_proba()")
 
         proba = model.predict_proba(X)
+        _ = model.predict(X)
         classes = getattr(model, "classes_", None)
         positive_index = None
         if classes is not None:
@@ -236,6 +343,16 @@ def predict(req: PredictRequest):
         raise HTTPException(status_code=400, detail="Prediction failed: probability is missing")
 
     level = _compute_level(probability)
+    logger.info(
+        "predict level=%s probability=%.4f retard_jours=%s montant=%s nb_relance=%s type_affaire=%s encoded_col=%s",
+        level,
+        probability,
+        features.get("retard_jours"),
+        features.get("montant"),
+        features.get("nb_relance", features.get("nb_relances")),
+        raw_type_affaire,
+        encoded_col,
+    )
     return PredictResponse(urgent=level == "URGENT", probability=probability, level=level, model=type(model).__name__)
 
 
