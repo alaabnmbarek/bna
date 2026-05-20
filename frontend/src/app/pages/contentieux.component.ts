@@ -415,10 +415,16 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
 
   private setBodyScrollLocked(locked: boolean): void {
     const cls = 'app-lock-scroll';
+    const modalCls = 'modal-open';
     const body = document?.body;
     if (!body) return;
-    if (locked) body.classList.add(cls);
-    else body.classList.remove(cls);
+    if (locked) {
+      body.classList.add(cls);
+      body.classList.add(modalCls);
+    } else {
+      body.classList.remove(cls);
+      body.classList.remove(modalCls);
+    }
   }
 
   private syncBodyScrollLock(): void {

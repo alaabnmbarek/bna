@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
+import { TemplatePortal } from '@angular/cdk/portal';
 import { Facture, FactureImportResponse, FacturesService } from './factures.service';
 import { CardComponent } from '../../theme/shared/components/card/card.component';
 import { AuthService } from '../../auth/auth.service';
@@ -46,7 +48,7 @@ interface OptionalFactureModel {
 @Component({
   selector: 'app-factures',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardComponent, NotesHonorairesComponent],
+  imports: [CommonModule, FormsModule, OverlayModule, CardComponent, NotesHonorairesComponent],
   templateUrl: './factures.component.html',
   styleUrls: ['./factures.component.scss']
 })
@@ -81,6 +83,8 @@ export class FacturesComponent implements OnInit {
   showFactureDetail = false;
   selectedFactureDetail: Facture | null = null;
   selectedFacturePrestataire: any = null;
+  @ViewChild('factureDetailTpl') factureDetailTpl?: TemplateRef<any>;
+  private factureDetailOverlayRef: OverlayRef | null = null;
 
   showChequePreview = false;
   chequePreviewUrl: string | null = null;
@@ -107,8 +111,34 @@ export class FacturesComponent implements OnInit {
     private prestatairesService: PrestatairesService,
     public auth: AuthService,
     private aos: AosService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private overlay: Overlay,
+    private vcr: ViewContainerRef
   ) {}
+
+  private setBodyScrollLocked(locked: boolean): void {
+    const cls = 'app-lock-scroll';
+    const modalCls = 'modal-open';
+    const body = document?.body;
+    if (!body) return;
+    if (locked) {
+      body.classList.add(cls);
+      body.classList.add(modalCls);
+    } else {
+      body.classList.remove(cls);
+      body.classList.remove(modalCls);
+    }
+  }
+
+  private syncBodyScrollLock(): void {
+    const anyOpen =
+      this.showModal ||
+      this.showImportModal ||
+      this.showFactureDetail ||
+      this.showChequePreview ||
+      this.showOptionalFacturePreview;
+    this.setBodyScrollLocked(anyOpen);
+  }
 
   get canDeleteFacture(): boolean {
     const r = this.auth.role();
@@ -126,6 +156,8 @@ export class FacturesComponent implements OnInit {
   viewFacture(facture: Facture) {
     this.selectedFactureDetail = facture;
     this.showFactureDetail = true;
+    this.syncBodyScrollLock();
+    this.openFactureDetailOverlay();
     if (facture.prestataireId) {
       this.prestatairesService.getPrestataire(facture.prestataireId).subscribe({
         next: (p) => this.selectedFacturePrestataire = p,
@@ -135,10 +167,33 @@ export class FacturesComponent implements OnInit {
   }
 
   closeFactureDetail() {
+    if (this.factureDetailOverlayRef) {
+      this.factureDetailOverlayRef.dispose();
+      this.factureDetailOverlayRef = null;
+    }
     this.showFactureDetail = false;
     this.selectedFactureDetail = null;
     this.selectedFacturePrestataire = null;
     this.closeChequePreview();
+    this.syncBodyScrollLock();
+  }
+
+  private openFactureDetailOverlay(): void {
+    if (this.factureDetailOverlayRef) return;
+    if (!this.factureDetailTpl) return;
+    if (!this.showFactureDetail || !this.selectedFactureDetail) return;
+
+    const overlayRef = this.overlay.create({
+      hasBackdrop: true,
+      backdropClass: 'app-modal-backdrop',
+      panelClass: 'app-modal-panel',
+      scrollStrategy: this.overlay.scrollStrategies.block(),
+      positionStrategy: this.overlay.position().global().centerHorizontally().top('0')
+    });
+
+    overlayRef.backdropClick().subscribe(() => this.closeFactureDetail());
+    overlayRef.attach(new TemplatePortal(this.factureDetailTpl, this.vcr));
+    this.factureDetailOverlayRef = overlayRef;
   }
 
   printFacture() {
@@ -420,6 +475,7 @@ export class FacturesComponent implements OnInit {
     this.chequePreviewSafeUrl = null;
     this.chequePreviewImageUrl = null;
     this.chequeBlob = null;
+    this.syncBodyScrollLock();
   }
 
   closeOptionalFacturePreview() {
@@ -428,6 +484,7 @@ export class FacturesComponent implements OnInit {
     this.optionalFacturePreviewUrl = null;
     this.optionalFacturePreviewImageUrl = null;
     this.optionalFactureBlob = null;
+    this.syncBodyScrollLock();
   }
 
   onChequeSigneSelected(event: any) {
@@ -1288,6 +1345,7 @@ export class FacturesComponent implements OnInit {
     this.selectedNoteId = null;
     this.loadNotesOptions();
     this.showModal = true;
+    this.syncBodyScrollLock();
   }
 
   closeModal() {
@@ -1295,6 +1353,7 @@ export class FacturesComponent implements OnInit {
     this.currentFacture = this.getEmptyFacture();
     this.selectedNoteId = null;
     this.closeChequePreview();
+    this.syncBodyScrollLock();
   }
 
   openImportModal() {
@@ -1304,6 +1363,7 @@ export class FacturesComponent implements OnInit {
     this.importResult = null;
     if (this.importPreviewUrl) URL.revokeObjectURL(this.importPreviewUrl);
     this.importPreviewUrl = null;
+    this.syncBodyScrollLock();
   }
 
   closeImportModal() {
@@ -1313,6 +1373,7 @@ export class FacturesComponent implements OnInit {
     this.importResult = null;
     if (this.importPreviewUrl) URL.revokeObjectURL(this.importPreviewUrl);
     this.importPreviewUrl = null;
+    this.syncBodyScrollLock();
   }
 
   onImportFileSelected(event: any) {

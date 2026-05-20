@@ -90,9 +90,20 @@
                   {{ p.actif ? 'Actif' : 'Inactif' }}
                 </span>
               </td>
-              <td class="col-hide-lg admin-cell-muted">
-                <div>Note: {{ p.noteMoyenne ?? '—' }}</div>
-                <div>Missions: {{ p.missionsTerminees ?? 0 }}/{{ p.missionsTotal ?? 0 }}</div>
+              <td class="col-hide-lg">
+                <div class="perf-stack">
+                  <div class="perf-chip perf-chip--note" [class.perf-chip--empty]="p.noteMoyenne == null">
+                    <i class="feather icon-star"></i>
+                    <span>{{ p.noteMoyenne == null ? '—' : (p.noteMoyenne | number:'1.1-1') }}</span>
+                  </div>
+                  <div class="perf-chip perf-chip--missions">
+                    <i class="feather icon-check-circle"></i>
+                    <span>{{ p.missionsTerminees ?? 0 }}/{{ p.missionsTotal ?? 0 }}</span>
+                  </div>
+                </div>
+                <div class="perf-bar" *ngIf="(p.missionsTotal ?? 0) > 0">
+                  <div class="perf-bar-fill" [style.width.%]="((p.missionsTerminees ?? 0) * 100) / (p.missionsTotal ?? 1)"></div>
+                </div>
               </td>
               <td class="text-end">
                 <div class="admin-actions-row">
@@ -104,6 +115,9 @@
                   </button>
                   <button class="btn btn-sm btn-outline-danger admin-action-btn" type="button" (click)="$event.stopPropagation(); deactivate(p)">
                     <i class="feather icon-slash"></i><span class="admin-action-text">Désactiver</span>
+                  </button>
+                  <button class="btn btn-sm btn-danger admin-action-btn admin-action-btn--delete" type="button" (click)="$event.stopPropagation(); remove(p)">
+                    <i class="feather icon-trash-2"></i><span class="admin-action-text">Supprimer</span>
                   </button>
                 </div>
               </td>

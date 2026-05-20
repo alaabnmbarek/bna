@@ -73,8 +73,8 @@
 </div>
 
 <!-- Modal Dossier Details -->
-<div *ngIf="showDossierDetails" class="modal fade show app-modal" (click)="closeDossierDetails()">
-  <div class="modal-dialog modal-xl modal-dialog-scrollable" (click)="$event.stopPropagation()">
+<ng-template #dossierDetailsTpl>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Détails du dossier</h5>
@@ -214,7 +214,7 @@
       </div>
     </div>
   </div>
-</div>
+</ng-template>
 
 <!-- Modal Affaire -->
 <div *ngIf="showAffaireForm && !showAssignationPopup" class="modal fade show app-modal">
@@ -366,7 +366,7 @@
 </div>
 
 <!-- Modal Audiences -->
-<div *ngIf="showAudienceForm" class="modal fade show app-modal">
+<ng-template #audiencesTpl>
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
@@ -449,7 +449,7 @@
       </div>
     </div>
   </div>
-</div>
+</ng-template>
 
 <!-- Modal Jugement -->
 <div *ngIf="showJugementForm" class="modal fade show app-modal">

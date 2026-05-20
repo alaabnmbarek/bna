@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
+import { TemplatePortal } from '@angular/cdk/portal';
 import { CardComponent } from '../theme/shared/components/card/card.component';
 import { SuiviJudiciaireService, AffaireJudiciaire, Audience, Jugement, ProcedureType, AudienceStatus, DecisionType, AssignationTarget } from '../suivi-judiciaire/suivi-judiciaire.service';
 import { AffaireContentieux, ContentieuxService, DossierContentieux, DossierDetailsResponse } from '../contentieux/contentieux.service';
@@ -11,7 +13,7 @@ import { AosService } from '../aos/aos.service';
 @Component({
   selector: 'app-suivi-judiciaire',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardComponent],
+  imports: [CommonModule, FormsModule, OverlayModule, CardComponent],
   templateUrl: './suivi-judiciaire.component.html',
   styleUrl: './suivi-judiciaire.component.scss'
 })
@@ -25,6 +27,8 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   showDossierDetails = false;
   dossierDetailsLoading = false;
   dossierDetails: DossierDetailsResponse | null = null;
+  @ViewChild('dossierDetailsTpl') dossierDetailsTpl?: TemplateRef<any>;
+  private dossierDetailsOverlayRef: OverlayRef | null = null;
   avocats: Prestataire[] = [];
   huissiers: Prestataire[] = [];
   
@@ -34,6 +38,8 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   showJugementForm = false;
   showAssignationPopup = false;
   selectedAffaire: AffaireJudiciaire | null = null;
+  @ViewChild('audiencesTpl') audiencesTpl?: TemplateRef<any>;
+  private audiencesOverlayRef: OverlayRef | null = null;
 
   procedureTypeOptions: Array<{ value: ProcedureType; label: string }> = [
     { value: 'ASSIGNATION', label: "Procédure d'assignation" },
@@ -55,7 +61,9 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     public contentieuxService: ContentieuxService,
     public prestataireService: PrestatairesService,
     public auth: AuthService,
-    private aos: AosService
+    private aos: AosService,
+    private overlay: Overlay,
+    private vcr: ViewContainerRef
   ) {}
 
   get canCreateProcedure(): boolean {
@@ -84,10 +92,38 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.dossierDetailsOverlayRef) {
+      this.dossierDetailsOverlayRef.dispose();
+      this.dossierDetailsOverlayRef = null;
+    }
+    if (this.audiencesOverlayRef) {
+      this.audiencesOverlayRef.dispose();
+      this.audiencesOverlayRef = null;
+    }
     this.setBodyScrollLocked(false);
   }
 
+  private openOverlayFromTemplate(tpl: TemplateRef<any>, onClose: () => void): OverlayRef {
+    const overlayRef = this.overlay.create({
+      hasBackdrop: true,
+      backdropClass: 'app-modal-backdrop',
+      scrollStrategy: this.overlay.scrollStrategies.block(),
+      positionStrategy: this.overlay.position().global().centerHorizontally().centerVertically()
+    });
+    overlayRef.backdropClick().subscribe(() => onClose());
+    overlayRef.attach(new TemplatePortal(tpl, this.vcr));
+    return overlayRef;
+  }
+
   private closeAllPopups(): void {
+    if (this.dossierDetailsOverlayRef) {
+      this.dossierDetailsOverlayRef.dispose();
+      this.dossierDetailsOverlayRef = null;
+    }
+    if (this.audiencesOverlayRef) {
+      this.audiencesOverlayRef.dispose();
+      this.audiencesOverlayRef = null;
+    }
     this.showAffaireForm = false;
     this.showAudienceForm = false;
     this.showJugementForm = false;
@@ -114,6 +150,10 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   }
 
   closeAudienceForm(): void {
+    if (this.audiencesOverlayRef) {
+      this.audiencesOverlayRef.dispose();
+      this.audiencesOverlayRef = null;
+    }
     this.showAudienceForm = false;
     this.selectedAffaire = null;
     this.syncBodyScrollLock();
@@ -206,6 +246,9 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     this.closeAllPopups();
     this.showDossierDetails = true;
     this.syncBodyScrollLock();
+    if (!this.dossierDetailsOverlayRef && this.dossierDetailsTpl) {
+      this.dossierDetailsOverlayRef = this.openOverlayFromTemplate(this.dossierDetailsTpl, () => this.closeDossierDetails());
+    }
     this.dossierDetailsLoading = true;
     this.dossierDetails = null;
     this.contentieuxService.getDossierDetails(id).subscribe({
@@ -222,6 +265,10 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   }
 
   closeDossierDetails(): void {
+    if (this.dossierDetailsOverlayRef) {
+      this.dossierDetailsOverlayRef.dispose();
+      this.dossierDetailsOverlayRef = null;
+    }
     this.showDossierDetails = false;
     this.dossierDetailsLoading = false;
     this.dossierDetails = null;
@@ -230,10 +277,16 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
 
   private setBodyScrollLocked(locked: boolean): void {
     const cls = 'app-lock-scroll';
+    const modalCls = 'modal-open';
     const body = document?.body;
     if (!body) return;
-    if (locked) body.classList.add(cls);
-    else body.classList.remove(cls);
+    if (locked) {
+      body.classList.add(cls);
+      body.classList.add(modalCls);
+    } else {
+      body.classList.remove(cls);
+      body.classList.remove(modalCls);
+    }
   }
 
   onDossierChange(dossierId: number): void {
@@ -375,6 +428,9 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     this.selectedAffaire = affaire;
     this.showAudienceForm = true; // Ouvrir le modal immédiatement
     this.syncBodyScrollLock();
+    if (!this.audiencesOverlayRef && this.audiencesTpl) {
+      this.audiencesOverlayRef = this.openOverlayFromTemplate(this.audiencesTpl, () => this.closeAudienceForm());
+    }
     this.audiences = []; // Vider la liste actuelle
     this.loading = true; // On peut réutiliser la variable loading ou en créer une spécifique
 

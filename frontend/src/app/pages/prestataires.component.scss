@@ -140,6 +140,73 @@
   font-size: 14px;
 }
 
+.admin-action-btn--delete {
+  border-color: rgba(220, 38, 38, 0.20);
+}
+
+.admin-action-btn--delete:hover:not(:disabled) {
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
+.perf-stack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.perf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.03);
+  color: rgba(15, 23, 42, 0.78);
+}
+
+.perf-chip i {
+  font-size: 13px;
+}
+
+.perf-chip--note {
+  background: rgba(245, 158, 11, 0.10);
+  border-color: rgba(245, 158, 11, 0.20);
+  color: rgba(180, 83, 9, 1);
+}
+
+.perf-chip--note.perf-chip--empty {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: rgba(15, 23, 42, 0.60);
+}
+
+.perf-chip--missions {
+  background: rgba(0, 104, 71, 0.10);
+  border-color: rgba(0, 104, 71, 0.18);
+  color: rgba(0, 104, 71, 1);
+}
+
+.perf-bar {
+  margin-top: 8px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.perf-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(0, 104, 71, 0.75), rgba(0, 104, 71, 0.95));
+  transition: width 220ms ease;
+}
+
 .admin-action-text {
   display: inline;
 }

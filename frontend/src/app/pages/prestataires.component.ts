@@ -232,6 +232,20 @@ export class PrestatairesPageComponent implements OnInit {
     });
   }
 
+  remove(p: Prestataire): void {
+    if (!confirm(`Supprimer définitivement ${p.nom} ?`)) return;
+    this.service.deletePrestataire(p.id).subscribe({
+      next: () => {
+        this.load();
+        this.showBanner('Prestataire supprimé.', 'success');
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Erreur lors de la suppression.';
+        this.showBanner(msg, 'danger');
+      }
+    });
+  }
+
   open(p: Prestataire): void {
     this.router.navigate(['/prestataires', p.id]);
   }

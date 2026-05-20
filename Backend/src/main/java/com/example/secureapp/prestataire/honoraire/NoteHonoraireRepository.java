@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface NoteHonoraireRepository extends JpaRepository<NoteHonoraireEntity, Long> {
     List<NoteHonoraireEntity> findByPrestataireIdOrderByCreatedAtDesc(Long prestataireId);
+    boolean existsByPrestataireId(Long prestataireId);
 }
-

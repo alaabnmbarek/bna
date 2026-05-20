@@ -130,6 +130,10 @@ export class PrestatairesService {
     return this.http.delete<void>(`${this.prestatairesUrl}/${id}`);
   }
 
+  deletePrestataire(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.prestatairesUrl}/${id}/purge`);
+  }
+
   listMissions(prestataireId: number): Observable<Mission[]> {
     return this.http.get<Mission[]>(`${this.prestatairesUrl}/${prestataireId}/missions`);
   }

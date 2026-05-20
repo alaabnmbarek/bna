@@ -96,4 +96,15 @@ public class PrestataireController {
         prestataireService.deactivate(id);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{id}/purge")
+    @PreAuthorize("hasAuthority('PRESTATAIRE_DELETE')")
+    public ResponseEntity<?> purge(@PathVariable("id") Long id) {
+        try {
+            prestataireService.purge(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+        }
+    }
 }

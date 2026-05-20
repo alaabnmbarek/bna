@@ -128,6 +128,17 @@ public class PrestataireService {
         prestataireRepository.save(entity);
     }
 
+    @Transactional
+    public void purge(Long id) {
+        PrestataireEntity entity = prestataireRepository.findById(id).orElseThrow(() -> new RuntimeException("Prestataire non trouvé"));
+        boolean hasMissions = missionRepository.existsByPrestataireId(id);
+        boolean hasNotes = noteHonoraireRepository.existsByPrestataireId(id);
+        if (hasMissions || hasNotes) {
+            throw new RuntimeException("Impossible de supprimer: prestataire lié à des missions ou notes d'honoraires");
+        }
+        prestataireRepository.delete(entity);
+    }
+
     private void apply(PrestataireDto dto, PrestataireEntity entity) {
         if (dto.getType() != null) entity.setType(dto.getType());
         if (dto.getNom() != null) entity.setNom(dto.getNom());

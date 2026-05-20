@@ -1,6 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 
 /* SCSS */
+@import "@angular/cdk/overlay-prebuilt.css";
 @import "scss/style";
 
 @media (max-width: 767.98px) {

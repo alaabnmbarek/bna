@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
+import { TemplatePortal } from '@angular/cdk/portal';
 import { AuthService } from '../auth/auth.service';
 import { AosService } from '../aos/aos.service';
 import { ContentieuxService, DossierContentieux } from '../contentieux/contentieux.service';
@@ -11,7 +13,7 @@ import { Mission, MissionResult, MissionResultStatus, MissionStatus, MissionType
 @Component({
   selector: 'app-missions-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardComponent],
+  imports: [CommonModule, FormsModule, OverlayModule, CardComponent],
   templateUrl: './missions.component.html',
   styleUrl: './missions.component.scss'
 })
@@ -23,6 +25,10 @@ export class MissionsPageComponent implements OnInit {
   showAssignForm = false;
   showResultModal = false;
   showMissionModal = false;
+  @ViewChild('resultModalTpl') resultModalTpl?: TemplateRef<any>;
+  @ViewChild('missionModalTpl') missionModalTpl?: TemplateRef<any>;
+  private resultOverlayRef: OverlayRef | null = null;
+  private missionOverlayRef: OverlayRef | null = null;
   missionModalLoading = false;
   selectedMission: Mission | null = null;
   selectedMissionResult: MissionResult | null = null;
@@ -100,19 +106,40 @@ export class MissionsPageComponent implements OnInit {
     private suiviService: SuiviJudiciaireService,
     private contentieuxService: ContentieuxService,
     public auth: AuthService,
-    private aos: AosService
+    private aos: AosService,
+    private overlay: Overlay,
+    private vcr: ViewContainerRef
   ) {}
 
   private setBodyScrollLocked(locked: boolean): void {
     const cls = 'app-lock-scroll';
+    const modalCls = 'modal-open';
     const body = document?.body;
     if (!body) return;
-    if (locked) body.classList.add(cls);
-    else body.classList.remove(cls);
+    if (locked) {
+      body.classList.add(cls);
+      body.classList.add(modalCls);
+    } else {
+      body.classList.remove(cls);
+      body.classList.remove(modalCls);
+    }
   }
 
   private syncBodyScrollLock(): void {
     this.setBodyScrollLocked(this.showResultModal || this.showMissionModal);
+  }
+
+  private openOverlayFromTemplate(tpl: TemplateRef<any>, onClose: () => void): OverlayRef {
+    const overlayRef = this.overlay.create({
+      hasBackdrop: true,
+      backdropClass: 'app-modal-backdrop',
+      scrollStrategy: this.overlay.scrollStrategies.block(),
+      positionStrategy: this.overlay.position().global().centerHorizontally().centerVertically()
+    });
+
+    overlayRef.backdropClick().subscribe(() => onClose());
+    overlayRef.attach(new TemplatePortal(tpl, this.vcr));
+    return overlayRef;
   }
 
   get canAssignMission(): boolean {
@@ -156,9 +183,16 @@ export class MissionsPageComponent implements OnInit {
     this.showResultModal = true;
     this.formResult = this.blankResultForm();
     this.syncBodyScrollLock();
+    if (!this.resultOverlayRef && this.resultModalTpl) {
+      this.resultOverlayRef = this.openOverlayFromTemplate(this.resultModalTpl, () => this.closeResultModal());
+    }
   }
 
   closeResultModal(): void {
+    if (this.resultOverlayRef) {
+      this.resultOverlayRef.dispose();
+      this.resultOverlayRef = null;
+    }
     this.showResultModal = false;
     this.savingResult = false;
     this.uploadingProof = false;
@@ -473,6 +507,9 @@ export class MissionsPageComponent implements OnInit {
     }
     this.showMissionModal = true;
     this.syncBodyScrollLock();
+    if (!this.missionOverlayRef && this.missionModalTpl) {
+      this.missionOverlayRef = this.openOverlayFromTemplate(this.missionModalTpl, () => this.closeMissionModal());
+    }
     this.missionModalLoading = true;
     this.prestatairesService.getMissionResult(m.id).subscribe({
       next: (r) => {
@@ -486,6 +523,10 @@ export class MissionsPageComponent implements OnInit {
   }
 
   closeMissionModal(): void {
+    if (this.missionOverlayRef) {
+      this.missionOverlayRef.dispose();
+      this.missionOverlayRef = null;
+    }
     this.showMissionModal = false;
     this.missionModalLoading = false;
     this.selectedMission = null;
