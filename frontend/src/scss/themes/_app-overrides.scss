@@ -186,21 +186,23 @@ h6 {
   width: 100vw;
   height: 100vh;
   max-height: none;
-  overflow: hidden;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12px;
 }
 
 .cdk-overlay-pane.app-modal-panel .modal-dialog {
-  margin: 12px auto;
+  margin: 0 auto;
 }
 
 .cdk-overlay-pane.app-modal-panel .modal-content {
-  max-height: calc(100vh - 24px);
-  display: flex;
-  flex-direction: column;
+  max-height: none;
 }
 
 .cdk-overlay-pane.app-modal-panel .modal-body {
-  overflow: auto;
+  overflow: visible;
 }
 
 .cdk-overlay-backdrop.app-modal-backdrop {

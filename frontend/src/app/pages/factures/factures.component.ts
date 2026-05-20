@@ -83,6 +83,14 @@ export class FacturesComponent implements OnInit {
   showFactureDetail = false;
   selectedFactureDetail: Facture | null = null;
   selectedFacturePrestataire: any = null;
+  detailPaymentModes: Array<{ value: string; label: string; description: string; icon: string; tone: 'primary' | 'success' | 'info' | 'warning' }> = [
+    { value: 'Virement', label: 'Virement', description: 'Transfert bancaire', icon: 'icon-repeat', tone: 'primary' },
+    { value: 'Carte bancaire', label: 'Carte', description: 'Carte bancaire', icon: 'icon-credit-card', tone: 'info' },
+    { value: 'PayPal', label: 'PayPal', description: 'Portefeuille en ligne', icon: 'icon-dollar-sign', tone: 'success' },
+    { value: 'Cheque', label: 'Chèque', description: 'Chèque classique', icon: 'icon-file-text', tone: 'warning' },
+    { value: 'Cheque BCT', label: 'Chèque BCT', description: 'Génération + suivi', icon: 'icon-shield', tone: 'primary' },
+    { value: 'Especes', label: 'Espèces', description: 'Paiement au guichet', icon: 'icon-briefcase', tone: 'warning' }
+  ];
   @ViewChild('factureDetailTpl') factureDetailTpl?: TemplateRef<any>;
   private factureDetailOverlayRef: OverlayRef | null = null;
 
@@ -158,9 +166,13 @@ export class FacturesComponent implements OnInit {
     this.showFactureDetail = true;
     this.syncBodyScrollLock();
     this.openFactureDetailOverlay();
+    this.onDetailModePaiementChange();
     if (facture.prestataireId) {
       this.prestatairesService.getPrestataire(facture.prestataireId).subscribe({
-        next: (p) => this.selectedFacturePrestataire = p,
+        next: (p) => {
+          this.selectedFacturePrestataire = p;
+          this.onDetailModePaiementChange();
+        },
         error: () => this.selectedFacturePrestataire = null
       });
     }
@@ -377,9 +389,53 @@ export class FacturesComponent implements OnInit {
     if (this.isChequeBct(f.modePaiement)) {
       if (f.chequeMontant == null) f.chequeMontant = f.montantTtc;
       if (!f.chequeDate) f.chequeDate = new Date().toISOString().split('T')[0];
+      if (!f.chequeNumero || !f.chequeNumero.trim()) f.chequeNumero = this.generateChequeNumero();
+      if (!f.chequeBeneficiaire || !f.chequeBeneficiaire.trim()) {
+        const b = this.getDefaultChequeBeneficiaire();
+        if (b) f.chequeBeneficiaire = b;
+      }
     } else {
       this.closeChequePreview();
     }
+  }
+
+  setDetailPaymentMode(mode: string): void {
+    const f = this.selectedFactureDetail;
+    if (!f) return;
+    f.modePaiement = mode;
+    this.onDetailModePaiementChange();
+  }
+
+  isDetailPaymentMode(mode: string): boolean {
+    const m = (this.selectedFactureDetail?.modePaiement || '').trim().toLowerCase();
+    return m === (mode || '').trim().toLowerCase();
+  }
+
+  paymentToneClass(tone: 'primary' | 'success' | 'info' | 'warning'): string {
+    switch (tone) {
+      case 'success': return 'pay-tone--success';
+      case 'info': return 'pay-tone--info';
+      case 'warning': return 'pay-tone--warning';
+      default: return 'pay-tone--primary';
+    }
+  }
+
+  private generateChequeNumero(): string {
+    const len = 10;
+    const bytes = new Uint32Array(len);
+    try {
+      crypto?.getRandomValues?.(bytes);
+    } catch {
+      for (let i = 0; i < len; i++) bytes[i] = Math.floor(Math.random() * 10);
+    }
+    const digits = Array.from(bytes, v => String(v % 10)).join('');
+    return digits.replace(/^0/, '1');
+  }
+
+  private getDefaultChequeBeneficiaire(): string | null {
+    const p = this.selectedFacturePrestataire;
+    const full = `${p?.nom || ''} ${p?.prenom || ''}`.trim();
+    return full || null;
   }
 
   onEditModePaiementChange() {

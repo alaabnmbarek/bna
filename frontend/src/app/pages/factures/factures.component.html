@@ -564,30 +564,29 @@
 
 <!-- Modal Facture Detail (View) -->
 <ng-template #factureDetailTpl>
-  <div class="app-overlay-modal">
-    <div class="modal-dialog modal-xl">
-      <div class="modal-content facture-view-modal">
-        <div class="modal-header border-bottom-0 no-print">
-          <h5 class="modal-title">Détail de la Facture</h5>
-          <div class="d-flex gap-2">
-            <button class="btn btn-outline-secondary btn-sm" (click)="printFacture()">
-              <i class="feather icon-printer me-1"></i> Imprimer
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" (click)="downloadFacturePdf()">
-              <i class="feather icon-download me-1"></i> Télécharger facture
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" *ngIf="selectedFactureDetail?.fichierJustificatif" (click)="downloadJustificatif(selectedFactureDetail!)">
-              <i class="feather icon-download me-1"></i> Télécharger PDF
-            </button>
-            <label class="btn btn-outline-primary btn-sm mb-0">
-              <i class="feather icon-upload me-1"></i> Uploader PDF
-              <input type="file" hidden accept=".pdf,image/*" (change)="onJustificatifSelected($event, selectedFactureDetail)" />
-            </label>
-            <button type="button" class="btn-close" (click)="closeFactureDetail()"></button>
-          </div>
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content facture-view-modal">
+      <div class="modal-header border-bottom-0 no-print">
+        <h5 class="modal-title">Détail de la Facture</h5>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary btn-sm" (click)="printFacture()">
+            <i class="feather icon-printer me-1"></i> Imprimer
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" (click)="downloadFacturePdf()">
+            <i class="feather icon-download me-1"></i> Télécharger facture
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" *ngIf="selectedFactureDetail?.fichierJustificatif" (click)="downloadJustificatif(selectedFactureDetail!)">
+            <i class="feather icon-download me-1"></i> Télécharger PDF
+          </button>
+          <label class="btn btn-outline-primary btn-sm mb-0">
+            <i class="feather icon-upload me-1"></i> Uploader PDF
+            <input type="file" hidden accept=".pdf,image/*" (change)="onJustificatifSelected($event, selectedFactureDetail)" />
+          </label>
+          <button type="button" class="btn-close" (click)="closeFactureDetail()"></button>
         </div>
-        <div class="modal-body p-0">
-          <div class="facture-document" id="printableFacture">
+      </div>
+      <div class="modal-body p-0">
+        <div class="facture-document" id="printableFacture">
           <!-- Header Facture -->
           <div class="facture-doc-header">
             <div class="row align-items-center">
@@ -711,29 +710,53 @@
             <div class="legal">Facture générée numériquement par le portail BNA BANK Contentieux.</div>
           </div>
         </div>
-        </div>
-        <div class="modal-footer border-top-0 no-print d-block">
-          <div class="w-100 border rounded-3 p-3 mb-3" style="background: rgba(255, 255, 255, 0.92);">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-              <div class="fw-bold">Mode de paiement</div>
-              <span class="badge bg-light text-dark" *ngIf="selectedFactureDetail?.statut">
+      </div>
+      <div class="modal-footer border-top-0 no-print d-block">
+        <div class="payment-section">
+          <div class="payment-head">
+            <div>
+              <div class="payment-title">Mode de paiement</div>
+              <div class="payment-subtitle">Sélectionnez une méthode de paiement</div>
+            </div>
+            <div class="payment-badges">
+              <span class="payment-badge payment-badge--secure">
+                <i class="feather icon-lock"></i>
+                Paiement sécurisé
+              </span>
+              <span class="payment-badge payment-badge--status" *ngIf="selectedFactureDetail?.statut">
                 {{ selectedFactureDetail?.statut }}
               </span>
             </div>
+          </div>
 
-            <div class="row g-3 mt-1">
-              <div class="col-12 col-md-6">
-                <label class="form-label">Choix</label>
-                <select class="form-select" [(ngModel)]="selectedFactureDetail!.modePaiement" name="detailModePaiement" (ngModelChange)="onDetailModePaiementChange()">
-                  <option value="Virement">Virement Bancaire</option>
-                  <option value="Cheque">Chèque</option>
-                  <option value="Cheque BCT">Chèque BCT</option>
-                  <option value="Especes">Espèces</option>
-                </select>
+          <div class="payment-grid">
+            <button
+              type="button"
+              class="payment-card"
+              *ngFor="let m of detailPaymentModes"
+              [class.is-selected]="isDetailPaymentMode(m.value)"
+              (click)="setDetailPaymentMode(m.value)"
+            >
+              <div class="payment-card-icon" [ngClass]="paymentToneClass(m.tone)">
+                <i class="feather" [ngClass]="m.icon"></i>
               </div>
+              <div class="payment-card-body">
+                <div class="payment-card-title">{{ m.label }}</div>
+                <div class="payment-card-desc">{{ m.description }}</div>
+              </div>
+              <div class="payment-card-check">
+                <i class="feather icon-check"></i>
+              </div>
+            </button>
+          </div>
+
+          <div class="payment-cheque" *ngIf="selectedFactureDetail && isChequeBct(selectedFactureDetail.modePaiement)">
+            <div class="payment-cheque-head">
+              <div class="payment-cheque-title">Chèque BCT</div>
+              <div class="payment-cheque-hint">Numéro et bénéficiaire sont remplis automatiquement</div>
             </div>
 
-            <div class="row g-3 mt-1" *ngIf="selectedFactureDetail && isChequeBct(selectedFactureDetail.modePaiement)">
+            <div class="row g-3 mt-1">
               <div class="col-12 col-md-4">
                 <label class="form-label">Numéro du chèque</label>
                 <input class="form-control" [(ngModel)]="selectedFactureDetail.chequeNumero" name="chequeNumero">
@@ -755,7 +778,7 @@
                 <input class="form-control" [(ngModel)]="selectedFactureDetail.chequeBeneficiaire" name="chequeBeneficiaire">
               </div>
 
-              <div class="col-12 d-flex flex-wrap gap-2">
+              <div class="col-12 d-flex flex-wrap gap-2 payment-actions">
                 <button type="button" class="btn btn-outline-primary" (click)="generateCheque()" [disabled]="chequeGenerating || chequeUploading">
                   <i class="feather icon-file me-1"></i> Générer chèque
                 </button>
@@ -777,16 +800,16 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <div class="d-flex justify-content-end gap-2 flex-wrap">
-            <button type="button" class="btn btn-outline-secondary" (click)="closeFactureDetail()">Fermer</button>
-            <button type="button" class="btn btn-primary" (click)="validateFacture(selectedFactureDetail!.id!)" *ngIf="selectedFactureDetail?.statut === 'EN_COURS' && auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
-              <i class="feather icon-check-circle me-1"></i> Valider la facture
-            </button>
-            <button type="button" class="btn btn-success" (click)="markAsPaid(selectedFactureDetail!.id!)" *ngIf="selectedFactureDetail?.statut === 'VALIDEE' && auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
-              <i class="feather icon-dollar-sign me-1"></i> Marquer comme payée
-            </button>
-          </div>
+        <div class="d-flex justify-content-end gap-2 flex-wrap">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeFactureDetail()">Fermer</button>
+          <button type="button" class="btn btn-primary" (click)="validateFacture(selectedFactureDetail!.id!)" *ngIf="selectedFactureDetail?.statut === 'EN_COURS' && auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
+            <i class="feather icon-check-circle me-1"></i> Valider la facture
+          </button>
+          <button type="button" class="btn btn-success" (click)="markAsPaid(selectedFactureDetail!.id!)" *ngIf="selectedFactureDetail?.statut === 'VALIDEE' && auth.role() === 'ROLE_RESPONSABLE_CONTENTIEUX'">
+            <i class="feather icon-dollar-sign me-1"></i> Marquer comme payée
+          </button>
         </div>
       </div>
     </div>
