@@ -172,6 +172,14 @@ public class SuiviJudiciaireService {
         return mapToAudienceDto(audienceRepository.save(entity));
     }
 
+    @Transactional
+    public void deleteAudience(Long id, Authentication authentication) {
+        AudienceEntity entity = audienceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Audience non trouvée"));
+        requireAccessibleAffaire(entity.getAffaireJudiciaire().getId(), authentication);
+        audienceRepository.deleteById(id);
+    }
+
     @Transactional(readOnly = true)
     public List<AudienceDto> getAudiencesByAffaire(Long affaireId, Authentication authentication) {
         requireAccessibleAffaire(affaireId, authentication);

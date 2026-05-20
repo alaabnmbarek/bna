@@ -86,6 +86,10 @@ export class SuiviJudiciaireService {
     return this.http.put<Audience>(`${this.url}/audiences/${id}`, payload);
   }
 
+  deleteAudience(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.url}/audiences/${id}`);
+  }
+
   getAudiencesByAffaire(affaireId: number): Observable<Audience[]> {
     return this.http.get<Audience[]>(`${this.url}/audiences/affaire/${affaireId}`);
   }

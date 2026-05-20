@@ -61,6 +61,13 @@ public class SuiviJudiciaireController {
         return ResponseEntity.ok(suiviJudiciaireService.updateAudience(id, dto, authentication));
     }
 
+    @DeleteMapping("/audiences/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    public ResponseEntity<Void> deleteAudience(@PathVariable("id") Long id, Authentication authentication) {
+        suiviJudiciaireService.deleteAudience(id, authentication);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/audiences/affaire/{affaireId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX', 'AVOCAT')")
     public ResponseEntity<List<AudienceDto>> getAudiencesByAffaire(@PathVariable("affaireId") Long affaireId, Authentication authentication) {

@@ -38,6 +38,9 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   showJugementForm = false;
   showAssignationPopup = false;
   selectedAffaire: AffaireJudiciaire | null = null;
+  showNewAudienceForm = false;
+  editingAudienceId: number | null = null;
+  activeAudienceId: number | null = null;
   @ViewChild('audiencesTpl') audiencesTpl?: TemplateRef<any>;
   private audiencesOverlayRef: OverlayRef | null = null;
 
@@ -126,6 +129,9 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     }
     this.showAffaireForm = false;
     this.showAudienceForm = false;
+    this.showNewAudienceForm = false;
+    this.editingAudienceId = null;
+    this.activeAudienceId = null;
     this.showJugementForm = false;
     this.showAssignationPopup = false;
     this.showDossierDetails = false;
@@ -155,6 +161,9 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
       this.audiencesOverlayRef = null;
     }
     this.showAudienceForm = false;
+    this.showNewAudienceForm = false;
+    this.editingAudienceId = null;
+    this.activeAudienceId = null;
     this.selectedAffaire = null;
     this.syncBodyScrollLock();
   }
@@ -426,20 +435,27 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     
     this.closeAllPopups();
     this.selectedAffaire = affaire;
-    this.showAudienceForm = true; // Ouvrir le modal immédiatement
+    this.showAudienceForm = true;
+    this.showNewAudienceForm = false;
+    this.editingAudienceId = null;
+    this.activeAudienceId = null;
     this.syncBodyScrollLock();
     if (!this.audiencesOverlayRef && this.audiencesTpl) {
       this.audiencesOverlayRef = this.openOverlayFromTemplate(this.audiencesTpl, () => this.closeAudienceForm());
     }
-    this.audiences = []; // Vider la liste actuelle
-    this.loading = true; // On peut réutiliser la variable loading ou en créer une spécifique
+    this.reloadAudiences();
+  }
 
-    this.addAudience(); // Préparer le formulaire d'ajout
-    
-    this.suiviService.getAudiencesByAffaire(affaire.id).subscribe({
+  private reloadAudiences(): void {
+    const affaireId = this.selectedAffaire?.id;
+    if (!affaireId) return;
+    this.audiences = [];
+    this.loading = true;
+    this.suiviService.getAudiencesByAffaire(affaireId).subscribe({
       next: (data) => {
-        this.audiences = data;
+        this.audiences = data || [];
         this.loading = false;
+        setTimeout(() => this.aos.refresh(), 0);
       },
       error: (err) => {
         console.error('Erreur lors du chargement des audiences', err);
@@ -449,7 +465,44 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     });
   }
 
-  addAudience(): void {
+  toggleNewAudienceForm(): void {
+    if (this.showNewAudienceForm) {
+      this.closeNewAudienceForm();
+    } else {
+      this.openNewAudienceForm();
+    }
+  }
+
+  openNewAudienceForm(): void {
+    if (!this.selectedAffaire?.id) return;
+    this.editingAudienceId = null;
+    this.activeAudienceId = null;
+    this.resetAudienceFormDefaults();
+    this.showNewAudienceForm = true;
+  }
+
+  closeNewAudienceForm(): void {
+    this.showNewAudienceForm = false;
+    this.editingAudienceId = null;
+  }
+
+  startEditAudience(aud: Audience): void {
+    if (!aud?.id || !this.selectedAffaire?.id) return;
+    this.editingAudienceId = aud.id;
+    this.activeAudienceId = aud.id;
+    this.showNewAudienceForm = true;
+    this.newAudience = { ...this.blankAudience(), ...aud, affaireId: this.selectedAffaire.id };
+    const iso = String(aud.dateAudience || '');
+    this.newAudienceDate = iso.length >= 10 ? iso.slice(0, 10) : '';
+    this.newAudienceTime = iso.length >= 16 ? iso.slice(11, 16) : '';
+  }
+
+  viewAudienceRow(aud: Audience): void {
+    if (!aud?.id) return;
+    this.activeAudienceId = this.activeAudienceId === aud.id ? null : aud.id;
+  }
+
+  private resetAudienceFormDefaults(): void {
     this.newAudience = this.blankAudience();
     this.newAudience.affaireId = this.selectedAffaire!.id!;
     const now = new Date();
@@ -476,18 +529,45 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
       return;
     }
     this.newAudience.dateAudience = `${this.newAudienceDate}T${this.newAudienceTime}`;
-
-    this.suiviService.scheduleAudience(this.newAudience).subscribe({
+    const affaireId = this.selectedAffaire?.id;
+    if (!affaireId) return;
+    const payload: Audience = { ...this.newAudience, affaireId };
+    const req$ = this.editingAudienceId
+      ? this.suiviService.updateAudience(this.editingAudienceId, payload)
+      : this.suiviService.scheduleAudience(payload);
+    req$.subscribe({
       next: () => {
-        this.viewAudiences(this.selectedAffaire!);
-        this.newAudience = this.blankAudience();
-        this.addAudience(); // Reset with new default date
+        this.reloadAudiences();
+        this.closeNewAudienceForm();
+        this.resetAudienceFormDefaults();
       },
       error: (err) => {
         console.error('Erreur lors de la programmation de l\'audience', err);
         alert('Erreur lors de la programmation de l\'audience.');
       }
     });
+  }
+
+  deleteAudience(aud: Audience): void {
+    if (!aud?.id) return;
+    if (!confirm('Voulez-vous vraiment supprimer cette audience ?')) return;
+    this.suiviService.deleteAudience(aud.id).subscribe({
+      next: () => this.reloadAudiences(),
+      error: (err) => {
+        console.error('Erreur lors de la suppression', err);
+        alert('Erreur lors de la suppression de l\'audience.');
+      }
+    });
+  }
+
+  audienceStatusLabel(s?: AudienceStatus | string | null): string {
+    switch (s) {
+      case 'REALISEE': return 'Confirmée';
+      case 'PROGRAMMEE': return 'En attente';
+      case 'REPORTEE': return 'Reportée';
+      case 'ANNULEE': return 'Annulée';
+      default: return s ? String(s) : '—';
+    }
   }
 
   openJugementForm(affaire: AffaireJudiciaire): void {
