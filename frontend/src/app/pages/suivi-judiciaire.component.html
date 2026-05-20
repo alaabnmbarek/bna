@@ -367,49 +367,96 @@
 
 <!-- Modal Audiences -->
 <ng-template #audiencesTpl>
-  <div class="modal-dialog modal-xl modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Calendrier des Audiences - {{ selectedAffaire?.referenceTribunal }}</h5>
-        <button type="button" class="btn-close" (click)="closeAudienceForm()"></button>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable sj-audiences-modal">
+    <div class="modal-content sj-modal">
+      <div class="modal-header sj-modal-header">
+        <div class="sj-modal-titlewrap">
+          <div class="sj-modal-icon">
+            <i class="feather icon-calendar"></i>
+          </div>
+          <div class="sj-modal-titles">
+            <div class="sj-modal-title">Calendrier des Audiences</div>
+            <div class="sj-modal-subtitle">{{ selectedAffaire?.referenceTribunal }}</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close sj-close" (click)="closeAudienceForm()"></button>
       </div>
-      <div class="modal-body">
-        <div class="audience-grid">
-          <div class="audience-left card p-3 bg-light">
-            <h6 class="audience-panel-title">Nouvelle Audience / Report</h6>
-            <div class="mb-2">
-              <label class="form-label">Référence audience</label>
-              <input type="text" class="form-control" [(ngModel)]="newAudience.referenceAudience">
-            </div>
-            <div class="row g-2 mb-2">
-              <div class="col-7">
-                <label class="form-label">Date de l'audience</label>
-                <input type="date" class="form-control" [(ngModel)]="newAudienceDate">
-              </div>
-              <div class="col-5">
-                <label class="form-label">Heure</label>
-                <input type="time" class="form-control" [(ngModel)]="newAudienceTime">
+
+      <div class="modal-body sj-modal-body">
+        <div class="audience-grid sj-audiences-grid">
+          <div class="audience-left sj-form-card">
+            <div class="sj-card-head">
+              <div class="sj-card-title">Nouvelle Audience</div>
+              <div class="sj-card-badge">
+                <i class="feather icon-lock"></i>
+                Paiement sécurisé
               </div>
             </div>
-            <div class="mb-2">
-              <label class="form-label">Tribunal</label>
-              <input type="text" class="form-control" [(ngModel)]="newAudience.tribunal">
+
+            <div class="sj-field">
+              <label class="sj-label">Référence audience</label>
+              <div class="input-group sj-input">
+                <span class="input-group-text"><i class="feather icon-hash"></i></span>
+                <input type="text" class="form-control" [(ngModel)]="newAudience.referenceAudience" placeholder="Ex: AUD-2026-001">
+              </div>
             </div>
-            <div class="mb-2">
-              <label class="form-label">Salle</label>
-              <input type="text" class="form-control" [(ngModel)]="newAudience.salle">
+
+            <div class="row g-2">
+              <div class="col-7 sj-field">
+                <label class="sj-label">Date de l'audience</label>
+                <div class="input-group sj-input">
+                  <span class="input-group-text"><i class="feather icon-calendar"></i></span>
+                  <input type="date" class="form-control" [(ngModel)]="newAudienceDate">
+                </div>
+              </div>
+              <div class="col-5 sj-field">
+                <label class="sj-label">Heure</label>
+                <div class="input-group sj-input">
+                  <span class="input-group-text"><i class="feather icon-clock"></i></span>
+                  <input type="time" class="form-control" [(ngModel)]="newAudienceTime">
+                </div>
+              </div>
             </div>
-            <div class="mb-2">
-              <label class="form-label">Objet / Motif</label>
-              <input type="text" class="form-control" [(ngModel)]="newAudience.objet">
+
+            <div class="sj-field">
+              <label class="sj-label">Tribunal</label>
+              <div class="input-group sj-input">
+                <span class="input-group-text"><i class="feather icon-home"></i></span>
+                <input type="text" class="form-control" [(ngModel)]="newAudience.tribunal" placeholder="Ex: Tribunal de 1ère Instance">
+              </div>
             </div>
-            <button class="btn btn-primary w-100" (click)="saveAudience()">Programmer</button>
+
+            <div class="sj-field">
+              <label class="sj-label">Salle</label>
+              <div class="input-group sj-input">
+                <span class="input-group-text"><i class="feather icon-map-pin"></i></span>
+                <input type="text" class="form-control" [(ngModel)]="newAudience.salle" placeholder="Ex: Salle A3">
+              </div>
+            </div>
+
+            <div class="sj-field">
+              <label class="sj-label">Objet / Motif</label>
+              <div class="input-group sj-input">
+                <span class="input-group-text"><i class="feather icon-edit-3"></i></span>
+                <input type="text" class="form-control" [(ngModel)]="newAudience.objet" placeholder="Ex: Audience de conciliation">
+              </div>
+            </div>
+
+            <button class="btn sj-primary-btn w-100" (click)="saveAudience()">
+              <i class="feather icon-calendar me-1"></i>
+              Programmer
+            </button>
           </div>
 
-          <div class="audience-right">
-            <div class="card p-0 audience-table-card">
-              <div class="table-responsive audience-table-responsive">
-                <table class="table table-sm mb-0">
+          <div class="audience-right sj-table-wrap">
+            <div class="sj-table-card">
+              <div class="sj-table-head">
+                <div class="sj-table-title">Audiences</div>
+                <div class="sj-table-meta">{{ audiences?.length || 0 }} élément(s)</div>
+              </div>
+
+              <div class="table-responsive audience-table-responsive sj-scroll">
+                <table class="table table-sm mb-0 sj-table">
                   <thead>
                     <tr>
                       <th>Référence</th>
@@ -422,19 +469,35 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let aud of audiences">
-                      <td>{{ aud.referenceAudience || '-' }}</td>
-                      <td>{{ aud.dateAudience | date:'dd/MM/yyyy HH:mm' }}</td>
-                      <td>{{ aud.tribunal || '-' }}</td>
-                      <td>{{ aud.salle || '-' }}</td>
-                      <td>{{ aud.objet }}</td>
-                      <td>
-                        <select class="form-select form-select-sm" [(ngModel)]="aud.statut" (change)="suiviService.updateAudience(aud.id!, aud).subscribe()">
-                          <option *ngFor="let s of audienceStatuses" [value]="s">{{ s }}</option>
-                        </select>
+                    <tr *ngFor="let aud of audiences" class="sj-row">
+                      <td class="text-nowrap">{{ aud.referenceAudience || '—' }}</td>
+                      <td class="text-nowrap">
+                        <i class="feather icon-clock sj-cell-icon"></i>
+                        {{ aud.dateAudience | date:'dd/MM/yyyy HH:mm' }}
+                      </td>
+                      <td class="text-nowrap">
+                        <i class="feather icon-home sj-cell-icon"></i>
+                        {{ aud.tribunal || '—' }}
+                      </td>
+                      <td class="text-nowrap">
+                        <i class="feather icon-map-pin sj-cell-icon"></i>
+                        {{ aud.salle || '—' }}
+                      </td>
+                      <td class="sj-ellipsis" [title]="aud.objet">{{ aud.objet }}</td>
+                      <td class="text-nowrap">
+                        <div class="sj-status-pill" [ngClass]="{
+                          'sj-status--warning': aud.statut === 'PROGRAMMEE',
+                          'sj-status--success': aud.statut === 'REALISEE',
+                          'sj-status--info': aud.statut === 'REPORTEE',
+                          'sj-status--danger': aud.statut === 'ANNULEE'
+                        }">
+                          <select class="form-select form-select-sm sj-status-select" [(ngModel)]="aud.statut" (change)="suiviService.updateAudience(aud.id!, aud).subscribe()">
+                            <option *ngFor="let s of audienceStatuses" [value]="s">{{ s }}</option>
+                          </select>
+                        </div>
                       </td>
                       <td>
-                        <textarea class="form-control form-control-sm" rows="1" [(ngModel)]="aud.compteRendu" (blur)="suiviService.updateAudience(aud.id!, aud).subscribe()" placeholder="Saisir compte rendu..."></textarea>
+                        <textarea class="form-control form-control-sm sj-textarea" rows="1" [(ngModel)]="aud.compteRendu" (blur)="suiviService.updateAudience(aud.id!, aud).subscribe()" placeholder="Saisir compte rendu..."></textarea>
                       </td>
                     </tr>
                     <tr *ngIf="audiences.length === 0">

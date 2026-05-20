@@ -207,6 +207,7 @@ h6 {
 
 .cdk-overlay-backdrop.app-modal-backdrop {
   background: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(8px);
 }
 
 .pcoded-content .card:hover {
