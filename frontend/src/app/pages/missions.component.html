@@ -335,146 +335,187 @@
 </ng-template>
 
 <ng-template #missionModalTpl>
-  <div class="modal-dialog modal-xl modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Détails de la mission</h5>
-        <button type="button" class="btn-close" (click)="closeMissionModal()"></button>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable md-dialog">
+    <div class="modal-content md-modal">
+      <div class="md-header">
+        <div class="md-titlewrap">
+          <div class="md-icon">
+            <i class="feather icon-clipboard"></i>
+          </div>
+          <div class="md-titles">
+            <div class="md-title">Détails de la mission</div>
+            <div class="md-subtitle" *ngIf="selectedMission">
+              #{{ selectedMission.id }} • {{ missionCodeOrAuto(selectedMission) }}
+            </div>
+          </div>
+        </div>
+        <button type="button" class="md-close" (click)="closeMissionModal()">
+          <i class="feather icon-x"></i>
+        </button>
       </div>
-      <div class="modal-body">
-        <div *ngIf="!selectedMission" class="text-muted">Aucune mission sélectionnée.</div>
+      <div class="md-headerline"></div>
 
-        <div *ngIf="selectedMission" class="row g-3">
-          <div class="col-12">
-            <div class="card p-3">
-              <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                <div>
-                  <div class="text-muted small">ID Mission</div>
-                  <div class="fw-bold">#{{ selectedMission.id }}</div>
-                </div>
-                <div>
-                  <div class="text-muted small">Type mission</div>
-                  <div class="fw-bold">{{ missionTypeLabelOrInfer(selectedMission) }}</div>
-                </div>
-                <div>
-                  <div class="text-muted small">Code mission</div>
-                  <div class="fw-bold">{{ missionCodeOrAuto(selectedMission) }}</div>
-                </div>
-                <div>
-                  <div class="text-muted small">Statut</div>
-                  <div class="fw-bold"><span [class]="badgeClass(selectedMission.statut)">{{ selectedMission.statut }}</span></div>
+      <div class="modal-body md-body">
+        <div *ngIf="!selectedMission" class="md-empty">Aucune mission sélectionnée.</div>
+
+        <div *ngIf="selectedMission" class="md-content">
+          <div class="md-stats">
+            <div class="md-stat">
+              <div class="md-stat-ico"><i class="feather icon-hash"></i></div>
+              <div>
+                <div class="md-stat-label">ID Mission</div>
+                <div class="md-stat-value">#{{ selectedMission.id }}</div>
+              </div>
+            </div>
+            <div class="md-stat">
+              <div class="md-stat-ico"><i class="feather icon-layers"></i></div>
+              <div>
+                <div class="md-stat-label">Type</div>
+                <div class="md-stat-value">{{ missionTypeLabelOrInfer(selectedMission) }}</div>
+              </div>
+            </div>
+            <div class="md-stat">
+              <div class="md-stat-ico"><i class="feather icon-hash"></i></div>
+              <div>
+                <div class="md-stat-label">Code</div>
+                <div class="md-stat-value">{{ missionCodeOrAuto(selectedMission) }}</div>
+              </div>
+            </div>
+            <div class="md-stat">
+              <div class="md-stat-ico"><i class="feather icon-activity"></i></div>
+              <div>
+                <div class="md-stat-label">Statut</div>
+                <div class="md-stat-value">
+                  <span class="md-badge" [ngClass]="{
+                    'md-badge--success': selectedMission.statut === 'TERMINEE',
+                    'md-badge--warning': selectedMission.statut === 'EN_COURS',
+                    'md-badge--info': selectedMission.statut === 'ASSIGNEE' || selectedMission.statut === 'EN_ATTENTE',
+                    'md-badge--danger': selectedMission.statut === 'ECHOUEE' || selectedMission.statut === 'ANNULEE'
+                  }">{{ statusLabel(selectedMission) }}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="col-12 col-lg-6">
-            <div class="card p-3 h-100">
-              <h6 class="mb-3">Informations mission</h6>
-              <div class="row g-3">
-                <div class="col-12 col-md-6">
-                  <div class="text-muted small">Dossier</div>
-                  <div class="fw-bold">{{ selectedMission.dossierReference || '—' }}</div>
-                </div>
-                <div class="col-12 col-md-6">
-                  <div class="text-muted small">Durée estimée</div>
-                  <div class="fw-bold">{{ selectedMission.dureeEstimee != null ? (selectedMission.dureeEstimee + ' jours') : '—' }}</div>
-                </div>
-                <div class="col-12">
-                  <div class="text-muted small">Description</div>
-                  <div class="fw-bold" style="white-space: pre-wrap;">{{ selectedMission.description || '—' }}</div>
-                </div>
-                <div class="col-12 col-md-6">
-                  <div class="text-muted small">Date création</div>
-                  <div class="fw-bold">{{ selectedMission.createdAt ? (selectedMission.createdAt | date:'dd/MM/yyyy HH:mm') : '—' }}</div>
-                </div>
+          <div class="md-grid">
+            <div class="md-card">
+              <div class="md-card-head">
+                <div class="md-card-title"><i class="feather icon-info md-card-ico md-ico--cyan"></i> Informations mission</div>
               </div>
-            </div>
-          </div>
-
-          <div class="col-12 col-lg-6">
-            <div class="card p-3 h-100">
-              <h6 class="mb-3">Prestataire & Procédure</h6>
-              <div class="row g-3">
-                <div class="col-12 col-md-6">
-                  <div class="text-muted small">Prestataire</div>
-                  <div class="fw-bold">{{ prestataireNameById(selectedMission.prestataireId) }}</div>
-                </div>
-                <div class="col-12 col-md-6">
-                  <div class="text-muted small">Type procédure</div>
-                  <div class="fw-bold">{{ displayProcedureType() }}</div>
-                </div>
-                <div class="col-12 col-md-6">
-                  <div class="text-muted small">Affaire liée (N°)</div>
-                  <div class="fw-bold">{{ displayAffaireNumero() }}</div>
-                </div>
-                <div class="col-12 col-md-6">
-                  <div class="text-muted small">Tribunal</div>
-                  <div class="fw-bold">{{ displayTribunal() }}</div>
-                </div>
-                <div class="col-12">
-                  <div class="text-muted small">ID Procédure</div>
-                  <div class="fw-bold">{{ displayProcedureId() }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12">
-            <div class="card p-3">
-              <h6 class="mb-3">Résultat de mission</h6>
-
-              <div *ngIf="missionModalLoading" class="text-muted">
-                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                Chargement du résultat...
-              </div>
-
-              <div *ngIf="!missionModalLoading && !selectedMissionResult" class="text-muted">
-                Aucun résultat saisi.
-              </div>
-
-              <div *ngIf="!missionModalLoading && selectedMissionResult" class="row g-3">
-                <div class="col-12 col-md-3">
-                  <div class="text-muted small">ID Résultat</div>
-                  <div class="fw-bold">#{{ selectedMissionResult.id }}</div>
-                </div>
-                <div class="col-12 col-md-3">
-                  <div class="text-muted small">Statut</div>
-                  <div class="fw-bold">{{ selectedMissionResult.statut }}</div>
-                </div>
-                <div class="col-12 col-md-3">
-                  <div class="text-muted small">Date début</div>
-                  <div class="fw-bold">{{ selectedMissionResult.dateDebut ? (selectedMissionResult.dateDebut | date:'dd/MM/yyyy') : '—' }}</div>
-                </div>
-                <div class="col-12 col-md-3">
-                  <div class="text-muted small">Date fin</div>
-                  <div class="fw-bold">{{ selectedMissionResult.dateFin ? (selectedMissionResult.dateFin | date:'dd/MM/yyyy') : '—' }}</div>
-                </div>
-                <div class="col-12 col-md-4">
-                  <div class="text-muted small">Montant récupérée</div>
-                  <div class="fw-bold">{{ selectedMissionResult.montantRecuperee != null ? selectedMissionResult.montantRecuperee : '—' }}</div>
-                </div>
-                <div class="col-12 col-md-8">
-                  <div class="text-muted small">Preuve</div>
-                  <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="fw-bold">{{ selectedMissionResult.preuveFileName || '—' }}</span>
-                    <button *ngIf="selectedMissionResult.hasPreuve" type="button" class="btn btn-sm btn-outline-primary" (click)="downloadSelectedProof()">
-                      <i class="feather icon-download me-1"></i>
-                      Télécharger
-                    </button>
+              <div class="md-card-body">
+                <div class="md-kv-grid">
+                  <div class="md-kv">
+                    <div class="md-k">Dossier</div>
+                    <div class="md-v">{{ selectedMission.dossierReference || '—' }}</div>
+                  </div>
+                  <div class="md-kv">
+                    <div class="md-k">Durée estimée</div>
+                    <div class="md-v">{{ selectedMission.dureeEstimee != null ? (selectedMission.dureeEstimee + ' jours') : '—' }}</div>
+                  </div>
+                  <div class="md-kv md-kv--full">
+                    <div class="md-k">Description</div>
+                    <div class="md-v md-v--pre">{{ selectedMission.description || '—' }}</div>
+                  </div>
+                  <div class="md-kv">
+                    <div class="md-k">Date création</div>
+                    <div class="md-v">{{ selectedMission.createdAt ? (selectedMission.createdAt | date:'dd/MM/yyyy HH:mm') : '—' }}</div>
                   </div>
                 </div>
-                <div class="col-12">
-                  <div class="text-muted small">Résultat</div>
-                  <div class="fw-bold" style="white-space: pre-wrap;">{{ selectedMissionResult.resultat || '—' }}</div>
+              </div>
+            </div>
+
+            <div class="md-card">
+              <div class="md-card-head">
+                <div class="md-card-title"><i class="feather icon-user md-card-ico md-ico--violet"></i> Prestataire & Procédure</div>
+              </div>
+              <div class="md-card-body">
+                <div class="md-kv-grid">
+                  <div class="md-kv">
+                    <div class="md-k">Prestataire</div>
+                    <div class="md-v">{{ prestataireNameById(selectedMission.prestataireId) }}</div>
+                  </div>
+                  <div class="md-kv">
+                    <div class="md-k">Type procédure</div>
+                    <div class="md-v">{{ displayProcedureType() }}</div>
+                  </div>
+                  <div class="md-kv">
+                    <div class="md-k">Affaire liée (N°)</div>
+                    <div class="md-v">{{ displayAffaireNumero() }}</div>
+                  </div>
+                  <div class="md-kv">
+                    <div class="md-k">Tribunal</div>
+                    <div class="md-v">{{ displayTribunal() }}</div>
+                  </div>
+                  <div class="md-kv md-kv--full">
+                    <div class="md-k">ID Procédure</div>
+                    <div class="md-v">{{ displayProcedureId() }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="md-card md-card--full">
+              <div class="md-card-head">
+                <div class="md-card-title"><i class="feather icon-award md-card-ico md-ico--cyan"></i> Résultat de mission</div>
+              </div>
+              <div class="md-card-body">
+                <div *ngIf="missionModalLoading" class="md-loading">
+                  <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                  Chargement du résultat...
+                </div>
+
+                <div *ngIf="!missionModalLoading && !selectedMissionResult" class="md-empty-inline">
+                  Aucun résultat saisi.
+                </div>
+
+                <div *ngIf="!missionModalLoading && selectedMissionResult" class="md-result">
+                  <div class="md-kv-grid">
+                    <div class="md-kv">
+                      <div class="md-k">ID Résultat</div>
+                      <div class="md-v">#{{ selectedMissionResult.id }}</div>
+                    </div>
+                    <div class="md-kv">
+                      <div class="md-k">Statut</div>
+                      <div class="md-v">{{ selectedMissionResult.statut }}</div>
+                    </div>
+                    <div class="md-kv">
+                      <div class="md-k">Date début</div>
+                      <div class="md-v">{{ selectedMissionResult.dateDebut ? (selectedMissionResult.dateDebut | date:'dd/MM/yyyy') : '—' }}</div>
+                    </div>
+                    <div class="md-kv">
+                      <div class="md-k">Date fin</div>
+                      <div class="md-v">{{ selectedMissionResult.dateFin ? (selectedMissionResult.dateFin | date:'dd/MM/yyyy') : '—' }}</div>
+                    </div>
+                    <div class="md-kv">
+                      <div class="md-k">Montant récupérée</div>
+                      <div class="md-v">{{ selectedMissionResult.montantRecuperee != null ? selectedMissionResult.montantRecuperee : '—' }}</div>
+                    </div>
+                    <div class="md-kv md-kv--full">
+                      <div class="md-k">Preuve</div>
+                      <div class="md-v">
+                        <div class="md-proof">
+                          <span class="md-proof-name">{{ selectedMissionResult.preuveFileName || '—' }}</span>
+                          <button *ngIf="selectedMissionResult.hasPreuve" type="button" class="md-link-btn" (click)="downloadSelectedProof()">
+                            <i class="feather icon-download"></i>
+                            Télécharger
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="md-kv md-kv--full">
+                      <div class="md-k">Résultat</div>
+                      <div class="md-v md-v--pre">{{ selectedMissionResult.resultat || '—' }}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeMissionModal()">Fermer</button>
+
+      <div class="md-footer">
+        <button type="button" class="md-secondary-btn" (click)="closeMissionModal()">Fermer</button>
       </div>
     </div>
   </div>

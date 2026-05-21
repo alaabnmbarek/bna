@@ -74,6 +74,10 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     return ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ADMIN', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX'].includes(r || '');
   }
 
+  get canManageAudiences(): boolean {
+    return this.canCreateProcedure;
+  }
+
   get canRecordJugement(): boolean {
     const r = this.auth.role();
     return [
@@ -427,6 +431,48 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     return full || '—';
   }
 
+  dossierStatusLabel(status?: string | null): string {
+    const s = (status || '').trim().toUpperCase();
+    switch (s) {
+      case 'CLOTURE': return 'Terminé';
+      case 'OUVERT': return 'En cours';
+      case 'AFFECTE': return 'En cours';
+      case 'CHANGEMENT_COMPTE': return 'En cours';
+      case 'A_VALIDER': return 'En attente';
+      case 'REOUVERT': return 'Réouvert';
+      case 'REJETE': return 'Urgent';
+      default: return status ? String(status) : '—';
+    }
+  }
+
+  dossierStatusClass(status?: string | null): string {
+    const s = (status || '').trim().toUpperCase();
+    if (s === 'CLOTURE') return 'sd-badge sd-badge--success';
+    if (s === 'REOUVERT') return 'sd-badge sd-badge--violet';
+    if (s === 'REJETE') return 'sd-badge sd-badge--danger';
+    if (s === 'A_VALIDER') return 'sd-badge sd-badge--neutral';
+    return 'sd-badge sd-badge--warning';
+  }
+
+  shortDate(value?: string | null): string {
+    if (!value) return '—';
+    const s = String(value);
+    return s.length >= 10 ? s.slice(0, 10) : s;
+  }
+
+  probabilityPct(value?: number | null): string {
+    if (value == null || Number.isNaN(Number(value))) return '—';
+    const v = Math.max(0, Math.min(1, Number(value)));
+    return `${Math.round(v * 100)}%`;
+  }
+
+  initials(nom?: string | null, prenom?: string | null): string {
+    const a = (prenom || '').trim().slice(0, 1);
+    const b = (nom || '').trim().slice(0, 1);
+    const out = `${a}${b}`.toUpperCase();
+    return out || '—';
+  }
+
   viewAudiences(affaire: AffaireJudiciaire): void {
     if (!affaire || !affaire.id) {
       console.error('Affaire ou ID manquant pour charger les audiences');
@@ -466,6 +512,10 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   }
 
   toggleNewAudienceForm(): void {
+    if (!this.canManageAudiences) {
+      alert('Accès refusé.');
+      return;
+    }
     if (this.showNewAudienceForm) {
       this.closeNewAudienceForm();
     } else {
@@ -474,6 +524,10 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   }
 
   openNewAudienceForm(): void {
+    if (!this.canManageAudiences) {
+      alert('Accès refusé.');
+      return;
+    }
     if (!this.selectedAffaire?.id) return;
     this.editingAudienceId = null;
     this.activeAudienceId = null;
@@ -487,6 +541,10 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   }
 
   startEditAudience(aud: Audience): void {
+    if (!this.canManageAudiences) {
+      alert('Accès refusé.');
+      return;
+    }
     if (!aud?.id || !this.selectedAffaire?.id) return;
     this.editingAudienceId = aud.id;
     this.activeAudienceId = aud.id;
@@ -512,6 +570,10 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   }
 
   saveAudience(): void {
+    if (!this.canManageAudiences) {
+      alert('Accès refusé.');
+      return;
+    }
     if (!this.newAudienceDate || !this.newAudienceTime) {
       alert('Veuillez saisir la date et l\'heure de l\'audience.');
       return;
@@ -549,13 +611,20 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   }
 
   deleteAudience(aud: Audience): void {
+    if (!this.canManageAudiences) {
+      alert('Accès refusé.');
+      return;
+    }
     if (!aud?.id) return;
     if (!confirm('Voulez-vous vraiment supprimer cette audience ?')) return;
     this.suiviService.deleteAudience(aud.id).subscribe({
       next: () => this.reloadAudiences(),
       error: (err) => {
         console.error('Erreur lors de la suppression', err);
-        alert('Erreur lors de la suppression de l\'audience.');
+        const status = err?.status;
+        if (status === 403) alert('Accès refusé (403).');
+        else if (status === 404) alert('Endpoint suppression audience introuvable (404). Redémarrez le backend si nécessaire.');
+        else alert('Erreur lors de la suppression de l\'audience.');
       }
     });
   }
@@ -594,6 +663,9 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Erreur lors de la suppression', err);
+          const status = err?.status;
+          if (status === 403) alert('Accès refusé (403).');
+          else alert('Erreur lors de la suppression de l\'affaire.');
         }
       });
     }

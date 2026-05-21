@@ -31,38 +31,38 @@ public class SuiviJudiciaireController {
     }
 
     @PostMapping("/affaires")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX')")
     public ResponseEntity<AffaireJudiciaireDto> createAffaire(@RequestBody AffaireJudiciaireDto dto, Authentication authentication) {
         return ResponseEntity.ok(suiviJudiciaireService.createAffaire(dto, authentication));
     }
 
     @PutMapping("/affaires/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX')")
     public ResponseEntity<AffaireJudiciaireDto> updateAffaire(@PathVariable("id") Long id, @RequestBody AffaireJudiciaireDto dto, Authentication authentication) {
         return ResponseEntity.ok(suiviJudiciaireService.updateAffaire(id, dto, authentication));
     }
 
     @DeleteMapping("/affaires/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX')")
     public ResponseEntity<Void> deleteAffaire(@PathVariable("id") Long id, Authentication authentication) {
         suiviJudiciaireService.deleteAffaire(id, authentication);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/audiences")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX')")
     public ResponseEntity<AudienceDto> scheduleAudience(@RequestBody AudienceDto dto, Authentication authentication) {
         return ResponseEntity.ok(suiviJudiciaireService.scheduleAudience(dto, authentication));
     }
 
     @PutMapping("/audiences/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX')")
     public ResponseEntity<AudienceDto> updateAudience(@PathVariable("id") Long id, @RequestBody AudienceDto dto, Authentication authentication) {
         return ResponseEntity.ok(suiviJudiciaireService.updateAudience(id, dto, authentication));
     }
 
     @DeleteMapping("/audiences/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CTX_AGENT', 'CHARGE_DOSSIER', 'RESPONSABLE_CONTENTIEUX')")
     public ResponseEntity<Void> deleteAudience(@PathVariable("id") Long id, Authentication authentication) {
         suiviJudiciaireService.deleteAudience(id, authentication);
         return ResponseEntity.noContent().build();
