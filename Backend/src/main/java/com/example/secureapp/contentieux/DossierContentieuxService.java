@@ -1,6 +1,8 @@
 package com.example.secureapp.contentieux;
 
 import com.example.secureapp.contentieux.dto.ContentieuxDtos;
+import com.example.secureapp.contentieux.affaire.AffaireContentieuxEntity;
+import com.example.secureapp.contentieux.affaire.AffaireContentieuxRepository;
 import com.example.secureapp.notification.NotificationPriority;
 import com.example.secureapp.notification.NotificationService;
 import com.example.secureapp.notification.NotificationType;
@@ -35,6 +37,7 @@ public class DossierContentieuxService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final RelanceRepository relanceRepository;
+    private final AffaireContentieuxRepository affaireRepository;
     private final boolean mlUrgencyEnabled;
     private final String mlUrgencyBaseUrl;
     private final int mlUrgencyTimeoutMs;
@@ -44,6 +47,7 @@ public class DossierContentieuxService {
             UserRepository userRepository,
             NotificationService notificationService,
             RelanceRepository relanceRepository,
+            AffaireContentieuxRepository affaireRepository,
             @Value("${ml.urgency.enabled:false}") boolean mlUrgencyEnabled,
             @Value("${ml.urgency.base-url:}") String mlUrgencyBaseUrl,
             @Value("${ml.urgency.timeout-ms:3000}") int mlUrgencyTimeoutMs
@@ -52,6 +56,7 @@ public class DossierContentieuxService {
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.relanceRepository = relanceRepository;
+        this.affaireRepository = affaireRepository;
         this.mlUrgencyEnabled = mlUrgencyEnabled;
         this.mlUrgencyBaseUrl = mlUrgencyBaseUrl;
         this.mlUrgencyTimeoutMs = mlUrgencyTimeoutMs;
@@ -214,6 +219,16 @@ public class DossierContentieuxService {
         m.put("retard_jours", retardJours);
         m.put("montant", d.getMontantEngage() != null ? d.getMontantEngage() : BigDecimal.ZERO);
         m.put("nb_relances", nbRelances);
+
+        if (d.getId() != null) {
+            List<AffaireContentieuxEntity> affaires = affaireRepository.findByDossierIdOrderByDateCreationDesc(d.getId());
+            if (!affaires.isEmpty()) {
+                String typeAffaire = affaires.get(0).getTypeAffaire();
+                if (typeAffaire != null && !typeAffaire.isBlank()) {
+                    m.put("type_affaire", typeAffaire.trim());
+                }
+            }
+        }
         return m;
     }
 
