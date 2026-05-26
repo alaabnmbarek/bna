@@ -195,7 +195,14 @@
           </div>
           <div class="col-12 col-md-4">
             <label class="form-label admin-label">Spécialités</label>
-            <input class="form-control admin-input" [(ngModel)]="form.specialites" name="specialites" placeholder="Ex: Recouvrement, Contentieux…">
+            <select class="form-select admin-input" [(ngModel)]="form.specialites" name="specialites">
+              <option value="">—</option>
+              <option *ngFor="let s of specialitesOptions" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label admin-label">Expérience avocat (ans)</label>
+            <input class="form-control admin-input" type="number" min="0" [(ngModel)]="form.experienceAvocat" name="experienceAvocat">
           </div>
           <div class="col-12 col-md-4 d-flex align-items-end">
             <button type="button" class="btn btn-outline-primary w-100" (click)="openHonorairesModal()">
@@ -232,7 +239,10 @@
           </div>
           <div class="col-12 col-md-8">
             <label class="form-label admin-label">Spécialités</label>
-            <input class="form-control admin-input" [(ngModel)]="form.specialites" name="specialites" placeholder="Ex: Recouvrement, Contentieux…">
+            <select class="form-select admin-input" [(ngModel)]="form.specialites" name="specialites">
+              <option value="">—</option>
+              <option *ngFor="let s of specialitesOptions" [value]="s">{{ s }}</option>
+            </select>
           </div>
 
           <div class="col-12 col-md-6">
@@ -502,6 +512,10 @@
             <div class="avocat-kv">
               <div class="avocat-k"><i class="feather icon-star me-2"></i>Spécialités</div>
               <div class="avocat-v">{{ selectedAvocat.specialites || '—' }}</div>
+            </div>
+            <div class="avocat-kv">
+              <div class="avocat-k"><i class="feather icon-award me-2"></i>Expérience (ans)</div>
+              <div class="avocat-v">{{ experienceAvocatDisplay(selectedAvocat) }}</div>
             </div>
           </div>
         </div>

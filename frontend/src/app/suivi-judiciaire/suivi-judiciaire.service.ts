@@ -2,7 +2,17 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export type ProcedureType = 'ASSIGNATION' | 'INJONCTION_DE_PAYER' | 'SAISIE_ARRET' | 'SAISIE_IMMOBILIERE' | 'SAISIE_MOBILIERE' | 'APPEL' | 'CASSATION';
+export type ProcedureType =
+  | 'ASSIGNATION'
+  | 'REFERE'
+  | 'APPEL'
+  | 'MEDIATION'
+  | 'EXECUTION'
+  | 'INJONCTION_DE_PAYER'
+  | 'SAISIE_ARRET'
+  | 'SAISIE_IMMOBILIERE'
+  | 'SAISIE_MOBILIERE'
+  | 'CASSATION';
 export type AssignationTarget = 'GARANTIE_PATRIMOINE' | 'DEBITEUR_PRINCIPAL';
 export type AffaireStatus = 'EN_COURS' | 'JUGEE' | 'CLOTUREE' | 'SUSPENDUE';
 export type AudienceStatus = 'PROGRAMMEE' | 'REALISEE' | 'REPORTEE' | 'ANNULEE';

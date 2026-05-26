@@ -130,6 +130,20 @@
                 <div class="sd-stat-value">{{ dossierDetails.dossier.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
               </div>
             </div>
+            <div class="sd-stat">
+              <div class="sd-stat-ico"><i class="feather icon-clock"></i></div>
+              <div>
+                <div class="sd-stat-label">Nombre d’audiences</div>
+                <div class="sd-stat-value">{{ dossierAudiencesCount(dossierDetails.dossier.id) }}</div>
+              </div>
+            </div>
+            <div class="sd-stat">
+              <div class="sd-stat-ico"><i class="feather icon-rotate-ccw"></i></div>
+              <div>
+                <div class="sd-stat-label">Nombre de reports</div>
+                <div class="sd-stat-value">{{ dossierReportsCount(dossierDetails.dossier.id) }}</div>
+              </div>
+            </div>
             <div class="sd-stat" *ngIf="dossierDetails.dossier.urgentPrediction != null || dossierDetails.dossier.urgentProbability != null">
               <div class="sd-stat-ico sd-stat-ico--glow"><i class="feather icon-alert-triangle"></i></div>
               <div>

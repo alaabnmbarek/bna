@@ -154,6 +154,7 @@ public class PrestataireService {
         entity.setSpecialites(dto.getSpecialites());
         entity.setTarifs(dto.getTarifs());
         entity.setDisponibilites(dto.getDisponibilites());
+        entity.setExperienceAvocat(dto.getExperienceAvocat());
         entity.setActif(dto.isActif());
     }
 
@@ -174,6 +175,7 @@ public class PrestataireService {
         dto.setSpecialites(entity.getSpecialites());
         dto.setTarifs(entity.getTarifs());
         dto.setDisponibilites(entity.getDisponibilites());
+        dto.setExperienceAvocat(entity.getExperienceAvocat());
         dto.setActif(entity.isActif());
         dto.setCreatedAt(entity.getCreatedAt());
 

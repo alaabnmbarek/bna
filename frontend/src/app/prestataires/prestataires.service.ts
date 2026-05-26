@@ -24,6 +24,7 @@ export interface Prestataire {
   specialites?: string;
   tarifs?: string;
   disponibilites?: string;
+  experienceAvocat?: number | null;
   actif: boolean;
   noteMoyenne?: number | null;
   missionsTotal?: number;

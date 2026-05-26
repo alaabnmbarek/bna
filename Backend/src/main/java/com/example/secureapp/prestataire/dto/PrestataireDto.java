@@ -20,6 +20,7 @@ public class PrestataireDto {
     private String specialites;
     private String tarifs;
     private String disponibilites;
+    private Integer experienceAvocat;
     private boolean actif;
     private Double noteMoyenne;
     private Long missionsTotal;
@@ -56,6 +57,8 @@ public class PrestataireDto {
     public void setTarifs(String tarifs) { this.tarifs = tarifs; }
     public String getDisponibilites() { return disponibilites; }
     public void setDisponibilites(String disponibilites) { this.disponibilites = disponibilites; }
+    public Integer getExperienceAvocat() { return experienceAvocat; }
+    public void setExperienceAvocat(Integer experienceAvocat) { this.experienceAvocat = experienceAvocat; }
     public boolean isActif() { return actif; }
     public void setActif(boolean actif) { this.actif = actif; }
     public Double getNoteMoyenne() { return noteMoyenne; }

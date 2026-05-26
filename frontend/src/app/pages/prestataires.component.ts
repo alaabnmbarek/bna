@@ -83,10 +83,12 @@ export class PrestatairesPageComponent implements OnInit {
     specialites: '',
     tarifs: '',
     disponibilites: '',
+    experienceAvocat: null,
     actif: true
   };
 
   readonly types: PrestataireType[] = ['HUISSIER', 'AVOCAT', 'EXPERT', 'NOTAIRE'];
+  readonly specialitesOptions: string[] = ['Civil', 'Commercial', 'Penal', 'Immobilier', 'Social'];
 
   constructor(
     private service: PrestatairesService,
@@ -166,6 +168,7 @@ export class PrestatairesPageComponent implements OnInit {
       specialites: '',
       tarifs: '',
       disponibilites: '',
+      experienceAvocat: null,
       actif: true
     };
   }
@@ -323,6 +326,12 @@ export class PrestatairesPageComponent implements OnInit {
     const nom = (p.nom || '').trim();
     const prenom = (p.prenom || '').trim();
     return [nom, prenom].filter(Boolean).join(' ');
+  }
+
+  experienceAvocatDisplay(p?: Prestataire | null): string {
+    const v = p?.experienceAvocat;
+    if (typeof v === 'number' && Number.isFinite(v)) return String(Math.max(0, Math.floor(v)));
+    return '—';
   }
 
   avocatAffairesTraitees(): number {

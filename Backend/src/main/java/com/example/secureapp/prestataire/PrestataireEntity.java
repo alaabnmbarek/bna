@@ -54,6 +54,8 @@ public class PrestataireEntity {
     @Column(columnDefinition = "LONGTEXT")
     private String disponibilites;
 
+    private Integer experienceAvocat;
+
     @Column(nullable = false)
     private boolean actif = true;
 
@@ -101,6 +103,8 @@ public class PrestataireEntity {
     public void setTarifs(String tarifs) { this.tarifs = tarifs; }
     public String getDisponibilites() { return disponibilites; }
     public void setDisponibilites(String disponibilites) { this.disponibilites = disponibilites; }
+    public Integer getExperienceAvocat() { return experienceAvocat; }
+    public void setExperienceAvocat(Integer experienceAvocat) { this.experienceAvocat = experienceAvocat; }
     public boolean isActif() { return actif; }
     public void setActif(boolean actif) { this.actif = actif; }
     public LocalDateTime getCreatedAt() { return createdAt; }

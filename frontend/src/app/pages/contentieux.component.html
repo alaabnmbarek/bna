@@ -595,6 +595,39 @@
                   </div>
                 </div>
 
+                <div class="row g-2 mb-2">
+                  <div class="col-12 col-md-4">
+                    <label class="form-label mb-1">Expérience avocat (ans)</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      [(ngModel)]="mlForm.experienceAvocat"
+                      (ngModelChange)="onMlFormChange()"
+                      name="mlExperienceAvocat"
+                      min="0">
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label mb-1">Nombre d’audiences</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      [(ngModel)]="mlForm.nombreAudiences"
+                      (ngModelChange)="onMlFormChange()"
+                      name="mlNombreAudiences"
+                      min="0">
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label mb-1">Nombre de reports</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      [(ngModel)]="mlForm.nombreReports"
+                      (ngModelChange)="onMlFormChange()"
+                      name="mlNombreReports"
+                      min="0">
+                  </div>
+                </div>
+
                 <button type="button" class="btn btn-primary w-100 ml-predict-btn" (click)="predictMl()" [disabled]="mlPredictLoading">
                   <span *ngIf="mlPredictLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
                   Prédire

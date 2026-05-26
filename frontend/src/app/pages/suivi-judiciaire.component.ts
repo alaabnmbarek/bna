@@ -45,9 +45,11 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   private audiencesOverlayRef: OverlayRef | null = null;
 
   procedureTypeOptions: Array<{ value: ProcedureType; label: string }> = [
-    { value: 'ASSIGNATION', label: "Procédure d'assignation" },
-    { value: 'SAISIE_MOBILIERE', label: 'Procédure de saisie' },
-    { value: 'APPEL', label: "Procédure d'appel" }
+    { value: 'ASSIGNATION', label: 'Assignation' },
+    { value: 'REFERE', label: 'Refere' },
+    { value: 'APPEL', label: 'Appel' },
+    { value: 'MEDIATION', label: 'Mediation' },
+    { value: 'EXECUTION', label: 'Execution' }
   ];
   assignationTargets: AssignationTarget[] = ['GARANTIE_PATRIMOINE', 'DEBITEUR_PRINCIPAL'];
   audienceStatuses: AudienceStatus[] = ['PROGRAMMEE', 'REALISEE', 'REPORTEE', 'ANNULEE'];
@@ -182,7 +184,7 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.suiviService.getAllAffaires().subscribe({
       next: (data) => {
-        this.affaires = data;
+        this.affaires = this.sortAffairesByRecent(data || []);
         this.loading = false;
         setTimeout(() => this.aos.refresh(), 0);
       },
@@ -191,6 +193,23 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
         setTimeout(() => this.aos.refresh(), 0);
       }
     });
+  }
+
+  private sortAffairesByRecent(rows: AffaireJudiciaire[]): AffaireJudiciaire[] {
+    return [...rows].sort((a, b) => {
+      const ta = this.parseDateMs(a?.dateTransmission) ?? this.parseDateMs(a?.dateOuverture) ?? 0;
+      const tb = this.parseDateMs(b?.dateTransmission) ?? this.parseDateMs(b?.dateOuverture) ?? 0;
+      if (ta !== tb) return tb - ta;
+      const ia = typeof a?.id === 'number' && Number.isFinite(a.id) ? a.id : 0;
+      const ib = typeof b?.id === 'number' && Number.isFinite(b.id) ? b.id : 0;
+      return ib - ia;
+    });
+  }
+
+  private parseDateMs(value?: string | null): number | null {
+    if (!value) return null;
+    const t = Date.parse(String(value));
+    return Number.isFinite(t) ? t : null;
   }
 
   loadDossiers(): void {
@@ -443,6 +462,32 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
       case 'REJETE': return 'Urgent';
       default: return status ? String(status) : '—';
     }
+  }
+
+  dossierAudiencesCount(dossierId?: number | null): number {
+    const id = Number(dossierId);
+    if (!id || !Number.isFinite(id)) return 0;
+    const affaireIds = new Set<number>(
+      this.affaires
+        .filter(a => a.dossierId === id)
+        .map(a => a.id)
+        .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+    );
+    if (affaireIds.size === 0) return 0;
+    return (this.audiences || []).filter(a => typeof a.affaireId === 'number' && affaireIds.has(a.affaireId)).length;
+  }
+
+  dossierReportsCount(dossierId?: number | null): number {
+    const id = Number(dossierId);
+    if (!id || !Number.isFinite(id)) return 0;
+    const affaireIds = new Set<number>(
+      this.affaires
+        .filter(a => a.dossierId === id)
+        .map(a => a.id)
+        .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+    );
+    if (affaireIds.size === 0) return 0;
+    return (this.audiences || []).filter(a => a.statut === 'REPORTEE' && typeof a.affaireId === 'number' && affaireIds.has(a.affaireId)).length;
   }
 
   dossierStatusClass(status?: string | null): string {

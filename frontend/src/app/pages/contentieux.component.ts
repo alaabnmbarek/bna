@@ -127,10 +127,20 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
   affaireSaving = false;
   dossierDetails: DossierDetailsResponse | null = null;
   dossierDetailsLoading = false;
-  mlForm: { retardJours: number | null; montant: string; nbRelances: number | null } = {
+  mlForm: {
+    retardJours: number | null;
+    montant: string;
+    nbRelances: number | null;
+    experienceAvocat: number | null;
+    nombreAudiences: number | null;
+    nombreReports: number | null;
+  } = {
     retardJours: null,
     montant: '',
-    nbRelances: null
+    nbRelances: null,
+    experienceAvocat: null,
+    nombreAudiences: null,
+    nombreReports: null
   };
   mlFormTouched = false;
   mlPrediction: UrgencePredictionResponse | null = null;
@@ -184,17 +194,11 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     dateCreation: ''
   };
   typeAffaireOptions: string[] = [
-    'Recouvrement de créance',
-    'Litige bancaire',
-    'Saisie',
-    'Exécution de jugement',
-    'Assignation',
-    'Appel',
-    'Opposition',
-    'Contentieux commercial',
-    'Contentieux civil',
-    'Contentieux pénal',
-    'Règlement amiable'
+    'Contentieux',
+    'Recouvrement',
+    'Litige',
+    'Contrat',
+    'Succession'
   ];
   affaireStatuts: Array<{ value: AffaireStatut; label: string }> = [
     { value: 'EN_COURS', label: 'en_cours' },
@@ -1426,7 +1430,10 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
       retard_jours: Math.max(0, this.mlForm.retardJours ?? 0),
       montant: Number.isFinite(montantNum) ? montantNum : 0,
       nb_relance: Math.max(0, this.mlForm.nbRelances ?? 0),
-      type_affaire: typeAffaire || undefined
+      type_affaire: typeAffaire || undefined,
+      experience_avocat: Math.max(0, this.mlForm.experienceAvocat ?? 0),
+      nombre_audiences: Math.max(0, this.mlForm.nombreAudiences ?? 0),
+      nombre_reports: Math.max(0, this.mlForm.nombreReports ?? 0)
     };
 
     this.contentieux.predictUrgenceMlDirect(features).subscribe({
@@ -1490,7 +1497,10 @@ export class ContentieuxPageComponent implements OnInit, OnDestroy {
     this.mlForm = {
       retardJours,
       montant: montantValue != null ? String(montantValue) : '',
-      nbRelances
+      nbRelances,
+      experienceAvocat: 0,
+      nombreAudiences: 0,
+      nombreReports: 0
     };
   }
 

@@ -6,6 +6,11 @@ import com.example.secureapp.contentieux.affaire.AffaireContentieuxRepository;
 import com.example.secureapp.notification.NotificationPriority;
 import com.example.secureapp.notification.NotificationService;
 import com.example.secureapp.notification.NotificationType;
+import com.example.secureapp.suivi_judiciaire.AffaireJudiciaireEntity;
+import com.example.secureapp.suivi_judiciaire.AffaireJudiciaireRepository;
+import com.example.secureapp.suivi_judiciaire.AudienceEntity;
+import com.example.secureapp.suivi_judiciaire.AudienceRepository;
+import com.example.secureapp.suivi_judiciaire.AudienceStatus;
 import com.example.secureapp.user.UserEntity;
 import com.example.secureapp.user.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +43,8 @@ public class DossierContentieuxService {
     private final NotificationService notificationService;
     private final RelanceRepository relanceRepository;
     private final AffaireContentieuxRepository affaireRepository;
+    private final AffaireJudiciaireRepository affaireJudiciaireRepository;
+    private final AudienceRepository audienceRepository;
     private final boolean mlUrgencyEnabled;
     private final String mlUrgencyBaseUrl;
     private final int mlUrgencyTimeoutMs;
@@ -48,6 +55,8 @@ public class DossierContentieuxService {
             NotificationService notificationService,
             RelanceRepository relanceRepository,
             AffaireContentieuxRepository affaireRepository,
+            AffaireJudiciaireRepository affaireJudiciaireRepository,
+            AudienceRepository audienceRepository,
             @Value("${ml.urgency.enabled:false}") boolean mlUrgencyEnabled,
             @Value("${ml.urgency.base-url:}") String mlUrgencyBaseUrl,
             @Value("${ml.urgency.timeout-ms:3000}") int mlUrgencyTimeoutMs
@@ -57,6 +66,8 @@ public class DossierContentieuxService {
         this.notificationService = notificationService;
         this.relanceRepository = relanceRepository;
         this.affaireRepository = affaireRepository;
+        this.affaireJudiciaireRepository = affaireJudiciaireRepository;
+        this.audienceRepository = audienceRepository;
         this.mlUrgencyEnabled = mlUrgencyEnabled;
         this.mlUrgencyBaseUrl = mlUrgencyBaseUrl;
         this.mlUrgencyTimeoutMs = mlUrgencyTimeoutMs;
@@ -229,6 +240,30 @@ public class DossierContentieuxService {
                 }
             }
         }
+
+        long nombreAudiences = 0;
+        long nombreReports = 0;
+        long experienceAvocat = 0;
+
+        if (d.getId() != null) {
+            List<AffaireJudiciaireEntity> affairesJud = affaireJudiciaireRepository.findByDossierContentieuxId(d.getId());
+            for (AffaireJudiciaireEntity a : affairesJud) {
+                if (a == null || a.getId() == null) continue;
+
+                if (experienceAvocat == 0 && a.getAvocat() != null && a.getAvocat().getCreatedAt() != null) {
+                    experienceAvocat = ChronoUnit.YEARS.between(a.getAvocat().getCreatedAt().toLocalDate(), LocalDate.now());
+                    if (experienceAvocat < 0) experienceAvocat = 0;
+                }
+
+                List<AudienceEntity> auds = audienceRepository.findByAffaireJudiciaireIdOrderByDateAudienceAsc(a.getId());
+                nombreAudiences += auds.size();
+                nombreReports += auds.stream().filter(x -> x != null && x.getStatut() == AudienceStatus.REPORTEE).count();
+            }
+        }
+
+        m.put("experience_avocat", experienceAvocat);
+        m.put("nombre_audiences", nombreAudiences);
+        m.put("nombre_reports", nombreReports);
         return m;
     }
 
