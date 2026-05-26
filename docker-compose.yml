@@ -45,7 +45,7 @@ services:
       MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-false}
       MAIL_SMTP_STARTTLS_REQUIRED: ${MAIL_SMTP_STARTTLS_REQUIRED:-false}
       MAIL_SMTP_SSL_TRUST: ${MAIL_SMTP_SSL_TRUST:-}
-      URGENCY_ML_ENABLED: ${URGENCY_ML_ENABLED:-true}
+      URGENCY_ML_ENABLED: ${URGENCY_ML_ENABLED:-false}
       URGENCY_ML_BASE_URL: ${URGENCY_ML_BASE_URL:-http://ml-urgency:8000}
       URGENCY_ML_TIMEOUT_MS: ${URGENCY_ML_TIMEOUT_MS:-3000}
     ports:
@@ -55,19 +55,18 @@ services:
         condition: service_healthy
       mailhog:
         condition: service_started
-      ml-urgency:
-        condition: service_started
 
-  ml-urgency:
-    build: ./ml-urgency
-    container_name: ml-urgency
+  prediction:
+    build: ./Prediction
+    container_name: prediction
     environment:
-      MODEL_PATH: ${URGENCY_ML_MODEL_PATH:-/models/logistic_regression.pkl}
-      THRESHOLD: ${URGENCY_ML_THRESHOLD:-0.5}
+      MODEL_PATH: ${LEGAL_PREDICTION_MODEL_PATH:-/models/xgb_model.pkl}
+      FEATURE_COLUMNS_PATH: ${LEGAL_PREDICTION_FEATURE_COLUMNS_PATH:-/models/feature_columns.pkl}
+      SCALER_PATH: ${LEGAL_PREDICTION_SCALER_PATH:-/models/scaler.pkl}
     volumes:
-      - ./ml-urgency/ml-models:/models
+      - ./Prediction/models:/models
     ports:
-      - "8001:8000"
+      - "8002:8000"
 
   frontend:
     build: ./frontend

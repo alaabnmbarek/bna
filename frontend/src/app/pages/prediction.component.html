@@ -1,0 +1,81 @@
+<app-card cardTitle="Prédiction (Gain / Perte)" [options]="false">
+  <div *ngIf="banner" class="alert mt-2" [ngClass]="{
+      'alert-success': banner.kind === 'success',
+      'alert-info': banner.kind === 'info',
+      'alert-danger': banner.kind === 'danger'
+    }">
+    {{ banner.message }}
+  </div>
+
+  <div class="row g-3 mt-1" data-aos="fade-up">
+    <div class="col-12 col-md-4">
+      <label class="form-label">Spécialité</label>
+      <select class="form-select" [(ngModel)]="form.specialite_avocat" name="specialite_avocat">
+        <option *ngFor="let s of specialites" [value]="s">{{ s }}</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Expérience (ans)</label>
+      <input class="form-control" type="number" min="0" [(ngModel)]="form.experience_avocat" name="experience_avocat">
+    </div>
+    <div class="col-12 col-md-4 d-flex align-items-end">
+      <button type="button" class="btn btn-primary w-100" (click)="predict()" [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+        Prédire
+      </button>
+    </div>
+
+    <div class="col-12 col-md-4">
+      <label class="form-label">Présence huissier</label>
+      <select class="form-select" [(ngModel)]="form.presence_huissier" name="presence_huissier">
+        <option [ngValue]="0">Non</option>
+        <option [ngValue]="1">Oui</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Présence expert</label>
+      <select class="form-select" [(ngModel)]="form.presence_expert" name="presence_expert">
+        <option [ngValue]="0">Non</option>
+        <option [ngValue]="1">Oui</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Nombre d’audiences</label>
+      <input class="form-control" type="number" min="0" [(ngModel)]="form.nombre_audiences" name="nombre_audiences">
+    </div>
+
+    <div class="col-12 col-md-4">
+      <label class="form-label">Type d’affaire</label>
+      <select class="form-select" [(ngModel)]="form.type_affaire" name="type_affaire">
+        <option *ngFor="let t of typesAffaire" [value]="t">{{ t }}</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Type de procédure</label>
+      <select class="form-select" [(ngModel)]="form.type_procedure" name="type_procedure">
+        <option *ngFor="let t of typesProcedure" [value]="t">{{ t }}</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Nombre de reports</label>
+      <input class="form-control" type="number" min="0" [(ngModel)]="form.nombre_reports" name="nombre_reports">
+    </div>
+  </div>
+
+  <div *ngIf="result" class="prediction-result mt-4" data-aos="fade-up" data-aos-delay="80">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted">Résultat</div>
+            <div class="h5 mb-0">{{ result.prediction }}</div>
+          </div>
+          <div class="text-end">
+            <div class="text-muted">Probabilité</div>
+            <div class="h5 mb-0">{{ probabilityPct(result.probability) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-card>

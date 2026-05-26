@@ -5,7 +5,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn -q -e -DskipTests dependency:go-offl
 COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 mvn -q -DskipTests package
 
-FROM eclipse-temurin:17-jre
+FROM maven:3.9.7-eclipse-temurin-17
 ENV TZ=UTC
 WORKDIR /app
 COPY --from=build /app/target/secureapp-0.0.1-SNAPSHOT.jar app.jar
