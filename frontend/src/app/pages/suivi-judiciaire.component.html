@@ -130,20 +130,6 @@
                 <div class="sd-stat-value">{{ dossierDetails.dossier.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
               </div>
             </div>
-            <div class="sd-stat">
-              <div class="sd-stat-ico"><i class="feather icon-clock"></i></div>
-              <div>
-                <div class="sd-stat-label">Nombre d’audiences</div>
-                <div class="sd-stat-value">{{ dossierAudiencesCount(dossierDetails.dossier.id) }}</div>
-              </div>
-            </div>
-            <div class="sd-stat">
-              <div class="sd-stat-ico"><i class="feather icon-rotate-ccw"></i></div>
-              <div>
-                <div class="sd-stat-label">Nombre de reports</div>
-                <div class="sd-stat-value">{{ dossierReportsCount(dossierDetails.dossier.id) }}</div>
-              </div>
-            </div>
             <div class="sd-stat" *ngIf="dossierDetails.dossier.urgentPrediction != null || dossierDetails.dossier.urgentProbability != null">
               <div class="sd-stat-ico sd-stat-ico--glow"><i class="feather icon-alert-triangle"></i></div>
               <div>
@@ -157,7 +143,69 @@
             </div>
           </div>
 
+          <div class="jd-mini-stats">
+            <div class="jd-mini-card jd-mini-card--aud">
+              <div class="jd-mini-ico"><i class="feather icon-calendar"></i></div>
+              <div class="jd-mini-main">
+                <div class="jd-mini-title">Nombre d’audiences</div>
+                <div class="jd-mini-value">
+                  <span *ngIf="dossierAudienceStatsLoading" class="spinner-border spinner-border-sm" role="status"></span>
+                  <span *ngIf="!dossierAudienceStatsLoading">{{ dossierAudienceStats.nombreAudiences }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="jd-mini-card jd-mini-card--rep">
+              <div class="jd-mini-ico"><i class="feather icon-rotate-ccw"></i></div>
+              <div class="jd-mini-main">
+                <div class="jd-mini-title">Nombre de reports</div>
+                <div class="jd-mini-value">
+                  <span *ngIf="dossierAudienceStatsLoading" class="spinner-border spinner-border-sm" role="status"></span>
+                  <span *ngIf="!dossierAudienceStatsLoading">{{ dossierAudienceStats.nombreReports }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="sd-grid">
+            <div class="sd-card sd-card--full ai-card">
+              <div class="ai-head">
+                <div class="ai-titlewrap">
+                  <span class="ai-ico" aria-hidden="true"><i class="feather icon-cpu"></i></span>
+                  <div class="ai-titles">
+                    <div class="ai-title">Prédiction IA</div>
+                    <div class="ai-subtitle">Prédiction instantanée basée sur les données du dossier, sans saisie.</div>
+                  </div>
+                </div>
+                <div class="ai-chip">1 clic</div>
+              </div>
+
+              <div class="ai-body">
+                <div class="ai-actions">
+                  <button type="button" class="ai-btn" (click)="predictOutcome()" [disabled]="outcomePredictionLoading || dossierDetailsLoading">
+                    <span class="ai-btn-ico" aria-hidden="true"><i class="feather icon-zap"></i></span>
+                    <span *ngIf="!outcomePredictionLoading">Prédire</span>
+                    <span *ngIf="outcomePredictionLoading" class="ai-btn-loading">
+                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Analyse...
+                    </span>
+                  </button>
+                </div>
+
+                <div *ngIf="outcomePredictionError" class="ai-error">
+                  {{ outcomePredictionError }}
+                </div>
+
+                <div *ngIf="outcomePrediction as r" class="ai-result" [class.is-show]="true">
+                  <span
+                    class="ai-badge"
+                    [ngClass]="(r.prediction || '').toUpperCase() === 'GAIN' ? 'ai-badge--gain' : 'ai-badge--perte'">
+                    {{ (r.prediction || '—').toUpperCase() }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <div class="sd-card">
               <div class="sd-card-head">
                 <div class="sd-card-title"><i class="feather icon-briefcase sd-card-ico sd-ico--cyan"></i> Affaires liées au dossier</div>
@@ -497,7 +545,7 @@
                 <label class="sj-label">Référence audience</label>
                 <div class="input-group sj-input">
                   <span class="input-group-text"><i class="feather icon-hash"></i></span>
-                  <input type="text" class="form-control" [(ngModel)]="newAudience.referenceAudience" placeholder="Ex: AUD-2026-001">
+                  <input type="text" class="form-control" [(ngModel)]="newAudience.referenceAudience" readonly>
                 </div>
               </div>
 
@@ -506,14 +554,14 @@
                   <label class="sj-label">Date de l'audience</label>
                   <div class="input-group sj-input">
                     <span class="input-group-text"><i class="feather icon-calendar"></i></span>
-                    <input type="date" class="form-control" [(ngModel)]="newAudienceDate">
+                    <input type="date" class="form-control" [(ngModel)]="newAudienceDate" (ngModelChange)="syncAudienceReference(true)">
                   </div>
                 </div>
                 <div class="col-5 sj-field">
                   <label class="sj-label">Heure</label>
                   <div class="input-group sj-input">
                     <span class="input-group-text"><i class="feather icon-clock"></i></span>
-                    <input type="time" class="form-control" [(ngModel)]="newAudienceTime">
+                    <input type="time" class="form-control" [(ngModel)]="newAudienceTime" (ngModelChange)="syncAudienceReference(true)">
                   </div>
                 </div>
               </div>
@@ -538,7 +586,10 @@
                 <label class="sj-label">Objet / Motif</label>
                 <div class="input-group sj-input">
                   <span class="input-group-text"><i class="feather icon-edit-3"></i></span>
-                  <input type="text" class="form-control" [(ngModel)]="newAudience.objet" placeholder="Ex: Audience de conciliation">
+                  <select class="form-select" [(ngModel)]="newAudience.objet">
+                    <option value="" disabled>Choisir...</option>
+                    <option *ngFor="let o of audienceObjetOptions" [value]="o">{{ o }}</option>
+                  </select>
                 </div>
               </div>
 

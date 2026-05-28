@@ -26,13 +26,13 @@ export const NavigationItems: NavigationItem[] = [
     children: [
       {
         id: 'admin-dashboard',
-        title: 'Tableau de Bord Admin',
+        title: 'Tableau de Bord',
         type: 'item',
         url: '/admin',
         icon: 'feather icon-layout',
         classes: 'nav-blue',
         breadcrumbs: false,
-        role: ['ROLE_ADMIN']
+        role: ['ROLE_ADMIN', 'ROLE_RESPONSABLE_CONTENTIEUX']
       }
     ]
   },

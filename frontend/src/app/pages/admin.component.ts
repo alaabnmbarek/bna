@@ -146,11 +146,11 @@ export class RoleLandingPageComponent implements OnInit {
 
   ngOnInit(): void {
     const role = this.auth.role();
-    if (role === 'ROLE_ADMIN') {
+    if (role === 'ROLE_ADMIN' || role === 'ROLE_RESPONSABLE_CONTENTIEUX') {
       this.router.navigate(['/admin'], { replaceUrl: true });
       return;
     }
-    if (role === 'ROLE_CHARGE_DOSSIER' || role === 'ROLE_RESPONSABLE_CONTENTIEUX') {
+    if (role === 'ROLE_CHARGE_DOSSIER') {
       this.router.navigate(['/contentieux'], { replaceUrl: true });
       return;
     }

@@ -14,10 +14,10 @@ export class AuthGuard implements CanActivate {
     const roles = route.data && route.data['roles'] as string[] | undefined;
     if (roles && !roles.some(r => this.auth.hasRole(r))) {
       const role = this.auth.role();
-      if (role === 'ROLE_CHARGE_DOSSIER' || role === 'ROLE_RESPONSABLE_CONTENTIEUX') {
-        this.router.navigate(['/contentieux']);
-      } else if (role === 'ROLE_ADMIN') {
+      if (role === 'ROLE_ADMIN' || role === 'ROLE_RESPONSABLE_CONTENTIEUX') {
         this.router.navigate(['/admin']);
+      } else if (role === 'ROLE_CHARGE_DOSSIER') {
+        this.router.navigate(['/contentieux']);
       } else {
         this.router.navigate(['/user']);
       }

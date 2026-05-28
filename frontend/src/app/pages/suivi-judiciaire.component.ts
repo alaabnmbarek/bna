@@ -9,6 +9,9 @@ import { AffaireContentieux, ContentieuxService, DossierContentieux, DossierDeta
 import { PrestatairesService, Prestataire } from '../prestataires/prestataires.service';
 import { AuthService } from '../auth/auth.service';
 import { AosService } from '../aos/aos.service';
+import { LegalPredictionRequest, LegalPredictionResponse, LegalPredictionService } from '../prediction/legal-prediction.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-suivi-judiciaire',
@@ -27,10 +30,15 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
   showDossierDetails = false;
   dossierDetailsLoading = false;
   dossierDetails: DossierDetailsResponse | null = null;
+  dossierAudienceStatsLoading = false;
+  dossierAudienceStats: { nombreAudiences: number; nombreReports: number } = { nombreAudiences: 0, nombreReports: 0 };
   @ViewChild('dossierDetailsTpl') dossierDetailsTpl?: TemplateRef<any>;
   private dossierDetailsOverlayRef: OverlayRef | null = null;
   avocats: Prestataire[] = [];
   huissiers: Prestataire[] = [];
+  outcomePredictionLoading = false;
+  outcomePrediction: LegalPredictionResponse | null = null;
+  outcomePredictionError: string | null = null;
   
   loading = false;
   showAffaireForm = false;
@@ -51,6 +59,15 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     { value: 'MEDIATION', label: 'Mediation' },
     { value: 'EXECUTION', label: 'Execution' }
   ];
+  audienceObjetOptions: string[] = [
+    'Audience de mise en état',
+    'Audience de conciliation',
+    'Audience de plaidoirie',
+    'Délibéré',
+    'Renvoi',
+    'Expertise',
+    'Médiation'
+  ];
   assignationTargets: AssignationTarget[] = ['GARANTIE_PATRIMOINE', 'DEBITEUR_PRINCIPAL'];
   audienceStatuses: AudienceStatus[] = ['PROGRAMMEE', 'REALISEE', 'REPORTEE', 'ANNULEE'];
   decisionTypes: DecisionType[] = ['GAIN', 'PERTE', 'REPORT', 'EXECUTION', 'RADIATION', 'NON_LIEU'];
@@ -65,6 +82,7 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     public suiviService: SuiviJudiciaireService,
     public contentieuxService: ContentieuxService,
     public prestataireService: PrestatairesService,
+    private legalPrediction: LegalPredictionService,
     public auth: AuthService,
     private aos: AosService,
     private overlay: Overlay,
@@ -283,14 +301,31 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     }
     this.dossierDetailsLoading = true;
     this.dossierDetails = null;
+    this.dossierAudienceStatsLoading = true;
+    this.dossierAudienceStats = { nombreAudiences: 0, nombreReports: 0 };
+    this.outcomePredictionLoading = false;
+    this.outcomePrediction = null;
+    this.outcomePredictionError = null;
     this.contentieuxService.getDossierDetails(id).subscribe({
       next: (data) => {
         this.dossierDetails = data;
         this.dossierDetailsLoading = false;
+        this.loadDossierAudienceStats(id).subscribe({
+          next: (stats) => {
+            this.dossierAudienceStats = stats;
+            this.dossierAudienceStatsLoading = false;
+            setTimeout(() => this.aos.refresh(), 0);
+          },
+          error: () => {
+            this.dossierAudienceStatsLoading = false;
+            setTimeout(() => this.aos.refresh(), 0);
+          }
+        });
         setTimeout(() => this.aos.refresh(), 0);
       },
       error: () => {
         this.dossierDetailsLoading = false;
+        this.dossierAudienceStatsLoading = false;
         setTimeout(() => this.aos.refresh(), 0);
       }
     });
@@ -304,7 +339,133 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     this.showDossierDetails = false;
     this.dossierDetailsLoading = false;
     this.dossierDetails = null;
+    this.dossierAudienceStatsLoading = false;
+    this.dossierAudienceStats = { nombreAudiences: 0, nombreReports: 0 };
+    this.outcomePredictionLoading = false;
+    this.outcomePrediction = null;
+    this.outcomePredictionError = null;
     this.syncBodyScrollLock();
+  }
+
+  predictOutcome(): void {
+    if (this.outcomePredictionLoading) return;
+    const dossierId = this.dossierDetails?.dossier?.id;
+    if (!dossierId) return;
+
+    this.outcomePredictionLoading = true;
+    this.outcomePrediction = null;
+    this.outcomePredictionError = null;
+
+    this.loadDossierAudienceStats(dossierId).subscribe({
+      next: (stats) => {
+        const payload = this.buildOutcomePayload(dossierId, stats.nombreAudiences, stats.nombreReports);
+        if (!payload) {
+          this.outcomePredictionLoading = false;
+          return;
+        }
+        this.legalPrediction.predict(payload).subscribe({
+          next: (r) => {
+            this.outcomePrediction = r;
+            this.outcomePredictionLoading = false;
+            setTimeout(() => this.aos.refresh(), 0);
+          },
+          error: () => {
+            this.outcomePredictionLoading = false;
+            this.outcomePredictionError = 'Erreur lors de la prédiction IA.';
+            setTimeout(() => this.aos.refresh(), 0);
+          }
+        });
+      },
+      error: () => {
+        this.outcomePredictionLoading = false;
+        this.outcomePredictionError = 'Erreur lors du chargement des audiences.';
+        setTimeout(() => this.aos.refresh(), 0);
+      }
+    });
+  }
+
+  private buildOutcomePayload(dossierId: number, nombreAudiences: number, nombreReports: number): LegalPredictionRequest | null {
+    const affaire = this.latestAffaireForDossier(dossierId);
+    if (!affaire) {
+      this.outcomePredictionError = 'Aucune procédure trouvée pour ce dossier.';
+      return null;
+    }
+
+    const avocat = affaire.avocatId ? this.avocats.find(a => a.id === affaire.avocatId) : null;
+    const specialite = (avocat?.specialites || '').trim();
+    if (!specialite) {
+      this.outcomePredictionError = 'Spécialité avocat manquante.';
+      return null;
+    }
+
+    const typeAffaire = this.resolveTypeAffaireForPrediction(affaire.referenceTribunal) || '';
+    if (!typeAffaire) {
+      this.outcomePredictionError = 'Type affaire manquant.';
+      return null;
+    }
+
+    const typeProcedure = this.procedureLabel(affaire.typeProcedure);
+    const presenceHuissier = affaire.huissierId != null || !!(affaire.huissierNom || '').trim() ? 1 : 0;
+    const presenceExpert = (this.dossierDetails?.prestataires || []).some(p => String((p as any)?.type || '').toUpperCase() === 'EXPERT') ? 1 : 0;
+
+    return {
+      specialite_avocat: specialite,
+      experience_avocat: Math.max(0, Number((avocat as any)?.experienceAvocat ?? 0) || 0),
+      presence_huissier: presenceHuissier,
+      presence_expert: presenceExpert,
+      nombre_audiences: Math.max(0, Number(nombreAudiences) || 0),
+      type_affaire: typeAffaire,
+      type_procedure: typeProcedure,
+      nombre_reports: Math.max(0, Number(nombreReports) || 0),
+    };
+  }
+
+  private loadDossierAudienceStats(dossierId: number) {
+    const ids = (this.affaires || [])
+      .filter(a => a.dossierId === dossierId)
+      .map(a => a.id)
+      .filter((v): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0);
+
+    if (ids.length === 0) return of({ nombreAudiences: 0, nombreReports: 0 });
+
+    return forkJoin(
+      ids.map(id =>
+        this.suiviService.getAudiencesByAffaire(id).pipe(
+          catchError(() => of([] as Audience[]))
+        )
+      )
+    ).pipe(
+      map((rows) => {
+        const flat = rows.flat();
+        const nombreAudiences = flat.length;
+        const nombreReports = flat.filter(a => a?.statut === 'REPORTEE').length;
+        return { nombreAudiences, nombreReports };
+      })
+    );
+  }
+
+  private latestAffaireForDossier(dossierId: number): AffaireJudiciaire | null {
+    const rows = (this.affaires || []).filter(a => a.dossierId === dossierId);
+    if (rows.length === 0) return null;
+    return [...rows].sort((a, b) => {
+      const ta = this.parseDateMs(a?.dateTransmission) ?? this.parseDateMs(a?.dateOuverture) ?? 0;
+      const tb = this.parseDateMs(b?.dateTransmission) ?? this.parseDateMs(b?.dateOuverture) ?? 0;
+      if (ta !== tb) return tb - ta;
+      const ia = typeof a?.id === 'number' && Number.isFinite(a.id) ? a.id : 0;
+      const ib = typeof b?.id === 'number' && Number.isFinite(b.id) ? b.id : 0;
+      return ib - ia;
+    })[0];
+  }
+
+  private resolveTypeAffaireForPrediction(referenceTribunal?: string | null): string | null {
+    const list = this.dossierDetails?.affaires || [];
+    const ref = (referenceTribunal || '').trim();
+    if (ref) {
+      const hit = list.find(a => String(a.numeroAffaire || '').trim() === ref);
+      if (hit?.typeAffaire) return String(hit.typeAffaire).trim() || null;
+    }
+    const first = list[0]?.typeAffaire;
+    return first ? String(first).trim() || null : null;
   }
 
   private setBodyScrollLocked(locked: boolean): void {
@@ -612,6 +773,22 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
     const pad = (n: number) => String(n).padStart(2, '0');
     this.newAudienceDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
     this.newAudienceTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    this.syncAudienceReference(true);
+  }
+
+  syncAudienceReference(force = false): void {
+    if (this.editingAudienceId) return;
+    if (!force && this.newAudience.referenceAudience && this.newAudience.referenceAudience.trim()) return;
+    if (!this.newAudienceDate || !this.newAudienceTime) return;
+    this.newAudience.referenceAudience = this.generateAudienceReference(this.newAudienceDate, this.newAudienceTime);
+  }
+
+  private generateAudienceReference(date: string, time: string): string {
+    const ymd = String(date).replaceAll('-', '');
+    const hm = String(time).replaceAll(':', '');
+    const base = (this.selectedAffaire?.referenceTribunal || `AFF${this.selectedAffaire?.id ?? ''}`).toString();
+    const ref = base.replace(/[^a-zA-Z0-9]/g, '').slice(0, 14) || 'AUD';
+    return `AUD-${ref}-${ymd}${hm}`;
   }
 
   saveAudience(): void {
@@ -623,10 +800,7 @@ export class SuiviJudiciaireComponent implements OnInit, OnDestroy {
       alert('Veuillez saisir la date et l\'heure de l\'audience.');
       return;
     }
-    if (!this.newAudience.referenceAudience || !this.newAudience.referenceAudience.trim()) {
-      alert('Veuillez saisir la référence audience.');
-      return;
-    }
+    this.syncAudienceReference(true);
     if (!this.newAudience.tribunal || !this.newAudience.tribunal.trim()) {
       alert('Veuillez saisir le tribunal.');
       return;

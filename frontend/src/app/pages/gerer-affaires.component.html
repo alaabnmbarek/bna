@@ -1,0 +1,234 @@
+<div class="ga-wrap">
+  <app-card [hidHeader]="true" [options]="false" cardClass="ga-shell">
+    <div class="ga-header">
+      <div class="ga-head">
+        <div>
+          <div class="ga-title">Gestion des Affaires</div>
+          <div class="ga-subtitle">Suivi clair et centralisé des affaires judiciaires liées à un dossier.</div>
+        </div>
+        <div class="ga-head-actions">
+          <button class="btn ga-primary" type="button" (click)="openCreate()" [disabled]="!canManage || !selectedDossierId">
+            <i class="feather icon-plus me-2"></i>
+            Créer une affaire
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ga-body">
+      <div class="ga-toolbar">
+        <div class="ga-toolbar-left">
+          <label class="ga-label">Dossier</label>
+          <select class="form-select ga-select" [(ngModel)]="selectedDossierId" (ngModelChange)="onDossierChange()">
+            <option *ngIf="loadingDossiers" [ngValue]="null">Chargement...</option>
+            <option *ngFor="let d of dossiers" [ngValue]="d.id">{{ d.reference }} — {{ d.nomDebiteur || '—' }}</option>
+          </select>
+        </div>
+
+        <div class="ga-toolbar-right">
+          <div class="ga-search">
+            <i class="feather icon-search"></i>
+            <input class="form-control" [(ngModel)]="search" placeholder="Rechercher (référence, titre, tribunal, responsable...)">
+          </div>
+          <div class="ga-filter">
+            <select class="form-select" [(ngModel)]="statutFilter">
+              <option value="ALL">Tous statuts</option>
+              <option value="EN_COURS">En cours</option>
+              <option value="GAIN">Gagnée</option>
+              <option value="PERTE">Perdue</option>
+              <option value="SUSPENDUE">Suspendue</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="ga-kpis">
+        <div class="ga-kpi ga-kpi--total">
+          <div class="ga-kpi-k">Total</div>
+          <div class="ga-kpi-v">{{ statsTotal() }}</div>
+        </div>
+        <div class="ga-kpi ga-kpi--gain">
+          <div class="ga-kpi-k">Affaires gagnées</div>
+          <div class="ga-kpi-v">{{ statsGagnees() }}</div>
+        </div>
+        <div class="ga-kpi ga-kpi--perte">
+          <div class="ga-kpi-k">Affaires perdues</div>
+          <div class="ga-kpi-v">{{ statsPerdues() }}</div>
+        </div>
+        <div class="ga-kpi ga-kpi--encours">
+          <div class="ga-kpi-k">Affaires en cours</div>
+          <div class="ga-kpi-v">{{ statsEnCours() }}</div>
+        </div>
+      </div>
+
+      <div class="ga-table card">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Dossier</th>
+                <th>Référence affaire</th>
+                <th>Type d’affaire</th>
+                <th>Statut</th>
+                <th>Date création</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="loading">
+                <td colspan="6" class="text-center">Chargement...</td>
+              </tr>
+              <tr *ngFor="let a of filteredAffaires()">
+                <td class="ga-strong">{{ a.dossierReference || '—' }}</td>
+                <td class="ga-mono">{{ a.referenceTribunal || '—' }}</td>
+                <td>{{ procedureLabel(a.typeProcedure) }}</td>
+                <td><span [class]="statutBadgeClass(a)">{{ statutLabel(a) }}</span></td>
+                <td class="ga-mono">{{ dateCreation(a) }}</td>
+                <td class="text-end">
+                  <div class="ga-actions">
+                    <button class="btn btn-sm btn-outline-info" type="button" (click)="openViewDetails(a)" title="Voir détails">
+                      <i class="feather icon-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" (click)="openEdit(a)" [disabled]="!canManage" title="Modifier">
+                      <i class="feather icon-edit-2"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" type="button" (click)="deleteAffaire(a)" [disabled]="!canManage" title="Supprimer">
+                      <i class="feather icon-trash-2"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="!loading && filteredAffaires().length === 0">
+                <td colspan="6">
+                  <div class="ga-empty">Aucune affaire trouvée pour ce dossier.</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </app-card>
+</div>
+
+<div *ngIf="showForm" class="ga-overlay" (click)="closeForm()">
+  <div class="ga-modal" (click)="$event.stopPropagation()">
+    <div class="ga-modal-head">
+      <div class="ga-modal-title">{{ editingId ? 'Modifier affaire' : 'Créer une affaire' }}</div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeForm()">Fermer</button>
+    </div>
+    <div class="ga-modal-body">
+      <div class="row g-3">
+        <div class="col-12 col-lg-6">
+          <label class="form-label">Dossier</label>
+          <select class="form-select" [(ngModel)]="form.dossierId" (ngModelChange)="syncReference()">
+            <option *ngFor="let d of dossiers" [ngValue]="d.id">{{ d.reference }} — {{ d.nomDebiteur || '—' }}</option>
+          </select>
+        </div>
+        <div class="col-12 col-lg-6">
+          <label class="form-label">Référence affaire</label>
+          <input class="form-control" [(ngModel)]="form.referenceTribunal" readonly>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <label class="form-label">Titre</label>
+          <input class="form-control" [(ngModel)]="form.titre" placeholder="Ex: Recouvrement créance...">
+        </div>
+        <div class="col-12 col-lg-6">
+          <label class="form-label">Type d’affaire</label>
+          <select class="form-select" [(ngModel)]="form.typeProcedure">
+            <option *ngFor="let o of procedureTypeOptions" [ngValue]="o.value">{{ o.label }}</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <label class="form-label">Tribunal</label>
+          <input class="form-control" [(ngModel)]="form.tribunal" placeholder="Ex: Tribunal de 1ère Instance">
+        </div>
+        <div class="col-12 col-lg-6">
+          <label class="form-label">Responsable</label>
+          <select class="form-select" [(ngModel)]="form.avocatId">
+            <option [ngValue]="null">Choisir...</option>
+            <option *ngFor="let a of avocats" [ngValue]="a.id">{{ a.nom }} {{ a.prenom }}</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <label class="form-label">Statut</label>
+          <select class="form-select" [(ngModel)]="form.statut">
+            <option value="EN_COURS">En cours</option>
+            <option value="GAIN">Gagnée</option>
+            <option value="PERTE">Perdue</option>
+            <option value="SUSPENDUE">Suspendue</option>
+          </select>
+        </div>
+        <div class="col-12 col-lg-6">
+          <label class="form-label">Date audience</label>
+          <input class="form-control" type="date" [(ngModel)]="form.dateAudience">
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="form.description" placeholder="Description / notes..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="ga-modal-foot">
+      <button class="btn btn-outline-secondary" type="button" (click)="closeForm()">Annuler</button>
+      <button class="btn ga-primary" type="button" (click)="save()" [disabled]="saving">
+        <span *ngIf="saving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+        Enregistrer
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showView && selectedAffaire" class="ga-overlay" (click)="closeView()">
+  <div class="ga-modal ga-modal--view" (click)="$event.stopPropagation()">
+    <div class="ga-modal-head">
+      <div class="ga-modal-title">Détails de l’affaire</div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeView()">Fermer</button>
+    </div>
+    <div class="ga-modal-body">
+      <div class="ga-view-grid">
+        <div class="ga-view-item">
+          <div class="ga-view-k">Dossier</div>
+          <div class="ga-view-v">{{ selectedAffaire.dossierReference || '—' }}</div>
+        </div>
+        <div class="ga-view-item">
+          <div class="ga-view-k">Référence</div>
+          <div class="ga-view-v ga-mono">{{ selectedAffaire.referenceTribunal || '—' }}</div>
+        </div>
+        <div class="ga-view-item">
+          <div class="ga-view-k">Titre</div>
+          <div class="ga-view-v">{{ selectedAffaire.titre || '—' }}</div>
+        </div>
+        <div class="ga-view-item">
+          <div class="ga-view-k">Type</div>
+          <div class="ga-view-v">{{ procedureLabel(selectedAffaire.typeProcedure) }}</div>
+        </div>
+        <div class="ga-view-item">
+          <div class="ga-view-k">Tribunal</div>
+          <div class="ga-view-v">{{ selectedAffaire.tribunal || '—' }}</div>
+        </div>
+        <div class="ga-view-item">
+          <div class="ga-view-k">Responsable</div>
+          <div class="ga-view-v">{{ selectedAffaire.avocatNom || '—' }}</div>
+        </div>
+        <div class="ga-view-item">
+          <div class="ga-view-k">Statut</div>
+          <div class="ga-view-v"><span [class]="statutBadgeClass(selectedAffaire)">{{ statutLabel(selectedAffaire) }}</span></div>
+        </div>
+        <div class="ga-view-item">
+          <div class="ga-view-k">Date création</div>
+          <div class="ga-view-v ga-mono">{{ dateCreation(selectedAffaire) }}</div>
+        </div>
+        <div class="ga-view-item ga-view-item--full">
+          <div class="ga-view-k">Description</div>
+          <div class="ga-view-v">{{ selectedAffaire.observations || '—' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

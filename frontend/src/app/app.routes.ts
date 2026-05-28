@@ -19,6 +19,7 @@ import { PrestatairesPageComponent } from './pages/prestataires.component';
 import { PrestataireDetailPageComponent } from './pages/prestataire-detail.component';
 import { SuiviJudiciaireComponent } from './pages/suivi-judiciaire.component';
 import { MissionsPageComponent } from './pages/missions.component';
+import { GererAffairesPageComponent } from './pages/gerer-affaires.component';
 import { AdminComponent } from './theme/layout/admin/admin.component';
 import { GuestComponent } from './theme/layout/guest/guest.component';
 
@@ -43,7 +44,7 @@ export const routes: Routes = [
     component: AdminComponent,
     canActivate: [AuthGuard],
     children: [
-      { path: 'admin', component: DashboardPageComponent, data: { roles: ['ROLE_ADMIN'] } },
+      { path: 'admin', component: DashboardPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
       { path: 'contentieux', component: ContentieuxPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
       { path: 'risque/engagement', component: RisqueEngagementPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
       { path: 'risque/patrimoines', component: RisquePatrimoinesPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
@@ -58,6 +59,7 @@ export const routes: Routes = [
       { path: 'prestataires', component: PrestatairesPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX'] } },
       { path: 'prestataires/:id', component: PrestataireDetailPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_PRESTATAIRE', 'ROLE_AVOCAT', 'ROLE_HUISSIER', 'ROLE_EXPERT', 'PRESTATAIRE', 'AVOCAT', 'HUISSIER', 'EXPERT'] } },
       { path: 'suivi-judiciaire', component: SuiviJudiciaireComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_AVOCAT', 'AVOCAT'] } },
+      { path: 'affaires', component: GererAffairesPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_AVOCAT', 'AVOCAT'] } },
       { path: 'missions', component: MissionsPageComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_PRESTATAIRE', 'ROLE_AVOCAT', 'ROLE_HUISSIER', 'ROLE_EXPERT', 'PRESTATAIRE', 'AVOCAT', 'HUISSIER', 'EXPERT'] } },
       { path: 'factures', component: FacturesComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_PRESTATAIRE', 'ROLE_AVOCAT', 'ROLE_HUISSIER', 'ROLE_EXPERT', 'PRESTATAIRE', 'AVOCAT', 'HUISSIER', 'EXPERT'] } },
       { path: 'notes-honoraires', component: NotesHonorairesComponent, data: { roles: ['ROLE_ADMIN', 'ROLE_CHARGE_DOSSIER', 'ROLE_RESPONSABLE_CONTENTIEUX', 'ROLE_PRESTATAIRE', 'ROLE_AVOCAT', 'ROLE_HUISSIER', 'ROLE_EXPERT', 'PRESTATAIRE', 'AVOCAT', 'HUISSIER', 'EXPERT'] } },

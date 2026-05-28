@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -86,7 +87,12 @@ public class SuiviJudiciaireService {
         
         AffaireJudiciaireEntity entity = new AffaireJudiciaireEntity();
         entity.setDossierContentieux(dossier);
-        entity.setReferenceTribunal(dto.referenceTribunal());
+        String ref = dto.referenceTribunal();
+        if (ref == null || ref.isBlank()) {
+            ref = generateAffaireReference(dossier.getReference());
+        }
+        entity.setReferenceTribunal(ref);
+        entity.setTitre(dto.titre());
         ProcedureType procedureType = dto.typeProcedure() != null ? dto.typeProcedure() : ProcedureType.ASSIGNATION;
         entity.setTypeProcedure(procedureType);
 
@@ -100,10 +106,18 @@ public class SuiviJudiciaireService {
             entity.setMontant(null);
         }
         entity.setDateTransmission(dto.dateTransmission());
-        entity.setStatut(AffaireStatus.EN_COURS);
         entity.setTribunal(dto.tribunal());
         entity.setDateOuverture(dto.dateOuverture());
+        entity.setDateAudience(dto.dateAudience());
         entity.setObservations(dto.observations());
+        entity.setResultatDecision(dto.resultatDecision());
+        if (dto.resultatDecision() == DecisionType.GAIN || dto.resultatDecision() == DecisionType.PERTE) {
+            entity.setStatut(AffaireStatus.JUGEE);
+        } else if (dto.statut() != null) {
+            entity.setStatut(dto.statut());
+        } else {
+            entity.setStatut(AffaireStatus.EN_COURS);
+        }
 
         if (dto.avocatId() == null) {
             throw new RuntimeException("Avocat obligatoire");
@@ -209,11 +223,29 @@ public class SuiviJudiciaireService {
     public AffaireJudiciaireDto updateAffaire(Long id, AffaireJudiciaireDto dto, Authentication authentication) {
         AffaireJudiciaireEntity entity = requireAccessibleAffaire(id, authentication);
         
-        entity.setReferenceTribunal(dto.referenceTribunal());
+        if (dto.dossierId() != null && !dto.dossierId().equals(entity.getDossierContentieux().getId())) {
+            DossierContentieuxEntity dossier = dossierRepository.findById(dto.dossierId())
+                    .orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
+            if (isChargeDossier(authentication)) {
+                Long uid = requireCurrentUserId(authentication);
+                if (dossier.getChargeDossierId() == null || !dossier.getChargeDossierId().equals(uid)) {
+                    throw new AccessDeniedException("Accès refusé");
+                }
+            }
+            entity.setDossierContentieux(dossier);
+        }
+
+        if (dto.referenceTribunal() != null && !dto.referenceTribunal().isBlank()) {
+            entity.setReferenceTribunal(dto.referenceTribunal());
+        }
+        entity.setTitre(dto.titre());
         entity.setTribunal(dto.tribunal());
         entity.setDateOuverture(dto.dateOuverture());
+        entity.setDateAudience(dto.dateAudience());
         entity.setObservations(dto.observations());
         entity.setDateTransmission(dto.dateTransmission());
+        if (dto.statut() != null) entity.setStatut(dto.statut());
+        entity.setResultatDecision(dto.resultatDecision());
         
         if (dto.avocatId() != null) {
             PrestataireEntity avocat = prestataireRepository.findById(dto.avocatId())
@@ -240,8 +272,16 @@ public class SuiviJudiciaireService {
 
     @Transactional
     public void deleteAffaire(Long id, Authentication authentication) {
-        requireAccessibleAffaire(id, authentication);
-        affaireRepository.deleteById(id);
+        AffaireJudiciaireEntity affaire = requireAccessibleAffaire(id, authentication);
+
+        jugementRepository.findByAffaireJudiciaireId(id).ifPresent(jugementRepository::delete);
+
+        List<AudienceEntity> audiences = audienceRepository.findByAffaireJudiciaireIdOrderByDateAudienceAsc(id);
+        if (audiences != null && !audiences.isEmpty()) {
+            audienceRepository.deleteAll(audiences);
+        }
+
+        affaireRepository.delete(affaire);
     }
 
     @Transactional
@@ -259,6 +299,7 @@ public class SuiviJudiciaireService {
         entity.setDocumentUrl(dto.documentUrl());
 
         affaire.setStatut(AffaireStatus.JUGEE);
+        affaire.setResultatDecision(dto.typeDecision());
         affaireRepository.save(affaire);
 
         return mapToJugementDto(jugementRepository.save(entity));
@@ -320,6 +361,7 @@ public class SuiviJudiciaireService {
                 entity.getDossierContentieux().getReference(),
                 entity.getDossierContentieux().getNomDebiteur(),
                 entity.getReferenceTribunal(),
+                entity.getTitre(),
                 entity.getTypeProcedure(),
                 entity.getAssignationTarget(),
                 entity.getGarantiePatrimoine(),
@@ -328,12 +370,22 @@ public class SuiviJudiciaireService {
                 entity.getStatut(),
                 entity.getTribunal(),
                 entity.getDateOuverture(),
+                entity.getDateAudience(),
                 entity.getAvocat() != null ? entity.getAvocat().getId() : null,
                 entity.getAvocat() != null ? entity.getAvocat().getNom() + " " + entity.getAvocat().getPrenom() : null,
                 entity.getHuissier() != null ? entity.getHuissier().getId() : null,
                 entity.getHuissier() != null ? entity.getHuissier().getNom() + " " + entity.getHuissier().getPrenom() : null,
-                entity.getObservations()
+                entity.getObservations(),
+                entity.getResultatDecision(),
+                entity.getCreatedAt()
         );
+    }
+
+    private String generateAffaireReference(String dossierRef) {
+        String base = dossierRef != null ? dossierRef.replaceAll("[^A-Za-z0-9]", "") : "DOS";
+        if (base.isBlank()) base = "DOS";
+        String token = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+        return "AFF-" + base + "-" + token;
     }
 
     private AudienceDto mapToAudienceDto(AudienceEntity entity) {

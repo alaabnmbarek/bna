@@ -24,6 +24,7 @@ export interface AffaireJudiciaire {
   dossierReference?: string;
   nomDebiteur?: string;
   referenceTribunal: string;
+  titre?: string;
   typeProcedure: ProcedureType;
   assignationTarget?: AssignationTarget;
   garantiePatrimoine?: string;
@@ -32,11 +33,14 @@ export interface AffaireJudiciaire {
   statut?: AffaireStatus;
   tribunal: string;
   dateOuverture: string;
+  dateAudience?: string;
   avocatId?: number;
   avocatNom?: string;
   huissierId?: number;
   huissierNom?: string;
   observations?: string;
+  resultatDecision?: DecisionType;
+  createdAt?: string;
 }
 
 export interface Audience {

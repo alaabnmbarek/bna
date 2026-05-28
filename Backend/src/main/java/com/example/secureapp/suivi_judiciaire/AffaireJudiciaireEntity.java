@@ -21,6 +21,9 @@ public class AffaireJudiciaireEntity {
     @Column(nullable = false, length = 50)
     private String referenceTribunal;
 
+    @Column(length = 150)
+    private String titre;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private ProcedureType typeProcedure;
@@ -46,6 +49,12 @@ public class AffaireJudiciaireEntity {
 
     @Column(nullable = false)
     private LocalDate dateOuverture;
+
+    private LocalDate dateAudience;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private DecisionType resultatDecision;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "avocat_id")
@@ -79,6 +88,8 @@ public class AffaireJudiciaireEntity {
     public void setDossierContentieux(DossierContentieuxEntity dossierContentieux) { this.dossierContentieux = dossierContentieux; }
     public String getReferenceTribunal() { return referenceTribunal; }
     public void setReferenceTribunal(String referenceTribunal) { this.referenceTribunal = referenceTribunal; }
+    public String getTitre() { return titre; }
+    public void setTitre(String titre) { this.titre = titre; }
     public ProcedureType getTypeProcedure() { return typeProcedure; }
     public void setTypeProcedure(ProcedureType typeProcedure) { this.typeProcedure = typeProcedure; }
     public AssignationTarget getAssignationTarget() { return assignationTarget; }
@@ -95,6 +106,10 @@ public class AffaireJudiciaireEntity {
     public void setTribunal(String tribunal) { this.tribunal = tribunal; }
     public LocalDate getDateOuverture() { return dateOuverture; }
     public void setDateOuverture(LocalDate dateOuverture) { this.dateOuverture = dateOuverture; }
+    public LocalDate getDateAudience() { return dateAudience; }
+    public void setDateAudience(LocalDate dateAudience) { this.dateAudience = dateAudience; }
+    public DecisionType getResultatDecision() { return resultatDecision; }
+    public void setResultatDecision(DecisionType resultatDecision) { this.resultatDecision = resultatDecision; }
     public PrestataireEntity getAvocat() { return avocat; }
     public void setAvocat(PrestataireEntity avocat) { this.avocat = avocat; }
     public PrestataireEntity getHuissier() { return huissier; }
