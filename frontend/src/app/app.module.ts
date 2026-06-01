@@ -18,7 +18,6 @@ import { CardComponent } from './theme/shared/components/card/card.component';
 import { RegisterComponent } from './register/register.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { SuiviJudiciaireComponent } from './pages/suivi-judiciaire.component';
-import { ChatbotComponent } from './chatbot/chatbot.component';
 
 @NgModule({
   declarations: [AppComponent],
@@ -38,8 +37,7 @@ import { ChatbotComponent } from './chatbot/chatbot.component';
     UsersPageComponent,
     RegisterComponent,
     ResetPasswordComponent,
-    SuiviJudiciaireComponent,
-    ChatbotComponent
+    SuiviJudiciaireComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
